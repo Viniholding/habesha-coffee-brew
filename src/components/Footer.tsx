@@ -1,4 +1,5 @@
-import { Coffee, Facebook, Instagram, Mail, Phone } from "lucide-react";
+import { Facebook, Instagram, Mail, Phone } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Footer = () => {
   return (
@@ -6,10 +7,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Coffee className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold">Coffee Habesha</span>
-            </div>
+            <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
             <p className="text-muted-foreground">
               Premium Ethiopian coffee, crafted with passion and delivered with love.
             </p>
@@ -20,6 +18,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li><a href="#home" className="text-muted-foreground hover:text-primary transition-colors">Home</a></li>
               <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">About</a></li>
+              <li><a href="#products" className="text-muted-foreground hover:text-primary transition-colors">Products</a></li>
               <li><a href="#process" className="text-muted-foreground hover:text-primary transition-colors">Our Process</a></li>
               <li><a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</a></li>
             </ul>
