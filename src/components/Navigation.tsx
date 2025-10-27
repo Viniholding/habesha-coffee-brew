@@ -10,10 +10,11 @@ const Navigation = () => {
         </div>
         
         <div className="hidden md:flex items-center gap-8">
-          <a href="#home" className="hover:text-primary transition-colors">Home</a>
+          <a href="/" className="hover:text-primary transition-colors">Home</a>
           <a href="#about" className="hover:text-primary transition-colors">About</a>
           <a href="#products" className="hover:text-primary transition-colors">Products</a>
           <a href="#process" className="hover:text-primary transition-colors">Our Process</a>
+          <a href="/cafe" className="hover:text-primary transition-colors">Café</a>
           <a href="#contact" className="hover:text-primary transition-colors">Contact</a>
         </div>
         
