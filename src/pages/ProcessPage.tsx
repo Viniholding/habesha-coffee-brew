@@ -1,15 +1,17 @@
 import Navigation from "@/components/Navigation";
-import Hero from "@/components/Hero";
+import Process from "@/components/Process";
 import Footer from "@/components/Footer";
 
-const Index = () => {
+const ProcessPage = () => {
   return (
     <div className="min-h-screen">
       <Navigation />
-      <Hero />
+      <div className="pt-20">
+        <Process />
+      </div>
       <Footer />
     </div>
   );
 };
 
-export default Index;
+export default ProcessPage;
