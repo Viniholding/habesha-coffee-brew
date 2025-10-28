@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-coffee.jpg";
 
 const Hero = () => {
@@ -34,8 +35,8 @@ const Hero = () => {
             <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto">
               Order Now
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-primary/50 hover:border-primary">
-              Learn More
+            <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-primary/50 hover:border-primary" asChild>
+              <Link to="/about">Learn More</Link>
             </Button>
           </div>
         </div>
