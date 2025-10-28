@@ -13,7 +13,9 @@ const Navigation = () => {
           <a href="/" className="hover:text-primary transition-colors">Home</a>
           <a href="/about" className="hover:text-primary transition-colors">The Journey</a>
           <a href="/products" className="hover:text-primary transition-colors">Products</a>
-          <a href="/learn" className="hover:text-primary transition-colors">The Logo Way</a>
+          <a href="/learn" className="hover:opacity-80 transition-opacity flex items-center">
+            <img src={logo} alt="Coffee Habesha Way" className="h-8 w-auto" />
+          </a>
           <a href="/cafe" className="hover:text-primary transition-colors">Café</a>
           <a href="/contact" className="hover:text-primary transition-colors">Contact</a>
         </div>
