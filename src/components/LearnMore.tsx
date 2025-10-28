@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Coffee, Leaf, Heart } from "lucide-react";
 
 const LearnMore = () => {
@@ -44,6 +45,12 @@ const LearnMore = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+        
+        <div className="text-center mt-12">
+          <Button variant="default" size="lg" asChild>
+            <a href="/process">Explore Our Process</a>
+          </Button>
         </div>
       </div>
     </section>
