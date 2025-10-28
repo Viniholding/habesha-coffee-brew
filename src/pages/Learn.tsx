@@ -1,7 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Coffee, Sparkles, Users, Heart } from "lucide-react";
-import jebenaImage from "@/assets/jebena.png";
+import jebenaImage from "@/assets/jebena-ceremony.png";
 
 const steps = [
   {
