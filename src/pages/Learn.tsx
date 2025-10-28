@@ -48,8 +48,8 @@ const tutorialSteps = [
     icon: Coffee 
   }, 
   { 
-    number: "4", 
-    title: "The Jebena Magic",
+    number: "4"</span>, 
+    title: "The Jebena Magic", 
     description: "Serve with fendisha (popcorn) or kolo, and enjoy three rounds: Abol (Bold & Beautiful), Tona (Smooth & Social), and Baraka (Light & Blessed).",
     icon: Users
   }
