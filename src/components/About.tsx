@@ -89,48 +89,110 @@ const About = () => {
         </button>
       </section>
 
-      {/* Company Bio Section */}
-      <section className="py-32 bg-muted/30">
-        <div className="container mx-auto px-6 max-w-5xl">
-          <div className="text-center mb-16 animate-fade-in">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4">
-              Coffee by <span className="text-primary relative inline-block">
+      {/* Company Bio Section - Creative Layout */}
+      <section className="py-32 bg-gradient-to-b from-background via-muted/20 to-background relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-20 right-10 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+        
+        <div className="container mx-auto px-6 max-w-7xl relative z-10">
+          {/* Title Section - Asymmetric */}
+          <div className="max-w-4xl mb-20 animate-fade-in">
+            <p className="text-primary font-semibold tracking-wider mb-4 flex items-center gap-2">
+              <Sparkles className="w-5 h-5" />
+              OUR STORY
+            </p>
+            <h2 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight mb-8">
+              Coffee by{" "}
+              <span className="text-primary relative inline-block">
                 Coffee Habesha
-                <span className="absolute bottom-0 left-0 w-full h-1 bg-primary"></span>
+                <svg className="absolute -bottom-2 left-0 w-full" height="12" viewBox="0 0 200 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 10C50 2 150 2 198 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                </svg>
               </span>
             </h2>
           </div>
-          
-          <div className="space-y-8 text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <p className="text-xl md:text-2xl leading-relaxed text-foreground/90">
-              To achieve our unique and famous signature <span className="font-bold text-primary">Coffee Habesha</span>, we only use premium Arabica beans, 
-              and our coffee beans are single sourced and hand-crafted in small batches to ensure the highest quality.
-            </p>
-            
-            <p className="text-lg md:text-xl leading-relaxed text-muted-foreground">
-              Coffee Habesha is both a necessity and a treat all at the same time, delivering pleasure and purpose all in one 
-              delicious, decadent, delightful drink. Ethiopian coffee beans are known for being the best coffee in the world. 
-              Ethiopian coffee is elegant and has smooth flavor.
-            </p>
-            
-            <p className="text-lg md:text-xl leading-relaxed text-muted-foreground">
-              We manage all our milling, processing, and roasting to maximize texture and flavor profile of all our coffee 
-              beans. Each sample is cupped (tasted) and graded by a Master Taster to ensure it meets our high standards 
-              worthy of the Habesha name.
-            </p>
+
+          {/* Story Grid - Creative Positioning */}
+          <div className="grid md:grid-cols-2 gap-16 items-start mb-20">
+            {/* Left Column */}
+            <div className="space-y-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="bg-card/50 backdrop-blur-sm p-8 rounded-2xl border border-primary/10 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5">
+                <Coffee className="w-12 h-12 text-primary mb-6" />
+                <h3 className="text-2xl font-bold mb-4 text-foreground">Born from Excellence</h3>
+                <p className="text-lg leading-relaxed text-muted-foreground">
+                  Our signature <span className="font-bold text-primary">Coffee Habesha</span> isn't just coffee—it's a promise. 
+                  Every bean tells the story of Ethiopia's highlands, carefully selected from premium Arabica harvests and 
+                  hand-crafted in small batches that honor centuries of tradition.
+                </p>
+              </div>
+
+              <div className="pl-8 border-l-4 border-primary/30">
+                <p className="text-xl leading-relaxed text-foreground italic">
+                  "Ethiopian coffee beans are known for being the best coffee in the world. 
+                  Our coffee is elegant, smooth, and carries the soul of its homeland."
+                </p>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-8 md:mt-20 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <div className="bg-card/50 backdrop-blur-sm p-8 rounded-2xl border border-primary/10 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5">
+                <Heart className="w-12 h-12 text-primary mb-6" />
+                <h3 className="text-2xl font-bold mb-4 text-foreground">Necessity Meets Pleasure</h3>
+                <p className="text-lg leading-relaxed text-muted-foreground">
+                  Coffee Habesha is both ritual and reward—delivering purpose and pleasure in every delicious, 
+                  decadent, delightful cup. It's the morning motivation and the afternoon escape, 
+                  crafted for those who know that life's best moments deserve exceptional coffee.
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-8 rounded-2xl">
+                <h3 className="text-2xl font-bold mb-4 text-foreground flex items-center gap-3">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                  Master Crafted Quality
+                </h3>
+                <p className="text-lg leading-relaxed text-muted-foreground">
+                  We control every step: milling, processing, roasting. Each batch is cupped and graded by 
+                  a Master Taster, ensuring only beans worthy of the Habesha name reach your cup. 
+                  This is coffee crafted with precision, passion, and pride.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="container mx-auto px-6">
-        <div className="w-32 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto"></div>
+      {/* Decorative Divider */}
+      <div className="relative py-16">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center justify-center gap-4">
+            <div className="w-24 h-px bg-gradient-to-r from-transparent to-primary"></div>
+            <Coffee className="w-8 h-8 text-primary animate-pulse" />
+            <div className="w-24 h-px bg-gradient-to-l from-transparent to-primary"></div>
+          </div>
+        </div>
       </div>
 
       {/* Process Steps Section */}
-      <section id="process" className="py-24 bg-background">
+      <section id="process" className="py-32 bg-background">
         <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto space-y-24">
+          {/* Section Header */}
+          <div className="text-center mb-24 max-w-3xl mx-auto">
+            <p className="text-primary font-semibold tracking-wider mb-4 flex items-center justify-center gap-2">
+              <Coffee className="w-5 h-5" />
+              THE JOURNEY
+            </p>
+            <h3 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+              From Highland to Home
+            </h3>
+            <p className="text-xl text-muted-foreground">
+              Every cup begins with a journey through Ethiopia's pristine forests, 
+              guided by tradition and perfected by expertise.
+            </p>
+          </div>
+
+          <div className="max-w-6xl mx-auto space-y-32">
             {processSteps.map((step, index) => (
               <div 
                 key={step.number}
@@ -159,32 +221,46 @@ const About = () => {
                 </div>
                 <div className="md:w-1/2 space-y-6 group">
                   <div className="flex items-center gap-3">
-                    {index === 0 && <Sparkles className="w-5 h-5 text-primary animate-pulse" />}
-                    {index === 1 && <Heart className="w-5 h-5 text-primary animate-pulse" />}
-                    {index === 2 && <Coffee className="w-5 h-5 text-primary animate-pulse" />}
-                    <p className="text-sm font-semibold text-primary tracking-wider">STEP {step.number}</p>
+                    {index === 0 && <Sparkles className="w-6 h-6 text-primary animate-pulse" />}
+                    {index === 1 && <Heart className="w-6 h-6 text-primary animate-pulse" />}
+                    {index === 2 && <Coffee className="w-6 h-6 text-primary animate-pulse" />}
+                    <p className="text-sm font-bold text-primary tracking-widest">STEP {step.number}</p>
                   </div>
-                  <h4 className="text-4xl md:text-5xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+                  <h4 className="text-5xl md:text-6xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
                     {step.title}
                   </h4>
-                  <p className="text-lg text-muted-foreground leading-relaxed">
+                  <p className="text-xl text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
-                  <div className="w-20 h-1 bg-gradient-to-r from-primary to-primary/50 rounded-full transform origin-left group-hover:scale-x-150 transition-transform duration-500" />
+                  <div className="flex gap-2 items-center pt-4">
+                    <div className="w-24 h-1 bg-gradient-to-r from-primary to-primary/50 rounded-full transform origin-left group-hover:scale-x-150 transition-transform duration-500" />
+                    <ChevronDown className="w-5 h-5 text-primary rotate-[-90deg] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="mt-24 text-center">
-            <a
-              href="/products"
-              className="group inline-flex items-center gap-3 bg-primary text-primary-foreground px-12 py-6 rounded-xl font-bold text-xl hover:bg-primary/90 hover:scale-105 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300"
-            >
-              Explore our Products
-              <Coffee className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-            </a>
+          {/* CTA Section - Creative */}
+          <div className="mt-32 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-3xl blur-3xl"></div>
+            <div className="relative bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm p-12 md:p-16 rounded-3xl border border-primary/20 text-center">
+              <h3 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
+                Ready to Experience{" "}
+                <span className="text-primary">Excellence?</span>
+              </h3>
+              <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+                Discover our curated collection of premium Ethiopian coffee, 
+                each blend telling its own unique story.
+              </p>
+              <a
+                href="/products"
+                className="group inline-flex items-center gap-3 bg-primary text-primary-foreground px-12 py-6 rounded-2xl font-bold text-xl hover:bg-primary/90 hover:scale-105 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300"
+              >
+                Explore our Products
+                <Coffee className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
+              </a>
+            </div>
           </div>
         </div>
       </section>
