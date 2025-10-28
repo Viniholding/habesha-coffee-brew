@@ -143,11 +143,11 @@ export default function Learn() {
 
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="order-2 lg:order-1 space-y-8">
-              {tutorialSteps.map((step) => (
+              {tutorialSteps.map((step, index) => (
                 <div
-                  key={step.number}
+                  key={index}
                   className="flex gap-6 group"
-                  data-testid={`tutorial-step-${step.number}`}
+                  data-testid={`tutorial-step-${index + 1}`}
                 >
                   <div className="flex-shrink-0">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
