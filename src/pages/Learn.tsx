@@ -1,5 +1,5 @@
 import { Coffee, Sparkles, Users, Heart } from "lucide-react";
-import jebenaImage from "@/assets/jebena-ceremony.png;
+import jebenaImage from "@/assets/jebena-ceremony.png";
 
 const steps = [
   {
