@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import forestShieldedImage from "@/assets/forest-shielded.png";
 import handPickingImage from "@/assets/hand-picking.png";
 import slowRoastedImage from "@/assets/slow-roasted.png";
@@ -25,25 +26,40 @@ const processSteps = [
 ];
 
 const About = () => {
+  const scrollToContent = () => {
+    window.scrollTo({
+      top: window.innerHeight,
+      behavior: "smooth"
+    });
+  };
+
   return (
     <>
       {/* Hero Section */}
-      <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center">
+      <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${ethiopianHighlandsHero})` }}
         >
-          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
         </div>
         
-        <div className="relative z-10 text-center text-white px-6">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4">
+        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-tight">
             From Ethiopian Highlands to Your Cup
           </h1>
-          <p className="text-xl md:text-2xl">
+          <p className="text-xl md:text-2xl text-white/90 font-sans leading-relaxed max-w-3xl mx-auto">
             Discover the journey of exceptional coffee
           </p>
         </div>
+
+        <button
+          onClick={scrollToContent}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 text-white/80 hover:text-white transition-all hover:translate-y-1"
+          aria-label="Scroll to content"
+        >
+          <ChevronDown className="w-12 h-12 animate-bounce" />
+        </button>
       </section>
 
       {/* Main Content */}
