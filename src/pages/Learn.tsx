@@ -1,7 +1,34 @@
-import { Coffee, Sparkles, Users, Heart } from "lucide-react";
+import { Coffee, Sparkles, Users, Heart, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import jebenaImage from "@/assets/jebena-ceremony.png";
+import forestImage from "@/assets/forest.jpg";
+import handPickedImage from "@/assets/hand-picked.jpg";
+import roastedImage from "@/assets/roasted.jpg";
 
-const steps = [
+const processSteps = [
+  {
+    number: "01",
+    title: "Forest Shielded",
+    description: "Our premium Arabica beans grow naturally in Ethiopia's lush, protected forest highlands, where the perfect climate creates exceptional flavor.",
+    image: forestImage
+  },
+  {
+    number: "02",
+    title: "Hand Picked",
+    description: "Each cherry is carefully selected by experienced farmers who harvest only the ripest beans, ensuring superior quality in every batch.",
+    image: handPickedImage
+  },
+  {
+    number: "03",
+    title: "Slow Roasted",
+    description: "We roast in small batches using traditional methods, allowing each bean to develop its full, complex flavor profile and aroma.",
+    image: roastedImage
+  }
+];
+
+const tutorialSteps = [
   {
     number: "1",
     title: "Set the Mood — Coffee Time Is Sacred",
@@ -28,62 +55,183 @@ const steps = [
   }
 ];
 
-export default function JebenaTutorial() {
-  return (
-    <section className="w-full bg-card py-20 md:py-32">
-      <div className="max-w-7xl mx-auto px-6 md:px-12">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-card-foreground mb-4">
-            How to Make Jebena Coffee
-          </h2>
-          <p className="text-xl md:text-2xl text-card-foreground/70 font-accent italic">
-            The Coffee Habesha Way
-          </p>
-        </div>
+const sacredRounds = [
+  {
+    name: "Abol",
+    subtitle: "Bold & Beautiful",
+    description: "The first round — strong, rich, and full of life. This is where the conversation begins and the magic unfolds."
+  },
+  {
+    name: "Tona",
+    subtitle: "Smooth & Social",
+    description: "The second round — mellower and more refined. Perfect for deep conversations and strengthening bonds."
+  },
+  {
+    name: "Baraka",
+    subtitle: "Light & Blessed",
+    description: "The third round — gentle and blessed. A moment of gratitude, reflection, and heartfelt connection."
+  }
+];
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="order-2 lg:order-1 space-y-8">
-            {steps.map((step) => (
-              <div
-                key={step.number}
-                className="flex gap-6 group"
-                data-testid={`tutorial-step-${step.number}`}
-              >
-                <div className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <step.icon className="w-8 h-8 text-primary" />
+export default function Learn() {
+  return (
+    <div className="min-h-screen">
+      <Navigation />
+      
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center justify-center text-center px-6">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${forestImage})` }}
+        >
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+        
+        <div className="relative z-10 max-w-4xl mx-auto text-white">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
+            From Ethiopian Highlands to Your Cup
+          </h1>
+          <p className="text-xl md:text-2xl mb-12">
+            Every step delivers perfection through centuries of tradition and uncompromising craftsmanship
+          </p>
+          <ChevronDown className="w-12 h-12 mx-auto animate-bounce" />
+        </div>
+      </section>
+
+      {/* Process Steps Section */}
+      <section className="w-full bg-background py-20 md:py-32">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="grid md:grid-cols-3 gap-12">
+            {processSteps.map((step) => (
+              <div key={step.number} className="text-center space-y-6">
+                <div className="relative aspect-square rounded-2xl overflow-hidden mb-6">
+                  <img
+                    src={step.image}
+                    alt={step.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-6 left-6">
+                    <span className="text-6xl font-bold text-white/90">{step.number}</span>
                   </div>
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-5xl font-bold text-primary/20">{step.number}</span>
-                    <h3 className="text-xl md:text-2xl font-semibold text-card-foreground">
-                      {step.title}
-                    </h3>
-                  </div>
-                  <p className="text-card-foreground/70 leading-relaxed">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">STEP {step.number}</p>
+                  <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
+                    {step.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="order-1 lg:order-2">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-              <img
-                src={jebenaImage}
-                alt="Traditional Ethiopian Jebena Coffee Pot"
-                className="w-full h-auto object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-            </div>
-            <p className="mt-6 text-center text-card-foreground/60 italic text-lg">
-              Because coffee isn't just a drink — it's the Habesha way of life.
+      {/* Jebena Tutorial Section */}
+      <section className="w-full bg-card py-20 md:py-32">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-card-foreground mb-4">
+              How to Make Jebena Coffee
+            </h2>
+            <p className="text-xl md:text-2xl text-card-foreground/70 font-accent italic">
+              The Coffee Habesha Way
             </p>
           </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="order-2 lg:order-1 space-y-8">
+              {tutorialSteps.map((step) => (
+                <div
+                  key={step.number}
+                  className="flex gap-6 group"
+                  data-testid={`tutorial-step-${step.number}`}
+                >
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <step.icon className="w-8 h-8 text-primary" />
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-5xl font-bold text-primary/20">{step.number}</span>
+                      <h3 className="text-xl md:text-2xl font-semibold text-card-foreground">
+                        {step.title}
+                      </h3>
+                    </div>
+                    <p className="text-card-foreground/70 leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="order-1 lg:order-2">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img
+                  src={jebenaImage}
+                  alt="Traditional Ethiopian Jebena Coffee Pot"
+                  className="w-full h-auto object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              </div>
+              <p className="mt-6 text-center text-card-foreground/60 italic text-lg">
+                Because coffee isn't just a drink — it's the Habesha way of life.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Three Sacred Rounds Section */}
+      <section className="w-full bg-background py-20 md:py-32">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4">
+              The Three Sacred Rounds
+            </h2>
+            <p className="text-xl md:text-2xl text-muted-foreground italic">
+              Each round tells a story, each cup brings us closer
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {sacredRounds.map((round) => (
+              <div key={round.name} className="text-center space-y-4 p-8 rounded-2xl bg-card hover:shadow-xl transition-shadow">
+                <h3 className="text-3xl md:text-4xl font-bold text-primary">
+                  {round.name}
+                </h3>
+                <p className="text-lg font-semibold text-card-foreground">
+                  {round.subtitle}
+                </p>
+                <p className="text-card-foreground/70 leading-relaxed">
+                  {round.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <blockquote className="text-2xl md:text-3xl font-serif italic text-foreground/80 border-l-4 border-primary pl-8">
+              "Coffee is our bread, our culture, our connection. It is the thread that weaves through every moment of Ethiopian life."
+            </blockquote>
+            
+            <div className="pt-8">
+              <p className="text-xl text-muted-foreground mb-6">
+                Experience the authentic taste of tradition with Coffee Habesha
+              </p>
+              <Button variant="hero" size="lg" asChild>
+                <a href="/products">Explore Our Coffee Selection</a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
   );
 }
