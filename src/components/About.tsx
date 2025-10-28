@@ -69,11 +69,16 @@ const About = () => {
       {/* Process Steps Section */}
       <section id="process" className="py-24 bg-background">
         <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-8">
-              {processSteps.map((step) => (
-                <div key={step.number} className="text-center space-y-4">
-                  <div className="relative aspect-square rounded-2xl overflow-hidden mb-4">
+          <div className="max-w-6xl mx-auto space-y-16">
+            {processSteps.map((step, index) => (
+              <div 
+                key={step.number} 
+                className={`flex flex-col md:flex-row gap-8 items-center ${
+                  index === 1 ? '' : 'md:flex-row-reverse'
+                }`}
+              >
+                <div className="md:w-1/2">
+                  <div className="relative aspect-square rounded-2xl overflow-hidden">
                     <img
                       src={step.image}
                       alt={step.title}
@@ -83,18 +88,18 @@ const About = () => {
                       <span className="text-5xl font-bold text-white/90">{step.number}</span>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">STEP {step.number}</p>
-                    <h4 className="text-2xl font-bold text-foreground mb-3">
-                      {step.title}
-                    </h4>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {step.description}
-                    </p>
-                  </div>
                 </div>
-              ))}
-            </div>
+                <div className="md:w-1/2 space-y-4">
+                  <p className="text-sm text-muted-foreground">STEP {step.number}</p>
+                  <h4 className="text-3xl md:text-4xl font-bold text-foreground">
+                    {step.title}
+                  </h4>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
