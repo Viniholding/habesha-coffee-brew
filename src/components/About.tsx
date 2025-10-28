@@ -90,15 +90,15 @@ const About = () => {
       </section>
 
       {/* Company Bio Section */}
-      <section className="py-24 bg-[#1a1a1a] text-white">
+      <section className="py-24 bg-background">
         <div className="container mx-auto px-6 max-w-5xl">
           <h2 className="text-5xl md:text-6xl font-bold text-center mb-12">
             Coffee by <span className="text-primary border-b-4 border-primary">Coffee Habesha</span>
           </h2>
           
-          <div className="space-y-8 text-center text-lg md:text-xl leading-relaxed text-white/80">
+          <div className="space-y-8 text-center text-lg md:text-xl leading-relaxed text-muted-foreground">
             <p>
-              To achieve our unique and famous signature <span className="text-white font-semibold">Coffee Habesha</span>, we only use premium Arabica beans, 
+              To achieve our unique and famous signature <span className="text-foreground font-semibold">Coffee Habesha</span>, we only use premium Arabica beans, 
               and our coffee beans are single sourced and hand-crafted in small batches to ensure the highest quality.
             </p>
             
