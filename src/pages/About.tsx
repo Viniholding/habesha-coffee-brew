@@ -6,9 +6,7 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen">
       <Navigation />
-      <div className="pt-20">
-        <About />
-      </div>
+      <About />
       <Footer />
     </div>
   );

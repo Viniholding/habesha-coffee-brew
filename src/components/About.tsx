@@ -1,6 +1,7 @@
 import forestShieldedImage from "@/assets/forest-shielded.png";
 import handPickingImage from "@/assets/hand-picking.png";
 import slowRoastedImage from "@/assets/slow-roasted.png";
+import ethiopianHighlandsHero from "@/assets/ethiopian-highlands-hero.png";
 
 const processSteps = [
   {
@@ -25,7 +26,28 @@ const processSteps = [
 
 const About = () => {
   return (
-    <section id="about" className="py-24 bg-background">
+    <>
+      {/* Hero Section */}
+      <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${ethiopianHighlandsHero})` }}
+        >
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+        
+        <div className="relative z-10 text-center text-white px-6">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4">
+            From Ethiopian Highlands to Your Cup
+          </h1>
+          <p className="text-xl md:text-2xl">
+            Discover the journey of exceptional coffee
+          </p>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <section id="about" className="py-24 bg-background">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-4">
@@ -120,6 +142,7 @@ const About = () => {
         </div>
       </div>
     </section>
+    </>
   );
 };
 
