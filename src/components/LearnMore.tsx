@@ -49,7 +49,7 @@ const LearnMore = () => {
         
         <div className="text-center mt-12">
           <Button variant="default" size="lg" asChild>
-            <a href="/process">Explore Our Process</a>
+            <a href="/products">Products</a>
           </Button>
         </div>
       </div>
