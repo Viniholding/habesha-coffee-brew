@@ -139,55 +139,6 @@ const About = () => {
           </div>
         </div>
       </section>
-
-      {/* Three Sacred Rounds Section */}
-      <section className="py-24 bg-gradient-to-b from-background to-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto space-y-16">
-            <div 
-              data-index={3}
-              className="animate-on-scroll text-center space-y-6 transition-all duration-700"
-            >
-              <h2 className="text-5xl md:text-6xl font-bold text-foreground animate-fade-in">
-                The Three Sacred Rounds
-              </h2>
-              <p className="text-xl text-muted-foreground animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                Each round tells a story, each cup brings us closer
-              </p>
-              <div className="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto rounded-full" />
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { name: "Abol", subtitle: "Bold & Beautiful", description: "The first round — strong, rich, and full of life. This is where the conversation begins and the magic unfolds.", delay: "0s" },
-                { name: "Tona", subtitle: "Smooth & Social", description: "The second round — mellower and more refined. Perfect for deep conversations and strengthening bonds.", delay: "0.1s" },
-                { name: "Baraka", subtitle: "Light & Blessed", description: "The third round — gentle and blessed. A moment of gratitude, reflection, and heartfelt connection.", delay: "0.2s" }
-              ].map((round, idx) => (
-                <div 
-                  key={round.name}
-                  data-index={4 + idx}
-                  className="animate-on-scroll text-center space-y-4 p-8 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 group"
-                  style={{ animationDelay: round.delay }}
-                >
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-500">
-                    <Coffee className="w-8 h-8 text-primary group-hover:rotate-12 transition-transform duration-500" />
-                  </div>
-                  <h3 className="text-3xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">{round.name}</h3>
-                  <p className="text-primary font-semibold text-lg">{round.subtitle}</p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {round.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <blockquote 
-              data-index={7}
-              className="animate-on-scroll text-center text-2xl md:text-3xl text-foreground italic border-l-4 border-primary pl-8 py-6 my-16 max-w-4xl mx-auto hover:border-l-8 transition-all duration-300"
-            >
-              "Coffee is our bread, our culture, our connection. It is the thread that weaves through every moment of Ethiopian life."
-            </blockquote>
-
             <div 
               data-index={8}
               className="animate-on-scroll text-center space-y-8"
