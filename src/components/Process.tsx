@@ -27,38 +27,57 @@ const processSteps = [
 
 const Process = () => {
   return (
-    <section id="process" className="py-24 bg-card">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-5xl md:text-6xl font-bold">Our Process</h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            From Ethiopian highlands to your cup, we ensure every step delivers perfection
+    <section id="process" className="bg-card">
+      {/* Hero Section with Background Image */}
+      <div className="relative h-screen min-h-[600px] flex items-center justify-center">
+        <div className="absolute inset-0 overflow-hidden">
+          <img 
+            src={forestImage} 
+            alt="Ethiopian Coffee Highlands"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/40"></div>
+        </div>
+        <div className="relative z-10 text-center px-4 space-y-6">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight">
+            From Ethiopian<br />Highlands to Your<br />Cup
+          </h1>
+          <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto font-light">
+            Every step delivers perfection through centuries of tradition and uncompromising craftsmanship
           </p>
         </div>
-        
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <svg className="w-8 h-8 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+            <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+          </svg>
+        </div>
+      </div>
+
+      {/* Process Steps Section */}
+      <div className="container mx-auto px-4 py-24">
+        <div className="grid md:grid-cols-3 gap-12">
           {processSteps.map((step, index) => (
-            <Card 
-              key={index}
-              className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.2)] group"
-            >
-              <div className="relative h-64 overflow-hidden">
+            <div key={index} className="space-y-6">
+              <div className="relative h-80 overflow-hidden rounded-lg group">
                 <img 
                   src={step.image} 
                   alt={step.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute top-4 left-4 bg-primary text-primary-foreground w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shadow-lg">
+                <div className="absolute top-6 left-6 bg-primary text-primary-foreground w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold shadow-lg">
                   {step.number}
                 </div>
               </div>
-              <div className="p-6 space-y-3">
-                <h3 className="text-2xl font-bold">{step.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-primary tracking-wider">
+                  STEP {step.number}
+                </div>
+                <h3 className="text-3xl font-bold">{step.title}</h3>
+                <p className="text-muted-foreground leading-relaxed text-lg">
                   {step.description}
                 </p>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
 
