@@ -4,8 +4,9 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import jebenaImage from "@/assets/jebena-ceremony.png";
 import forestImage from "@/assets/forest.jpg";
-import handPickedImage from "@/assets/hand-picked.jpg";
-import roastedImage from "@/assets/roasted.jpg";
+import forestShieldedImage from "@/assets/forest-shielded.png";
+import handPickingImage from "@/assets/hand-picking.png";
+import slowRoastedImage from "@/assets/slow-roasted.png";
 import coffeeCeremonyImage from "@/assets/coffee-ceremony.png";
 
 const processSteps = [
@@ -13,19 +14,19 @@ const processSteps = [
     number: "01",
     title: "Forest Shielded",
     description: "Our premium Arabica beans grow naturally in Ethiopia's lush, protected forest highlands, where the perfect climate creates exceptional flavor.",
-    image: forestImage
+    image: forestShieldedImage
   },
   {
     number: "02",
     title: "Hand Picked",
     description: "Each cherry is carefully selected by experienced farmers who harvest only the ripest beans, ensuring superior quality in every batch.",
-    image: handPickedImage
+    image: handPickingImage
   },
   {
     number: "03",
     title: "Slow Roasted",
     description: "We roast in small batches using traditional methods, allowing each bean to develop its full, complex flavor profile and aroma.",
-    image: roastedImage
+    image: slowRoastedImage
   }
 ];
 
