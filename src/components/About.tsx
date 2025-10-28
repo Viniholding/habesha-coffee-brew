@@ -138,34 +138,6 @@ const About = () => {
             ))}
           </div>
 
-          {/* Why Choose Coffee Habesha Section */}
-          <div className="mt-32 bg-card border border-border rounded-lg p-8 md:p-12 text-center space-y-6">
-            <h3 className="text-3xl md:text-4xl font-bold">Why Choose Coffee Habesha?</h3>
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="space-y-2">
-                <div className="text-4xl mb-3">🌱</div>
-                <h4 className="font-bold text-lg">Sustainably Sourced</h4>
-                <p className="text-muted-foreground text-sm">
-                  Direct partnerships with Ethiopian farmers ensuring fair practices and quality
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="text-4xl mb-3">🔥</div>
-                <h4 className="font-bold text-lg">Small Batch Roasted</h4>
-                <p className="text-muted-foreground text-sm">
-                  Every batch is carefully roasted to unlock maximum flavor and aroma
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="text-4xl mb-3">📦</div>
-                <h4 className="font-bold text-lg">Fresh Delivery</h4>
-                <p className="text-muted-foreground text-sm">
-                  Roasted to order and shipped quickly to ensure peak freshness
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* CTA Button */}
           <div className="mt-20 text-center">
             <a
