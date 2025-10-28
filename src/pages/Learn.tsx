@@ -113,27 +113,31 @@ export default function Learn() {
       </section>
 
       {/* Three Sacred Rounds Section */}
-      <section className="w-full bg-background py-20 md:py-32">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4">
+      <section className="w-full bg-gradient-to-b from-background to-muted/30 py-20 md:py-32">
+        <div className="max-w-6xl mx-auto px-6 md:px-12">
+          <div className="text-center space-y-6 mb-16">
+            <h2 className="text-5xl md:text-6xl font-bold text-foreground animate-fade-in">
               The Three Sacred Rounds
             </h2>
-            <p className="text-xl md:text-2xl text-muted-foreground italic">
+            <p className="text-xl text-muted-foreground animate-fade-in" style={{ animationDelay: '0.1s' }}>
               Each round tells a story, each cup brings us closer
             </p>
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto rounded-full" />
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {sacredRounds.map((round) => (
-              <div key={round.name} className="text-center space-y-4 p-8 rounded-2xl bg-card hover:shadow-xl transition-shadow">
-                <h3 className="text-3xl md:text-4xl font-bold text-primary">
-                  {round.name}
-                </h3>
-                <p className="text-lg font-semibold text-card-foreground">
-                  {round.subtitle}
-                </p>
-                <p className="text-card-foreground/70 leading-relaxed">
+            {sacredRounds.map((round, idx) => (
+              <div 
+                key={round.name}
+                className="text-center space-y-4 p-8 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 group"
+                style={{ animationDelay: `${idx * 0.1}s` }}
+              >
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-500">
+                  <Coffee className="w-8 h-8 text-primary group-hover:rotate-12 transition-transform duration-500" />
+                </div>
+                <h3 className="text-3xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">{round.name}</h3>
+                <p className="text-primary font-semibold text-lg">{round.subtitle}</p>
+                <p className="text-muted-foreground leading-relaxed">
                   {round.description}
                 </p>
               </div>
@@ -148,7 +152,7 @@ export default function Learn() {
               >
                 <div className="absolute inset-0 bg-black/30" />
               </div>
-              <blockquote className="relative z-10 text-2xl md:text-3xl font-serif italic text-white border-l-4 border-primary pl-8 py-12 pr-8">
+              <blockquote className="relative z-10 text-2xl md:text-3xl font-serif italic text-white border-l-4 border-primary pl-8 py-12 pr-8 hover:border-l-8 transition-all duration-300">
                 "Coffee is our bread, our culture, our connection. It is the thread that weaves through every moment of Ethiopian life."
               </blockquote>
             </div>
@@ -157,8 +161,11 @@ export default function Learn() {
               <p className="text-xl text-muted-foreground mb-6">
                 Experience the authentic taste of tradition with Coffee Habesha
               </p>
-              <Button variant="hero" size="lg" asChild>
-                <a href="/products">Explore Our Coffee Selection</a>
+              <Button variant="hero" size="lg" asChild className="hover:scale-105 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 group">
+                <a href="/products" className="flex items-center gap-3">
+                  Explore Our Coffee Selection
+                  <Coffee className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+                </a>
               </Button>
             </div>
           </div>
