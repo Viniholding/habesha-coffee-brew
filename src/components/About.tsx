@@ -137,25 +137,15 @@ const About = () => {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-            <div 
-              data-index={8}
-              className="animate-on-scroll text-center space-y-8"
+
+          {/* CTA Button */}
+          <div className="mt-20 text-center">
+            <a
+              href="/products"
+              className="inline-block bg-primary text-primary-foreground px-10 py-5 rounded-xl font-semibold text-lg hover:bg-primary/90 hover:scale-105 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300"
             >
-              <p className="text-xl text-muted-foreground">
-                Experience the authentic taste of tradition with Coffee Habesha
-              </p>
-              <a
-                href="/products"
-                className="inline-block bg-primary text-primary-foreground px-10 py-5 rounded-xl font-semibold text-lg hover:bg-primary/90 hover:scale-105 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300 group"
-              >
-                <span className="flex items-center gap-3">
-                  Explore Our Coffee Selection
-                  <ChevronDown className="w-5 h-5 rotate-[-90deg] group-hover:translate-x-2 transition-transform duration-300" />
-                </span>
-              </a>
-            </div>
+              Explore our Products
+            </a>
           </div>
         </div>
       </section>
