@@ -64,7 +64,21 @@ const Learn = () => {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="order-2 lg:order-1 space-y-8">
+            <div className="order-1 lg:order-1">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img
+                  src={jebenaImage}
+                  alt="Traditional Ethiopian Jebena Coffee Pot"
+                  className="w-full h-auto object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              </div>
+              <p className="mt-6 text-center text-card-foreground/60 italic text-lg">
+                Because coffee isn't just a drink — it's the Habesha way of life.
+              </p>
+            </div>
+
+            <div className="order-2 lg:order-2 space-y-8">
               {steps.map((step) => (
                 <div
                   key={step.number}
@@ -89,20 +103,6 @@ const Learn = () => {
                   </div>
                 </div>
               ))}
-            </div>
-
-            <div className="order-1 lg:order-2">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <img
-                  src={jebenaImage}
-                  alt="Traditional Ethiopian Jebena Coffee Pot"
-                  className="w-full h-auto object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-              </div>
-              <p className="mt-6 text-center text-card-foreground/60 italic text-lg">
-                Because coffee isn't just a drink — it's the Habesha way of life.
-              </p>
             </div>
           </div>
         </div>
