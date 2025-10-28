@@ -63,96 +63,116 @@ const Process = () => {
         </div>
 
         {/* Jebena Coffee Brewing Guide */}
-        <div className="mt-32">
-          <div className="text-center mb-16 space-y-6">
-            <div className="flex justify-center mb-8">
+        <div className="mt-32 relative">
+          {/* Hero Section with Image */}
+          <div className="text-center mb-20 space-y-8">
+            <div className="relative inline-block">
+              <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150"></div>
               <img 
                 src={jebenaImage} 
                 alt="Traditional Ethiopian Jebena Coffee Pot" 
-                className="w-64 h-auto object-contain"
+                className="relative w-80 h-auto object-contain mx-auto animate-fade-in"
               />
             </div>
-            <h3 className="text-4xl md:text-5xl font-bold">How to Make Jebena Coffee</h3>
-            <p className="text-xl text-muted-foreground">The Coffee Habesha Way</p>
+            <div className="space-y-4">
+              <h3 className="text-4xl md:text-6xl font-bold">How to Make Jebena Coffee</h3>
+              <p className="text-2xl text-muted-foreground font-light">The Coffee Habesha Way</p>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {/* Timeline Style Instructions */}
+          <div className="max-w-4xl mx-auto space-y-12">
             {/* Step 1 */}
-            <Card className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300">
-              <div className="p-8 space-y-4">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-primary text-primary-foreground w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0">
-                    1
-                  </div>
-                  <h4 className="text-2xl font-bold">Set the Mood — Coffee Time Is Sacred</h4>
-                </div>
-                <p className="text-muted-foreground leading-relaxed">
+            <div className="relative pl-8 md:pl-16 border-l-2 border-primary/30">
+              <div className="absolute -left-4 top-0 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">
+                1
+              </div>
+              <div className="bg-card/50 backdrop-blur-sm p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]">
+                <h4 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">
+                  Set the Mood — Coffee Time Is Sacred
+                </h4>
+                <p className="text-lg text-muted-foreground leading-relaxed">
                   Find your coziest spot — Light your etan (frankincense), grab your Jebena, and gather your people. Coffee time is sacred — laughter required.
                 </p>
               </div>
-            </Card>
+            </div>
 
             {/* Step 2 */}
-            <Card className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300">
-              <div className="p-8 space-y-4">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-primary text-primary-foreground w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0">
-                    2
-                  </div>
-                  <h4 className="text-2xl font-bold">Roast with Rhythm</h4>
-                </div>
-                <p className="text-muted-foreground leading-relaxed">
-                  Traditionally, you'd roast green beans until your kitchen smells like paradise.
-                </p>
-                <p className="text-muted-foreground leading-relaxed">
-                  But hey — we've got you covered! Pick from our amazing Coffee Habesha selection — roasted to perfection and ready to impress.
-                </p>
-                <p className="text-muted-foreground leading-relaxed italic">
-                  (Warning: neighbors might "accidentally" drop by once they smell it 😉)
-                </p>
+            <div className="relative pl-8 md:pl-16 border-l-2 border-primary/30">
+              <div className="absolute -left-4 top-0 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">
+                2
               </div>
-            </Card>
+              <div className="bg-card/50 backdrop-blur-sm p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]">
+                <h4 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">
+                  Roast with Rhythm
+                </h4>
+                <div className="space-y-3">
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    Traditionally, you'd roast green beans until your kitchen smells like paradise.
+                  </p>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    But hey — we've got you covered! Pick from our amazing Coffee Habesha selection — roasted to perfection and ready to impress.
+                  </p>
+                  <p className="text-lg text-muted-foreground leading-relaxed italic opacity-80">
+                    (Warning: neighbors might "accidentally" drop by once they smell it 😉)
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Step 3 */}
-            <Card className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300">
-              <div className="p-8 space-y-4">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-primary text-primary-foreground w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0">
-                    3
-                  </div>
-                  <h4 className="text-2xl font-bold">Grind It the Traditional Way</h4>
-                </div>
-                <p className="text-muted-foreground leading-relaxed">
-                  Add your ground coffee to the Jebena, fill with water, and simmer slowly.
-                </p>
-                <p className="text-muted-foreground leading-relaxed">
-                  When it starts to rise, lift it — let it dance a little — then pour into sini cups with style and confidence.
-                </p>
+            <div className="relative pl-8 md:pl-16 border-l-2 border-primary/30">
+              <div className="absolute -left-4 top-0 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">
+                3
               </div>
-            </Card>
+              <div className="bg-card/50 backdrop-blur-sm p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]">
+                <h4 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">
+                  Grind It the Traditional Way
+                </h4>
+                <div className="space-y-3">
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    Add your ground coffee to the Jebena, fill with water, and simmer slowly.
+                  </p>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    When it starts to rise, lift it — let it dance a little — then pour into sini cups with style and confidence.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Step 4 */}
-            <Card className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300">
-              <div className="p-8 space-y-4">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-primary text-primary-foreground w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0">
-                    4
-                  </div>
-                  <h4 className="text-2xl font-bold">The Jebena Magic</h4>
-                </div>
-                <p className="text-muted-foreground leading-relaxed">
-                  Serve with fendisha (popcorn) or kolo, and enjoy three rounds:
-                </p>
-                <div className="space-y-2 pl-4">
-                  <p className="text-muted-foreground">☕ Abol – bold & beautiful</p>
-                  <p className="text-muted-foreground">☕ Tona – smooth & social</p>
-                  <p className="text-muted-foreground">☕ Baraka – light & blessed</p>
-                </div>
-                <p className="font-semibold mt-4 text-foreground">
-                  Because coffee isn't just a drink — it's the Habesha way of life.
-                </p>
+            <div className="relative pl-8 md:pl-16 border-l-2 border-primary/30">
+              <div className="absolute -left-4 top-0 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-lg">
+                4
               </div>
-            </Card>
+              <div className="bg-card/50 backdrop-blur-sm p-8 rounded-lg border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]">
+                <h4 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">
+                  The Jebena Magic
+                </h4>
+                <div className="space-y-4">
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    Serve with fendisha (popcorn) or kolo, and enjoy three rounds:
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+                    <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                      <p className="text-lg font-semibold mb-1">☕ Abol</p>
+                      <p className="text-sm text-muted-foreground">Bold & Beautiful</p>
+                    </div>
+                    <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                      <p className="text-lg font-semibold mb-1">☕ Tona</p>
+                      <p className="text-sm text-muted-foreground">Smooth & Social</p>
+                    </div>
+                    <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                      <p className="text-lg font-semibold mb-1">☕ Baraka</p>
+                      <p className="text-sm text-muted-foreground">Light & Blessed</p>
+                    </div>
+                  </div>
+                  <p className="text-xl font-semibold text-center mt-8 text-foreground">
+                    Because coffee isn't just a drink — it's the Habesha way of life.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
