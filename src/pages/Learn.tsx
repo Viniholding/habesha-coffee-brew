@@ -6,6 +6,7 @@ import jebenaImage from "@/assets/jebena-ceremony.png";
 import forestImage from "@/assets/forest.jpg";
 import handPickedImage from "@/assets/hand-picked.jpg";
 import roastedImage from "@/assets/roasted.jpg";
+import coffeeCeremonyImage from "@/assets/coffee-ceremony.png";
 
 const processSteps = [
   {
@@ -215,9 +216,17 @@ export default function Learn() {
           </div>
 
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <blockquote className="text-2xl md:text-3xl font-serif italic text-foreground/80 border-l-4 border-primary pl-8">
-              "Coffee is our bread, our culture, our connection. It is the thread that weaves through every moment of Ethiopian life."
-            </blockquote>
+            <div className="relative rounded-2xl overflow-hidden">
+              <div 
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${coffeeCeremonyImage})` }}
+              >
+                <div className="absolute inset-0 bg-black/60" />
+              </div>
+              <blockquote className="relative z-10 text-2xl md:text-3xl font-serif italic text-white border-l-4 border-primary pl-8 py-12 pr-8">
+                "Coffee is our bread, our culture, our connection. It is the thread that weaves through every moment of Ethiopian life."
+              </blockquote>
+            </div>
             
             <div className="pt-8">
               <p className="text-xl text-muted-foreground mb-6">
