@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import forestImage from "@/assets/forest.jpg";
 import handPickedImage from "@/assets/hand-picked.jpg";
 import roastedImage from "@/assets/roasted.jpg";
+import jebenaImage from "@/assets/jebena.png";
 
 const processSteps = [
   {
@@ -63,7 +64,14 @@ const Process = () => {
 
         {/* Jebena Coffee Brewing Guide */}
         <div className="mt-32">
-          <div className="text-center mb-16 space-y-4">
+          <div className="text-center mb-16 space-y-6">
+            <div className="flex justify-center mb-8">
+              <img 
+                src={jebenaImage} 
+                alt="Traditional Ethiopian Jebena Coffee Pot" 
+                className="w-64 h-auto object-contain"
+              />
+            </div>
             <h3 className="text-4xl md:text-5xl font-bold">How to Make Jebena Coffee</h3>
             <p className="text-xl text-muted-foreground">The Coffee Habesha Way</p>
           </div>
