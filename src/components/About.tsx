@@ -3,7 +3,7 @@ import forestShieldedImage from "@/assets/forest-shielded.png";
 import handPickingImage from "@/assets/hand-picking.png";
 import slowRoastedImage from "@/assets/slow-roasted.png";
 import ethiopianHighlandsHero from "@/assets/ethiopian-highlands-hero.png";
-import jebenaImage from "@/assets/jebena.png";
+
 
 const processSteps = [
   {
@@ -94,99 +94,6 @@ const About = () => {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How to Make Jebena Coffee Section */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto space-y-12">
-            <div className="text-center space-y-4">
-              <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-                How to Make Jebena Coffee
-              </h2>
-              <p className="text-xl text-primary font-semibold">
-                The Coffee Habesha Way
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">1</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">
-                      Set the Mood — Coffee Time Is Sacred
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Find your coziest spot — Light your etan (frankincense), grab your Jebena, and gather your people. Coffee time is sacred — laughter required.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">2</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">
-                      Roast with Rhythm
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Traditionally, you'd roast green beans until your kitchen smells like paradise. But hey — we've got you covered! Pick from our amazing Coffee Habesha selection — roasted to perfection and ready to impress.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">3</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">
-                      Grind It the Traditional Way
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Add your ground coffee to the Jebena, fill with water, and simmer slowly. When it starts to rise, lift it — let it dance a little — then pour into sini cups with style and confidence.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">4</span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">
-                      The Jebena Magic
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Serve with fendisha (popcorn) or kolo, and enjoy three rounds: Abol (Bold & Beautiful), Tona (Smooth & Social), and Baraka (Light & Blessed).
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center mt-12">
-              <img
-                src={jebenaImage}
-                alt="Traditional Ethiopian Jebena Coffee Pot"
-                className="max-w-md mx-auto rounded-2xl shadow-lg"
-              />
-              <p className="mt-6 text-lg text-muted-foreground italic">
-                Because coffee isn't just a drink — it's the Habesha way of life.
-              </p>
             </div>
           </div>
         </div>
