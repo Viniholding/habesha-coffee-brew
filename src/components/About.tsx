@@ -90,25 +90,30 @@ const About = () => {
       </section>
 
       {/* Company Bio Section */}
-      <section className="py-24 bg-background">
+      <section className="py-32 bg-muted/30">
         <div className="container mx-auto px-6 max-w-5xl">
-          <h2 className="text-5xl md:text-6xl font-bold text-center mb-12">
-            Coffee by <span className="text-primary border-b-4 border-primary">Coffee Habesha</span>
-          </h2>
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4">
+              Coffee by <span className="text-primary relative inline-block">
+                Coffee Habesha
+                <span className="absolute bottom-0 left-0 w-full h-1 bg-primary"></span>
+              </span>
+            </h2>
+          </div>
           
-          <div className="space-y-8 text-center text-lg md:text-xl leading-relaxed text-muted-foreground">
-            <p>
-              To achieve our unique and famous signature <span className="text-foreground font-semibold">Coffee Habesha</span>, we only use premium Arabica beans, 
+          <div className="space-y-8 text-center animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <p className="text-xl md:text-2xl leading-relaxed text-foreground/90">
+              To achieve our unique and famous signature <span className="font-bold text-primary">Coffee Habesha</span>, we only use premium Arabica beans, 
               and our coffee beans are single sourced and hand-crafted in small batches to ensure the highest quality.
             </p>
             
-            <p>
+            <p className="text-lg md:text-xl leading-relaxed text-muted-foreground">
               Coffee Habesha is both a necessity and a treat all at the same time, delivering pleasure and purpose all in one 
               delicious, decadent, delightful drink. Ethiopian coffee beans are known for being the best coffee in the world. 
               Ethiopian coffee is elegant and has smooth flavor.
             </p>
             
-            <p>
+            <p className="text-lg md:text-xl leading-relaxed text-muted-foreground">
               We manage all our milling, processing, and roasting to maximize texture and flavor profile of all our coffee 
               beans. Each sample is cupped (tasted) and graded by a Master Taster to ensure it meets our high standards 
               worthy of the Habesha name.
@@ -116,6 +121,11 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      {/* Divider */}
+      <div className="container mx-auto px-6">
+        <div className="w-32 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto"></div>
+      </div>
 
       {/* Process Steps Section */}
       <section id="process" className="py-24 bg-background">
@@ -167,12 +177,13 @@ const About = () => {
           </div>
 
           {/* CTA Button */}
-          <div className="mt-20 text-center">
+          <div className="mt-24 text-center">
             <a
               href="/products"
-              className="inline-block bg-primary text-primary-foreground px-10 py-5 rounded-xl font-semibold text-lg hover:bg-primary/90 hover:scale-105 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300"
+              className="group inline-flex items-center gap-3 bg-primary text-primary-foreground px-12 py-6 rounded-xl font-bold text-xl hover:bg-primary/90 hover:scale-105 hover:shadow-2xl hover:shadow-primary/30 transition-all duration-300"
             >
               Explore our Products
+              <Coffee className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
             </a>
           </div>
         </div>
