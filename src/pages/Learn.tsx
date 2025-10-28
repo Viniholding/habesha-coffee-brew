@@ -221,7 +221,7 @@ export default function Learn() {
                 className="absolute inset-0 bg-cover bg-center"
                 style={{ backgroundImage: `url(${coffeeCeremonyImage})` }}
               >
-                <div className="absolute inset-0 bg-black/60" />
+                <div className="absolute inset-0 bg-black/30" />
               </div>
               <blockquote className="relative z-10 text-2xl md:text-3xl font-serif italic text-white border-l-4 border-primary pl-8 py-12 pr-8">
                 "Coffee is our bread, our culture, our connection. It is the thread that weaves through every moment of Ethiopian life."
