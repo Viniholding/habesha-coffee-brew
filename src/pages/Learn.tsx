@@ -30,37 +30,28 @@ const processSteps = [
 
 const tutorialSteps = [
   { 
-     number: "1", 
-     title: "Set the Mood — Coffee Time Is Sacred", 
-     description: "Find your coziest spot — Light your etan 
-  (frankincense), grab your Jebena, and gather your people. Coffee time 
-  is sacred — laughter required.",
-      icon: Heart 
-   }, 
-   { 
-     number: "2", 
-     title: "Roast with Rhythm", 
-     description: "Traditionally, you'd roast green beans until your 
-  kitchen smells like paradise. But hey — we've got you covered! Pick 
-  from our amazing Coffee Habesha selection — roasted to perfection and 
-  ready to impress.",
-      icon: Sparkles 
-   }, 
-   { 
-     number: "3", 
-     title: "Grind It the Traditional Way", 
-     description: "Add your ground coffee to the Jebena, fill with 
-  water, and simmer slowly. When it starts to rise, lift it — let it 
-  dance a little — then pour into sini cups with style and confidence.",
-      icon: Coffee 
-   }, 
-   { 
-     number: "4", 
+    number: "1", 
+    title: "Set the Mood — Coffee Time Is Sacred", 
+    description: "Find your coziest spot — Light your etan (frankincense), grab your Jebena, and gather your people. Coffee time is sacred — laughter required.",
+    icon: Heart 
+  }, 
+  { 
+    number: "2", 
+    title: "Roast with Rhythm", 
+    description: "Traditionally, you'd roast green beans until your kitchen smells like paradise. But hey — we've got you covered! Pick from our amazing Coffee Habesha selection — roasted to perfection and ready to impress.",
+    icon: Sparkles 
+  }, 
+  { 
+    number: "3", 
+    title: "Grind It the Traditional Way", 
+    description: "Add your ground coffee to the Jebena, fill with water, and simmer slowly. When it starts to rise, lift it — let it dance a little — then pour into sini cups with style and confidence.",
+    icon: Coffee 
+  }, 
+  { 
+    number: "4", 
     title: "The Jebena Magic", 
-    description: "Serve with fendisha (popcorn) or kolo, and enjoy 
-  three rounds: Abol (Bold & Beautiful), Tona (Smooth & Social), and 
-  Baraka (Light & Blessed).",
-      icon: Users
+    description: "Serve with fendisha (popcorn) or kolo, and enjoy three rounds: Abol (Bold & Beautiful), Tona (Smooth & Social), and Baraka (Light & Blessed).",
+    icon: Users
   }
 ];
 
