@@ -10,18 +10,21 @@ const processSteps = [
     title: "Forest Shielded",
     description: "Our premium Arabica beans grow naturally in Ethiopia's lush, protected forest highlands, where the perfect climate creates exceptional flavor.",
     image: forestShieldedImage
+    imagePosition="left"
   },
   {
     number: "02",
     title: "Hand Picked",
     description: "Each cherry is carefully selected by experienced farmers who harvest only the ripest beans, ensuring superior quality in every batch.",
     image: handPickingImage
+    imagePosition="right"
   },
   {
     number: "03",
     title: "Slow Roasted",
     description: "We roast in small batches using traditional methods, allowing each bean to develop its full, complex flavor profile and aroma.",
     image: slowRoastedImage
+    imagePosition="left"
   }
 ];
 
