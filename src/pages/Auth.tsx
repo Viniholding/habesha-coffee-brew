@@ -107,7 +107,7 @@ const Auth = () => {
           backgroundPosition: 'center',
         }}
       >
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-background/40 backdrop-blur-sm" />
         <Card className="w-full max-w-sm relative z-10 shadow-2xl">
         <CardHeader className="space-y-3">
           <div className="flex justify-center">
