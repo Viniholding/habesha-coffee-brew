@@ -63,11 +63,20 @@ const ResetPassword = () => {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen flex items-center justify-center pt-24 bg-background">
+      <div className="min-h-screen flex items-center justify-center pt-24" style={{ backgroundColor: '#3d2817' }}>
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
-            {/* Left side - Form */}
-            <Card className="w-full shadow-2xl">
+            {/* Left side - Image */}
+            <div className="hidden lg:block">
+              <img 
+                src={sadCoffeeMug} 
+                alt="Reset Password" 
+                className="w-full h-auto rounded-lg shadow-xl"
+              />
+            </div>
+
+            {/* Right side - Form */}
+            <Card className="w-full shadow-2xl bg-background/95 backdrop-blur-sm">
               <CardHeader className="space-y-3">
                 <div className="flex justify-center">
                   <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
@@ -112,15 +121,6 @@ const ResetPassword = () => {
                 </form>
               </CardContent>
             </Card>
-
-            {/* Right side - Image */}
-            <div className="hidden lg:block">
-              <img 
-                src={sadCoffeeMug} 
-                alt="Reset Password" 
-                className="w-full h-auto rounded-lg shadow-xl"
-              />
-            </div>
           </div>
         </div>
       </div>
