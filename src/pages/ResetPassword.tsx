@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import logo from "@/assets/logo.png";
-import forgotPasswordBg from "@/assets/forgot-password-bg.jpg";
+import sadCoffeeMug from "@/assets/sad-coffee-mug.png";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -63,57 +63,66 @@ const ResetPassword = () => {
   return (
     <>
       <Navigation />
-      <div 
-        className="min-h-screen flex items-center justify-center px-4 pt-24 relative"
-        style={{
-          backgroundImage: `url(${forgotPasswordBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-background/20 backdrop-blur-sm" />
-        <Card className="w-full max-w-sm relative z-10 shadow-2xl bg-background/50 backdrop-blur-md border-white/20">
-          <CardHeader className="space-y-3">
-            <div className="flex justify-center">
-              <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
+      <div className="min-h-screen flex items-center justify-center pt-24 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
+            {/* Left side - Form */}
+            <Card className="w-full shadow-2xl">
+              <CardHeader className="space-y-3">
+                <div className="flex justify-center">
+                  <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
+                </div>
+                <CardTitle className="text-xl text-center">Create New Password</CardTitle>
+                <CardDescription className="text-center text-sm">
+                  Enter your new password below
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">New Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Updating..." : "Update Password"}
+                  </Button>
+                  <div className="text-center mt-4">
+                    <a href="/auth" className="text-sm text-primary hover:underline">
+                      Back to Login
+                    </a>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Right side - Image */}
+            <div className="hidden lg:block">
+              <img 
+                src={sadCoffeeMug} 
+                alt="Reset Password" 
+                className="w-full h-auto rounded-lg shadow-xl"
+              />
             </div>
-            <CardTitle className="text-xl text-center">Set New Password</CardTitle>
-            <CardDescription className="text-center text-sm">
-              Enter your new password below
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Updating..." : "Update Password"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </>
   );

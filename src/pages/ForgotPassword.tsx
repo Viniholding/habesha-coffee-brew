@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import logo from "@/assets/logo.png";
-import forgotPasswordBg from "@/assets/forgot-password-bg.jpg";
+import sadCoffeeMug from "@/assets/sad-coffee-mug.png";
 
 const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
@@ -41,64 +41,70 @@ const ForgotPassword = () => {
   return (
     <>
       <Navigation />
-      <div 
-        className="min-h-screen flex items-center justify-center px-4 pt-24 relative"
-        style={{
-          backgroundImage: `url(${forgotPasswordBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-background/20 backdrop-blur-sm" />
-        <Card className="w-full max-w-sm relative z-10 shadow-2xl bg-background/50 backdrop-blur-md border-white/20">
-          <CardHeader className="space-y-3">
-            <div className="flex justify-center">
-              <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
+      <div className="min-h-screen flex items-center justify-center pt-24 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
+            {/* Left side - Form */}
+            <Card className="w-full shadow-2xl">
+              <CardHeader className="space-y-3">
+                <div className="flex justify-center">
+                  <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
+                </div>
+                <CardTitle className="text-xl text-center">Reset Password</CardTitle>
+                <CardDescription className="text-center text-sm">
+                  {sent 
+                    ? "Check your email for the reset link"
+                    : "Enter your email to receive a password reset link"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!sent ? (
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Sending..." : "Send Reset Link"}
+                    </Button>
+                    <div className="text-center mt-4">
+                      <a href="/auth" className="text-sm text-primary hover:underline">
+                        Back to Login
+                      </a>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-center text-muted-foreground">
+                      We've sent a password reset link to <strong>{email}</strong>. 
+                      Click the link in the email to reset your password.
+                    </p>
+                    <Button className="w-full" asChild>
+                      <a href="/auth">Back to Login</a>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Right side - Image */}
+            <div className="hidden lg:block">
+              <img 
+                src={sadCoffeeMug} 
+                alt="Forgot Password" 
+                className="w-full h-auto rounded-lg shadow-xl"
+              />
             </div>
-            <CardTitle className="text-xl text-center">Reset Password</CardTitle>
-            <CardDescription className="text-center text-sm">
-              {sent 
-                ? "Check your email for the reset link"
-                : "Enter your email to receive a password reset link"
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!sent ? (
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Sending..." : "Send Reset Link"}
-                </Button>
-                <div className="text-center mt-4">
-                  <a href="/auth" className="text-sm text-primary hover:underline">
-                    Back to Login
-                  </a>
-                </div>
-              </form>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-center text-muted-foreground">
-                  We've sent a password reset link to <strong>{email}</strong>. 
-                  Click the link in the email to reset your password.
-                </p>
-                <Button className="w-full" asChild>
-                  <a href="/auth">Back to Login</a>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </>
   );
