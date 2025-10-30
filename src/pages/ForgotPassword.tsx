@@ -50,7 +50,7 @@ const ForgotPassword = () => {
         }}
       >
         <div className="absolute inset-0 bg-background/40 backdrop-blur-sm" />
-        <Card className="w-full max-w-sm relative z-10 shadow-2xl">
+        <Card className="w-full max-w-sm relative z-10 shadow-2xl bg-background/70 backdrop-blur-md border-white/20">
           <CardHeader className="space-y-3">
             <div className="flex justify-center">
               <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
