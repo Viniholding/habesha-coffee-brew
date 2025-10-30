@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 20 18% 12%;
     --popover-foreground: 30 40% 95%;
 
-    --primary: 45 95% 55%;
+    --primary: 28 85% 55%;
     --primary-foreground: 30 10% 10%;
 
     --secondary: 25 25% 18%;
@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --muted: 25 20% 15%;
     --muted-foreground: 30 20% 65%;
 
-    --accent: 45 95% 55%;
+    --accent: 28 85% 55%;
     --accent-foreground: 30 10% 10%;
 
     --destructive: 0 84.2% 60.2%;
@@ -34,18 +34,18 @@ All colors MUST be HSL.
 
     --border: 25 15% 25%;
     --input: 25 15% 25%;
-    --ring: 45 95% 55%;
+    --ring: 28 85% 55%;
 
     --radius: 0.5rem;
 
     /* Coffee gradients */
     --gradient-hero: linear-gradient(135deg, hsl(25 20% 8%) 0%, hsl(20 25% 12%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(45 95% 55%) 0%, hsl(48 98% 62%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(28 85% 55%) 0%, hsl(35 90% 60%) 100%);
     --gradient-overlay: linear-gradient(180deg, hsl(25 20% 8% / 0.8) 0%, hsl(25 20% 8% / 0.95) 100%);
     
     /* Shadows */
     --shadow-soft: 0 4px 20px hsl(25 20% 5% / 0.4);
-    --shadow-glow: 0 0 40px hsl(45 95% 55% / 0.3);
+    --shadow-glow: 0 0 40px hsl(28 85% 55% / 0.3);
     
     /* Animations */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -61,7 +61,7 @@ All colors MUST be HSL.
     --popover: 20 18% 12%;
     --popover-foreground: 30 40% 95%;
 
-    --primary: 45 95% 55%;
+    --primary: 28 85% 55%;
     --primary-foreground: 30 10% 10%;
 
     --secondary: 25 25% 18%;
@@ -70,7 +70,7 @@ All colors MUST be HSL.
     --muted: 25 20% 15%;
     --muted-foreground: 30 20% 65%;
 
-    --accent: 45 95% 55%;
+    --accent: 28 85% 55%;
     --accent-foreground: 30 10% 10%;
 
     --destructive: 0 62.8% 30.6%;
@@ -78,7 +78,7 @@ All colors MUST be HSL.
 
     --border: 25 15% 25%;
     --input: 25 15% 25%;
-    --ring: 45 95% 55%;
+    --ring: 28 85% 55%;
   }
 }
 
