@@ -1,11 +1,11 @@
-import { Facebook, Instagram, Mail, Phone } from "lucide-react";
+import { Facebook, Instagram } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Footer = () => {
   return (
     <footer id="contact" className="bg-card border-t border-border py-12">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
+        <div className="grid md:grid-cols-3 gap-8 mb-8">
           <div className="space-y-4">
             <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
             <p className="text-muted-foreground">
@@ -21,20 +21,6 @@ const Footer = () => {
               <li><a href="#products" className="text-muted-foreground hover:text-primary transition-colors">Products</a></li>
               <li><a href="#process" className="text-muted-foreground hover:text-primary transition-colors">Our Process</a></li>
               <li><a href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="font-bold text-lg mb-4">Contact</h3>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4 text-primary" />
-                <span>+1 (877) 788-0389</span>
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4 text-primary" />
-                <span>info@coffeehabesha.com</span>
-              </li>
             </ul>
           </div>
           
