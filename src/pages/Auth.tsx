@@ -143,6 +143,11 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Logging in..." : "Login"}
                 </Button>
+                <div className="text-center mt-4">
+                  <a href="/forgot-password" className="text-sm text-primary hover:underline">
+                    Forgot Password?
+                  </a>
+                </div>
               </form>
             </TabsContent>
             
@@ -180,6 +185,12 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          <div className="text-center mt-4 text-sm text-muted-foreground">
+            Having trouble accessing your account?{" "}
+            <a href="/contact" className="text-primary hover:underline">
+              Contact Us
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>
