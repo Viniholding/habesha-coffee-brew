@@ -19,9 +19,14 @@ const Navigation = () => {
           <a href="/cafe" className="hover:text-primary transition-colors">Café</a>
         </div>
         
-        <Button variant="hero" size="lg">
-          Order Now
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="lg" asChild>
+            <a href="/auth">Login</a>
+          </Button>
+          <Button variant="hero" size="lg">
+            Order Now
+          </Button>
+        </div>
       </div>
     </nav>
   );
