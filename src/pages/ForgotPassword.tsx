@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import logo from "@/assets/logo.png";
-import loginBg from "@/assets/login-background.jpg";
+import forgotPasswordBg from "@/assets/forgot-password-bg.jpg";
 
 const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ const ForgotPassword = () => {
       <div 
         className="min-h-screen flex items-center justify-center px-4 pt-24 relative"
         style={{
-          backgroundImage: `url(${loginBg})`,
+          backgroundImage: `url(${forgotPasswordBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
