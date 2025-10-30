@@ -20,7 +20,7 @@ const Footer = () => {
               <li><a href="#about" className="text-muted-foreground hover:text-primary transition-colors">The Journey</a></li>
               <li><a href="#products" className="text-muted-foreground hover:text-primary transition-colors">Products</a></li>
               <li><a href="#process" className="text-muted-foreground hover:text-primary transition-colors">Our Process</a></li>
-              <li><a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</a></li>
+              <li><a href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</a></li>
             </ul>
           </div>
           

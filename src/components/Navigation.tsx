@@ -17,7 +17,6 @@ const Navigation = () => {
             <img src={logo} alt="Coffee Habesha Way" className="h-8 w-auto" />
           </a>
           <a href="/cafe" className="hover:text-primary transition-colors">Café</a>
-          <a href="/contact" className="hover:text-primary transition-colors">Contact</a>
         </div>
         
         <Button variant="hero" size="lg">
