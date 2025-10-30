@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import logo from "@/assets/logo.png";
+import loginBg from "@/assets/login-background.jpg";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -62,8 +63,16 @@ const ResetPassword = () => {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 px-4 pt-24">
-        <Card className="w-full max-w-sm">
+      <div 
+        className="min-h-screen flex items-center justify-center px-4 pt-24 relative"
+        style={{
+          backgroundImage: `url(${loginBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <Card className="w-full max-w-sm relative z-10 shadow-2xl">
           <CardHeader className="space-y-3">
             <div className="flex justify-center">
               <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
