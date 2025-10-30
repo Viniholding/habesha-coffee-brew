@@ -96,14 +96,14 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="space-y-3">
           <div className="flex justify-center">
-            <img src={logo} alt="Coffee Habesha" className="h-16 w-auto" />
+            <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
           </div>
-          <CardTitle className="text-2xl text-center">Welcome to Coffee Habesha</CardTitle>
-          <CardDescription className="text-center">
-            Sign in to your account or create a new one
+          <CardTitle className="text-xl text-center">Welcome</CardTitle>
+          <CardDescription className="text-center text-sm">
+            Sign in or create an account
           </CardDescription>
         </CardHeader>
         <CardContent>
