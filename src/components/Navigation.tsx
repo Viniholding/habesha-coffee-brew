@@ -24,7 +24,7 @@ const Navigation = () => {
             <a href="/auth">Login</a>
           </Button>
           <Button variant="hero" size="lg">
-            Order Now
+            Shop Now
           </Button>
         </div>
       </div>

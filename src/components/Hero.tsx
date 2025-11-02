@@ -33,7 +33,7 @@ const Hero = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto">
-              Order Now
+              Shop Now
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-primary/50 hover:border-primary" asChild>
               <Link to="/about">Learn More</Link>
