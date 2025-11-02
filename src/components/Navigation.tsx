@@ -23,8 +23,8 @@ const Navigation = () => {
           <Button variant="outline" size="lg" asChild>
             <a href="/auth">Login</a>
           </Button>
-          <Button variant="hero" size="lg">
-            Shop Now
+          <Button variant="hero" size="lg" asChild>
+            <a href="/products">Shop Now</a>
           </Button>
         </div>
       </div>

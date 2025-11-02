@@ -32,8 +32,8 @@ const Hero = () => {
             to deliver the world's finest coffee experience
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto">
-              Shop Now
+            <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" asChild>
+              <Link to="/products">Shop Now</Link>
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-primary/50 hover:border-primary" asChild>
               <Link to="/about">Learn More</Link>
