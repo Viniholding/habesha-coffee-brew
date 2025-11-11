@@ -119,7 +119,7 @@ const Account = () => {
       <main className="min-h-screen bg-account-bg pt-24 pb-12 relative before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(184,134,11,0.04)_1px,transparent_1px)] before:bg-[size:32px_32px] after:absolute after:inset-0 after:bg-[linear-gradient(180deg,rgba(25,20,8,0.3)_0%,transparent_20%,transparent_80%,rgba(25,20,8,0.3)_100%)] before:pointer-events-none after:pointer-events-none">
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
           {/* Profile Header Card */}
-          <Card className="mb-8 bg-account-card/95 backdrop-blur-sm border-border/50 shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.5)] ring-1 ring-primary/10 animate-in fade-in-50 slide-in-from-top-4 duration-700">
+          <Card className="mb-8 bg-account-card/95 backdrop-blur-sm border-border/50 shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.5)] ring-1 ring-primary/10 animate-in fade-in-50 slide-in-from-top-4 duration-700 [animation-delay:700ms] animate-[float_6s_ease-in-out_infinite]">
             <CardHeader className="pb-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                 <div className="flex items-center gap-6 w-full sm:w-auto">
