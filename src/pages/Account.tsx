@@ -27,6 +27,10 @@ const Account = () => {
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  
+  // Get tab from URL params
+  const searchParams = new URLSearchParams(window.location.search);
+  const defaultTab = searchParams.get("tab") || "settings";
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -153,7 +157,7 @@ const Account = () => {
           </Card>
 
           {/* Tabs Navigation */}
-          <Tabs defaultValue="settings" className="flex flex-col lg:flex-row gap-6">
+          <Tabs defaultValue={defaultTab} className="flex flex-col lg:flex-row gap-6">
             <TabsList className="flex flex-row lg:flex-col h-auto lg:h-fit w-full lg:w-56 gap-2 overflow-x-auto lg:overflow-x-visible bg-card/50 p-3 rounded-lg border border-border/50 backdrop-blur-sm">
               <TabsTrigger 
                 value="settings" 
