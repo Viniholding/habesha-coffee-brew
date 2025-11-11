@@ -123,10 +123,12 @@ const Account = () => {
             <CardHeader className="pb-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                 <div className="flex items-center gap-6 w-full sm:w-auto">
-                  <div className="relative group">
+                  <div 
+                    className="relative group cursor-pointer"
+                    onDoubleClick={() => setActiveTab("orders")}
+                  >
                     <div 
-                      onDoubleClick={() => setActiveTab("orders")}
-                      className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden ring-2 ring-primary/20 transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/30 cursor-pointer"
+                      className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden ring-2 ring-primary/20 transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/30"
                     >
                       {avatarUrl ? (
                         <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
