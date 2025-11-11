@@ -231,44 +231,44 @@ const Account = () => {
             </TabsList>
 
             <div className="flex-1">
-              <TabsContent value="settings" className="mt-0 animate-in fade-in-50 duration-300">
-                <ProfileSettings userId={user.id} />
-              </TabsContent>
-
-              <TabsContent value="subscriptions" className="mt-0 animate-in fade-in-50 duration-300">
-                <SubscriptionManagement userId={user.id} />
-              </TabsContent>
-
-              <TabsContent value="orders" className="mt-0 animate-in fade-in-50 duration-300">
+              <TabsContent value="orders" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <OrderHistory userId={user.id} />
               </TabsContent>
 
-              <TabsContent value="tracking" className="mt-0 animate-in fade-in-50 duration-300">
+              <TabsContent value="subscriptions" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                <SubscriptionManagement userId={user.id} />
+              </TabsContent>
+
+              <TabsContent value="tracking" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <OrderTracking userId={user.id} />
               </TabsContent>
 
-              <TabsContent value="addresses" className="mt-0 animate-in fade-in-50 duration-300">
+              <TabsContent value="addresses" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <AddressBook userId={user.id} />
               </TabsContent>
 
-              <TabsContent value="payment" className="mt-0 animate-in fade-in-50 duration-300">
+              <TabsContent value="payment" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <PaymentMethods userId={user.id} />
               </TabsContent>
 
-              <TabsContent value="calendar" className="mt-0 animate-in fade-in-50 duration-300">
+              <TabsContent value="calendar" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <DeliveryCalendar userId={user.id} />
               </TabsContent>
 
-              <TabsContent value="notifications" className="mt-0 animate-in fade-in-50 duration-300">
+              <TabsContent value="notifications" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <NotificationPreferences userId={user.id} />
               </TabsContent>
 
-              <TabsContent value="gallery" className="mt-0 animate-in fade-in-50 duration-300">
+              <TabsContent value="gallery" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
                 <AvatarGallery 
                   userId={user.id} 
                   currentAvatarUrl={avatarUrl}
                   onAvatarSelect={setAvatarUrl}
                 />
+              </TabsContent>
+
+              <TabsContent value="settings" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                <ProfileSettings userId={user.id} />
               </TabsContent>
             </div>
           </Tabs>

@@ -125,7 +125,7 @@ const Navigation = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="relative rounded-full hover:ring-2 hover:ring-primary/20 transition-all duration-300"
+              className="relative rounded-full hover:ring-2 hover:ring-primary/20 transition-all duration-300 active:scale-95"
               onClick={() => navigate("/account?tab=orders")}
             >
               <Avatar className="h-10 w-10 ring-2 ring-border">
@@ -161,7 +161,7 @@ const Navigation = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="relative rounded-full"
+              className="relative rounded-full active:scale-95 transition-transform duration-150"
               onClick={() => navigateToSection("/account?tab=orders")}
             >
               <Avatar className="h-9 w-9 ring-2 ring-border">
