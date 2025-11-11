@@ -19,9 +19,6 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        "account-bg": "hsl(var(--account-bg))",
-        "account-card": "hsl(var(--account-card))",
-        "account-card-warm": "hsl(var(--account-card-warm))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

@@ -116,10 +116,10 @@ const Account = () => {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-account-bg pt-24 pb-12 relative before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_120%,rgba(139,69,19,0.03),transparent_50%)] before:pointer-events-none">
+      <main className="min-h-screen bg-background pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Profile Header Card */}
-          <Card className="mb-8 border-border/30 shadow-lg transition-all duration-300 hover:shadow-xl bg-account-card/80 backdrop-blur-sm">
+          <Card className="mb-8 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl">
             <CardHeader className="pb-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                 <div className="flex items-center gap-6 w-full sm:w-auto">
@@ -164,7 +164,7 @@ const Account = () => {
 
           {/* Tabs Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col lg:flex-row gap-6">
-            <TabsList className="flex flex-row lg:flex-col h-auto lg:h-fit w-full lg:w-56 gap-2 overflow-x-auto lg:overflow-x-visible bg-account-card-warm/70 p-3 rounded-lg border border-border/30 backdrop-blur-sm">
+            <TabsList className="flex flex-row lg:flex-col h-auto lg:h-fit w-full lg:w-56 gap-2 overflow-x-auto lg:overflow-x-visible bg-card/50 p-3 rounded-lg border border-border/50 backdrop-blur-sm">
               <TabsTrigger 
                 value="orders" 
                 className="flex items-center justify-start gap-3 w-full px-4 py-3 rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 hover:bg-muted/50"
