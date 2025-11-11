@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-coffee.jpg";
+import coffeeBean from "@/assets/avatars/coffee-bean.png";
 
 const Hero = () => {
   return (
@@ -21,8 +22,14 @@ const Hero = () => {
       {/* Content */}
       <div className="container mx-auto px-4 z-10 text-center">
         <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-1000">
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tight">
-            Coffee <span className="text-primary">Habesha</span>
+          <h1 className="text-6xl md:text-8xl font-bold tracking-tight flex items-center justify-center gap-2">
+            <span>C</span>
+            <img 
+              src={coffeeBean} 
+              alt="o" 
+              className="w-12 h-12 md:w-20 md:h-20 inline-block object-contain rounded-full"
+            />
+            <span>ffee <span className="text-primary">Habesha</span></span>
           </h1>
           <p className="text-3xl md:text-5xl font-serif italic text-primary">
             Love at first sip
