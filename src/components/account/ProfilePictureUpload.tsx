@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Camera, Upload } from "lucide-react";
+import ImageCropper from "./ImageCropper";
 import coffeeCup from "@/assets/avatars/coffee-cup.png";
 import coffeeBean from "@/assets/avatars/coffee-bean.png";
 import farmer from "@/assets/avatars/farmer.png";
@@ -29,29 +30,43 @@ interface ProfilePictureUploadProps {
 const ProfilePictureUpload = ({ userId, currentAvatarUrl, onAvatarUpdate }: ProfilePictureUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
+      return;
+    }
+
+    // Read file and show cropper
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToCrop(reader.result as string);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedImage: Blob) => {
     try {
       setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file");
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("File size must be less than 5MB");
-        return;
-      }
-
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${userId}/avatar.${fileExt}`;
+      setCropperOpen(false);
+      
+      const timestamp = Date.now();
+      const filePath = `${userId}/avatar-${timestamp}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, croppedImage, { upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -69,12 +84,18 @@ const ProfilePictureUpload = ({ userId, currentAvatarUrl, onAvatarUpdate }: Prof
       onAvatarUpdate(publicUrl);
       toast.success("Profile picture updated successfully");
       setOpen(false);
+      setImageToCrop(null);
     } catch (error) {
       console.error("Error uploading avatar:", error);
       toast.error("Failed to upload profile picture");
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    setImageToCrop(null);
   };
 
   const selectDefaultAvatar = async (avatarSrc: string) => {
@@ -100,8 +121,18 @@ const ProfilePictureUpload = ({ userId, currentAvatarUrl, onAvatarUpdate }: Prof
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <>
+      {imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          open={cropperOpen}
+        />
+      )}
+      
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
         <Button
           variant="outline"
           size="icon"
@@ -164,7 +195,7 @@ const ProfilePictureUpload = ({ userId, currentAvatarUrl, onAvatarUpdate }: Prof
                 id="avatar-upload"
                 type="file"
                 accept="image/*"
-                onChange={handleFileUpload}
+                onChange={handleFileSelect}
                 disabled={uploading}
                 className="hidden"
               />
@@ -176,6 +207,7 @@ const ProfilePictureUpload = ({ userId, currentAvatarUrl, onAvatarUpdate }: Prof
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 

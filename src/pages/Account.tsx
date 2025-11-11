@@ -16,7 +16,8 @@ import DeliveryCalendar from "@/components/account/DeliveryCalendar";
 import ProfileSettings from "@/components/account/ProfileSettings";
 import SubscriptionManagement from "@/components/account/SubscriptionManagement";
 import ProfilePictureUpload from "@/components/account/ProfilePictureUpload";
-import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw } from "lucide-react";
+import AvatarGallery from "@/components/account/AvatarGallery";
+import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw, Images } from "lucide-react";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -173,6 +174,10 @@ const Account = () => {
                 <Calendar className="h-4 w-4" />
                 <span>Calendar</span>
               </TabsTrigger>
+              <TabsTrigger value="gallery" className="flex items-center justify-start gap-2 w-full">
+                <Images className="h-4 w-4" />
+                <span>Avatar Gallery</span>
+              </TabsTrigger>
             </TabsList>
 
             <div className="flex-1 space-y-6">
@@ -203,6 +208,14 @@ const Account = () => {
 
               <TabsContent value="calendar">
                 <DeliveryCalendar userId={user.id} />
+              </TabsContent>
+
+              <TabsContent value="gallery">
+                <AvatarGallery 
+                  userId={user.id} 
+                  currentAvatarUrl={avatarUrl}
+                  onAvatarSelect={setAvatarUrl}
+                />
               </TabsContent>
             </div>
           </Tabs>

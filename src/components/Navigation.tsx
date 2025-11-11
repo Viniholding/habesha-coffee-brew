@@ -1,7 +1,52 @@
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
 const Navigation = () => {
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+      if (session?.user?.id) {
+        fetchUserAvatar(session.user.id);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+      if (session?.user?.id) {
+        fetchUserAvatar(session.user.id);
+      } else {
+        setAvatarUrl("");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserAvatar = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data?.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+      }
+    } catch (error) {
+      console.error("Error fetching avatar:", error);
+    }
+  };
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -20,6 +65,18 @@ const Navigation = () => {
         </div>
         
         <div className="flex items-center gap-3">
+          {isLoggedIn && (
+            <Button variant="ghost" size="icon" className="rounded-full" asChild>
+              <a href="/account">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={avatarUrl} alt="Profile" />
+                  <AvatarFallback>
+                    <User className="h-5 w-5" />
+                  </AvatarFallback>
+                </Avatar>
+              </a>
+            </Button>
+          )}
           <Button variant="outline" size="lg" asChild>
             <a href="/account">My Account</a>
           </Button>
