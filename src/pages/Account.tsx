@@ -119,10 +119,6 @@ const Account = () => {
                 <CreditCard className="h-4 w-4" />
                 <span>Payment</span>
               </TabsTrigger>
-              <TabsTrigger value="delivery" className="flex items-center justify-start gap-2 w-full">
-                <Truck className="h-4 w-4" />
-                <span>Delivery</span>
-              </TabsTrigger>
               <TabsTrigger value="calendar" className="flex items-center justify-start gap-2 w-full">
                 <Calendar className="h-4 w-4" />
                 <span>Calendar</span>
@@ -149,10 +145,6 @@ const Account = () => {
 
               <TabsContent value="payment">
                 <PaymentMethods userId={user.id} />
-              </TabsContent>
-
-              <TabsContent value="delivery">
-                <DeliveryPreferences userId={user.id} />
               </TabsContent>
 
               <TabsContent value="calendar">
