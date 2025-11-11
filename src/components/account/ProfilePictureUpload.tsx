@@ -32,28 +32,62 @@ const ProfilePictureUpload = ({ userId, currentAvatarUrl, onAvatarUpdate }: Prof
   const [open, setOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const validateFile = (file: File): boolean => {
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
-      return;
+      return false;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File size must be less than 5MB");
-      return;
+      return false;
     }
 
-    // Read file and show cropper
+    return true;
+  };
+
+  const processFile = (file: File) => {
+    if (!validateFile(file)) return;
+
     const reader = new FileReader();
     reader.onload = () => {
       setImageToCrop(reader.result as string);
       setCropperOpen(true);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    processFile(file);
+    // Reset input value to allow selecting the same file again
+    event.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      processFile(files[0]);
+    }
   };
 
   const handleCropComplete = async (croppedImage: Blob) => {
@@ -174,23 +208,34 @@ const ProfilePictureUpload = ({ userId, currentAvatarUrl, onAvatarUpdate }: Prof
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or</span>
+              <span className="bg-background px-2 text-muted-foreground">Or Upload Your Own</span>
             </div>
           </div>
 
-          <div>
-            <label htmlFor="avatar-upload">
-              <Button
-                variant="outline"
-                className="w-full"
-                disabled={uploading}
-                asChild
-              >
-                <span className="cursor-pointer">
-                  <Upload className="h-4 w-4 mr-2" />
-                  {uploading ? "Uploading..." : "Upload Your Own"}
-                </span>
-              </Button>
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-8 transition-colors ${
+              isDragging
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/50"
+            } ${uploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+          >
+            <label htmlFor="avatar-upload" className="cursor-pointer">
+              <div className="flex flex-col items-center gap-3">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <Upload className="h-8 w-8 text-primary" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">
+                    {uploading ? "Uploading..." : isDragging ? "Drop your image here" : "Click to upload or drag and drop"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Max file size: 5MB • JPG, PNG, WEBP
+                  </p>
+                </div>
+              </div>
               <input
                 id="avatar-upload"
                 type="file"
@@ -200,9 +245,6 @@ const ProfilePictureUpload = ({ userId, currentAvatarUrl, onAvatarUpdate }: Prof
                 className="hidden"
               />
             </label>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Max file size: 5MB. Supported formats: JPG, PNG, WEBP
-            </p>
           </div>
         </div>
       </DialogContent>
