@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -10,12 +11,14 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { User, Menu, Settings, Package, MapPin, CreditCard, Bell, LogOut, RefreshCw } from "lucide-react";
+import { User, Menu, Settings, Package, MapPin, CreditCard, Bell, LogOut, RefreshCw, Keyboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
+import SearchBar from "./SearchBar";
+import ShoppingCart from "./ShoppingCart";
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -100,6 +103,46 @@ const Navigation = () => {
     navigate(path);
     setMobileMenuOpen(false);
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only trigger if not typing in an input
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // '/' for search
+      if (event.key === '/') {
+        event.preventDefault();
+        const searchInput = document.querySelector('input[placeholder="Search products..."]') as HTMLInputElement;
+        searchInput?.focus();
+      }
+
+      // 'a' for account
+      if (event.key === 'a' && isLoggedIn) {
+        event.preventDefault();
+        navigate('/account');
+      }
+
+      // 'c' for cart
+      if (event.key === 'c' && isLoggedIn) {
+        event.preventDefault();
+        // Trigger cart dropdown by clicking the button
+        const cartButton = document.querySelector('[data-cart-trigger]') as HTMLButtonElement;
+        cartButton?.click();
+      }
+
+      // 's' for shop
+      if (event.key === 's') {
+        event.preventDefault();
+        navigate('/products');
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isLoggedIn, navigate]);
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -120,8 +163,43 @@ const Navigation = () => {
           <a href="/cafe" className="hover:text-primary transition-colors">Café</a>
         </div>
         
-        {/* Desktop Actions */}
+        {/* Desktop Search & Actions */}
         <div className="hidden lg:flex items-center gap-3">
+          <SearchBar />
+          
+          <ShoppingCart userId={userId} />
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-muted-foreground">
+                  <Keyboard className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="p-3">
+                <div className="space-y-1.5 text-xs">
+                  <p className="font-semibold mb-2">Keyboard Shortcuts:</p>
+                  <div className="flex items-center gap-2">
+                    <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">/</kbd>
+                    <span>Search products</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">a</kbd>
+                    <span>Open account</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">c</kbd>
+                    <span>Open cart</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">s</kbd>
+                    <span>Go to shop</span>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
           {isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -193,6 +271,8 @@ const Navigation = () => {
 
         {/* Mobile Menu */}
         <div className="flex lg:hidden items-center gap-2">
+          <ShoppingCart userId={userId} />
+          
           {isLoggedIn && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -254,6 +334,10 @@ const Navigation = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <div className="flex flex-col gap-6 mt-8">
+                <div className="mb-4">
+                  <SearchBar isMobile />
+                </div>
+                
                 <a 
                   href="/" 
                   className="text-lg font-medium hover:text-primary transition-colors"
@@ -299,6 +383,14 @@ const Navigation = () => {
                   <Button variant="hero" size="lg" className="w-full" asChild>
                     <a href="/products" onClick={() => setMobileMenuOpen(false)}>Shop Now</a>
                   </Button>
+                  
+                  <div className="pt-4 text-xs text-muted-foreground space-y-1">
+                    <p>Keyboard shortcuts:</p>
+                    <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">/</kbd> Search</p>
+                    <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">a</kbd> Account</p>
+                    <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">c</kbd> Cart</p>
+                    <p><kbd className="px-1.5 py-0.5 bg-muted rounded text-foreground">s</kbd> Shop</p>
+                  </div>
                 </div>
               </div>
             </SheetContent>
