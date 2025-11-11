@@ -30,7 +30,7 @@ const Account = () => {
   
   // Get tab from URL params
   const searchParams = new URLSearchParams(window.location.search);
-  const defaultTab = searchParams.get("tab") || "settings";
+  const defaultTab = searchParams.get("tab") || "orders";
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -160,11 +160,11 @@ const Account = () => {
           <Tabs defaultValue={defaultTab} className="flex flex-col lg:flex-row gap-6">
             <TabsList className="flex flex-row lg:flex-col h-auto lg:h-fit w-full lg:w-56 gap-2 overflow-x-auto lg:overflow-x-visible bg-card/50 p-3 rounded-lg border border-border/50 backdrop-blur-sm">
               <TabsTrigger 
-                value="settings" 
+                value="orders" 
                 className="flex items-center justify-start gap-3 w-full px-4 py-3 rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 hover:bg-muted/50"
               >
-                <Settings className="h-4 w-4" />
-                <span className="font-medium">Settings</span>
+                <Package className="h-4 w-4" />
+                <span className="font-medium">Orders</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="subscriptions" 
@@ -172,13 +172,6 @@ const Account = () => {
               >
                 <RefreshCw className="h-4 w-4" />
                 <span className="font-medium">Subscriptions</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="orders" 
-                className="flex items-center justify-start gap-3 w-full px-4 py-3 rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 hover:bg-muted/50"
-              >
-                <Package className="h-4 w-4" />
-                <span className="font-medium">Orders</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="tracking" 
@@ -221,6 +214,13 @@ const Account = () => {
               >
                 <Images className="h-4 w-4" />
                 <span className="font-medium">Avatar Gallery</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="settings" 
+                className="flex items-center justify-start gap-3 w-full px-4 py-3 rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 hover:bg-muted/50"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="font-medium">Settings</span>
               </TabsTrigger>
             </TabsList>
 
