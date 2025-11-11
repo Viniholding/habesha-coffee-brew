@@ -65,21 +65,22 @@ const Navigation = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          {isLoggedIn && (
-            <Button variant="ghost" size="icon" className="rounded-full" asChild>
+          {isLoggedIn ? (
+            <Button variant="ghost" size="icon" className="rounded-full hover:ring-2 hover:ring-primary/20 transition-all duration-300" asChild>
               <a href="/account">
-                <Avatar className="h-9 w-9">
+                <Avatar className="h-10 w-10 ring-2 ring-border">
                   <AvatarImage src={avatarUrl} alt="Profile" />
-                  <AvatarFallback>
-                    <User className="h-5 w-5" />
+                  <AvatarFallback className="bg-primary/10">
+                    <User className="h-5 w-5 text-primary" />
                   </AvatarFallback>
                 </Avatar>
               </a>
             </Button>
+          ) : (
+            <Button variant="outline" size="lg" asChild>
+              <a href="/account">My Account</a>
+            </Button>
           )}
-          <Button variant="outline" size="lg" asChild>
-            <a href="/account">My Account</a>
-          </Button>
           <Button variant="hero" size="lg" asChild>
             <a href="/products">Shop Now</a>
           </Button>
