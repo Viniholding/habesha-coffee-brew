@@ -17,7 +17,8 @@ import ProfileSettings from "@/components/account/ProfileSettings";
 import SubscriptionManagement from "@/components/account/SubscriptionManagement";
 import ProfilePictureUpload from "@/components/account/ProfilePictureUpload";
 import AvatarGallery from "@/components/account/AvatarGallery";
-import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw, Images } from "lucide-react";
+import NotificationPreferences from "@/components/account/NotificationPreferences";
+import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw, Images, Bell } from "lucide-react";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -204,6 +205,13 @@ const Account = () => {
                 <span className="font-medium">Calendar</span>
               </TabsTrigger>
               <TabsTrigger 
+                value="notifications" 
+                className="flex items-center justify-start gap-3 w-full px-4 py-3 rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 hover:bg-muted/50"
+              >
+                <Bell className="h-4 w-4" />
+                <span className="font-medium">Notifications</span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="gallery" 
                 className="flex items-center justify-start gap-3 w-full px-4 py-3 rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 hover:bg-muted/50"
               >
@@ -239,6 +247,10 @@ const Account = () => {
 
               <TabsContent value="calendar" className="mt-0 animate-in fade-in-50 duration-300">
                 <DeliveryCalendar userId={user.id} />
+              </TabsContent>
+
+              <TabsContent value="notifications" className="mt-0 animate-in fade-in-50 duration-300">
+                <NotificationPreferences userId={user.id} />
               </TabsContent>
 
               <TabsContent value="gallery" className="mt-0 animate-in fade-in-50 duration-300">

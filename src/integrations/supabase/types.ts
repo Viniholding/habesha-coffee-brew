@@ -111,6 +111,45 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_newsletter: boolean
+          email_order_updates: boolean
+          email_promotional: boolean
+          id: string
+          sms_order_updates: boolean
+          sms_phone_number: string | null
+          sms_promotional: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_newsletter?: boolean
+          email_order_updates?: boolean
+          email_promotional?: boolean
+          id?: string
+          sms_order_updates?: boolean
+          sms_phone_number?: string | null
+          sms_promotional?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_newsletter?: boolean
+          email_order_updates?: boolean
+          email_promotional?: boolean
+          id?: string
+          sms_order_updates?: boolean
+          sms_phone_number?: string | null
+          sms_promotional?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_issues: {
         Row: {
           created_at: string | null
