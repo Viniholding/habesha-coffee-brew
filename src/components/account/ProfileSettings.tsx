@@ -13,7 +13,8 @@ interface ProfileSettingsProps {
 }
 
 interface Profile {
-  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   email: string;
   phone: string | null;
   date_of_birth: string | null;
@@ -98,7 +99,8 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
       const { error } = await supabase
         .from("profiles")
         .update({
-          full_name: profile.full_name,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
           phone: profile.phone,
           date_of_birth: profile.date_of_birth,
         })
@@ -144,16 +146,30 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
           <CardDescription>Update your personal details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Full Name</Label>
-            <Input
-              id="full_name"
-              value={profile.full_name || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, full_name: e.target.value })
-              }
-              placeholder="Enter your full name"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="first_name">First Name</Label>
+              <Input
+                id="first_name"
+                value={profile.first_name || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, first_name: e.target.value })
+                }
+                placeholder="Enter your first name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="last_name">Last Name</Label>
+              <Input
+                id="last_name"
+                value={profile.last_name || ""}
+                onChange={(e) =>
+                  setProfile({ ...profile, last_name: e.target.value })
+                }
+                placeholder="Enter your last name"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
