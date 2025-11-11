@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-coffee.jpg";
-import coffeeBean from "@/assets/avatars/coffee-bean.png";
+import coffeeBeanIcon from "@/assets/coffee-bean-icon.png";
 
 const Hero = () => {
   return (
@@ -25,9 +25,9 @@ const Hero = () => {
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight flex items-center justify-center gap-2">
             <span>C</span>
             <img 
-              src={coffeeBean} 
+              src={coffeeBeanIcon} 
               alt="o" 
-              className="w-12 h-12 md:w-20 md:h-20 inline-block object-contain rounded-full"
+              className="w-12 h-12 md:w-20 md:h-20 inline-block object-contain"
             />
             <span>ffee <span className="text-primary">Habesha</span></span>
           </h1>
