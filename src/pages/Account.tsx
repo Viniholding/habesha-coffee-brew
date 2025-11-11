@@ -116,7 +116,7 @@ const Account = () => {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-account-bg pt-24 pb-12 relative before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02)_1px,transparent_1px)] before:bg-[size:24px_24px] before:pointer-events-none">
+      <main className="min-h-screen bg-account-bg pt-24 pb-12 relative before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(184,134,11,0.08)_1px,transparent_1px)] before:bg-[size:20px_20px] after:absolute after:inset-0 after:bg-[linear-gradient(90deg,transparent_49%,rgba(184,134,11,0.03)_49%,rgba(184,134,11,0.03)_51%,transparent_51%)] after:bg-[size:40px_40px] before:pointer-events-none after:pointer-events-none">
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
           {/* Profile Header Card */}
           <Card className="mb-8 bg-account-card/90 backdrop-blur-sm border-border/30 shadow-lg transition-all duration-300 hover:shadow-xl">
