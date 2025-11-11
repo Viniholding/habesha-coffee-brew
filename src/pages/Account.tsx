@@ -116,7 +116,7 @@ const Account = () => {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-background pt-24 pb-12">
+      <main className="min-h-screen bg-[#faf8f5] pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Profile Header Card */}
           <Card className="mb-8 border-border/50 shadow-lg transition-all duration-300 hover:shadow-xl">
