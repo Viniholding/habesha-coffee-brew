@@ -38,6 +38,11 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
+    /* Account page colors */
+    --account-bg: 30 25% 94%;
+    --account-card: 30 20% 98%;
+    --account-card-warm: 30 30% 96%;
+
     /* Coffee gradients */
     --gradient-hero: linear-gradient(135deg, hsl(25 20% 8%) 0%, hsl(20 25% 12%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(28 85% 55%) 0%, hsl(35 90% 60%) 100%);
@@ -79,6 +84,11 @@ All colors MUST be HSL.
     --border: 25 15% 25%;
     --input: 25 15% 25%;
     --ring: 28 85% 55%;
+
+    /* Account page colors - dark mode */
+    --account-bg: 25 20% 8%;
+    --account-card: 20 18% 12%;
+    --account-card-warm: 25 20% 14%;
   }
 }
 
