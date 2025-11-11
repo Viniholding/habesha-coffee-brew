@@ -12,10 +12,10 @@ import OrderHistory from "@/components/account/OrderHistory";
 import OrderTracking from "@/components/account/OrderTracking";
 import AddressBook from "@/components/account/AddressBook";
 import PaymentMethods from "@/components/account/PaymentMethods";
-import DeliveryPreferences from "@/components/account/DeliveryPreferences";
 import DeliveryCalendar from "@/components/account/DeliveryCalendar";
 import ProfileSettings from "@/components/account/ProfileSettings";
-import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings } from "lucide-react";
+import SubscriptionManagement from "@/components/account/SubscriptionManagement";
+import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw } from "lucide-react";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -103,6 +103,10 @@ const Account = () => {
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
               </TabsTrigger>
+              <TabsTrigger value="subscriptions" className="flex items-center justify-start gap-2 w-full">
+                <RefreshCw className="h-4 w-4" />
+                <span>Subscriptions</span>
+              </TabsTrigger>
               <TabsTrigger value="orders" className="flex items-center justify-start gap-2 w-full">
                 <Package className="h-4 w-4" />
                 <span>Orders</span>
@@ -129,6 +133,10 @@ const Account = () => {
 
               <TabsContent value="settings">
                 <ProfileSettings userId={user.id} />
+              </TabsContent>
+
+              <TabsContent value="subscriptions">
+                <SubscriptionManagement userId={user.id} />
               </TabsContent>
 
               <TabsContent value="orders">

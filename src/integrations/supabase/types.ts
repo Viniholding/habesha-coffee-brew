@@ -366,6 +366,48 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          frequency: string
+          id: string
+          next_delivery_date: string | null
+          price: number
+          product_id: string
+          product_name: string
+          quantity: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          next_delivery_date?: string | null
+          price: number
+          product_id: string
+          product_name: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          next_delivery_date?: string | null
+          price?: number
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
