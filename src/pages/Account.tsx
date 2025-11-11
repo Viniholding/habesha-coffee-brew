@@ -14,7 +14,8 @@ import AddressBook from "@/components/account/AddressBook";
 import PaymentMethods from "@/components/account/PaymentMethods";
 import DeliveryPreferences from "@/components/account/DeliveryPreferences";
 import DeliveryCalendar from "@/components/account/DeliveryCalendar";
-import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon } from "lucide-react";
+import ProfileSettings from "@/components/account/ProfileSettings";
+import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings } from "lucide-react";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -96,8 +97,12 @@ const Account = () => {
             </CardHeader>
           </Card>
 
-          <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 h-auto gap-2">
+          <Tabs defaultValue="settings" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7 h-auto gap-2">
+              <TabsTrigger value="settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </TabsTrigger>
               <TabsTrigger value="orders" className="flex items-center gap-2">
                 <Package className="h-4 w-4" />
                 <span className="hidden sm:inline">Orders</span>
@@ -123,6 +128,10 @@ const Account = () => {
                 <span className="hidden sm:inline">Calendar</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="settings" className="space-y-6">
+              <ProfileSettings userId={user.id} />
+            </TabsContent>
 
             <TabsContent value="orders" className="space-y-6">
               <OrderHistory userId={user.id} />
