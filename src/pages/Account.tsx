@@ -97,65 +97,68 @@ const Account = () => {
             </CardHeader>
           </Card>
 
-          <Tabs defaultValue="settings" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7 h-auto gap-2">
-              <TabsTrigger value="settings" className="flex items-center gap-2">
+          <Tabs defaultValue="settings" className="flex flex-col lg:flex-row gap-6">
+            <TabsList className="flex flex-row lg:flex-col h-auto lg:h-fit w-full lg:w-48 gap-2 overflow-x-auto lg:overflow-x-visible">
+              <TabsTrigger value="settings" className="flex items-center justify-start gap-2 w-full">
                 <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Settings</span>
+                <span>Settings</span>
               </TabsTrigger>
-              <TabsTrigger value="orders" className="flex items-center gap-2">
+              <TabsTrigger value="orders" className="flex items-center justify-start gap-2 w-full">
                 <Package className="h-4 w-4" />
-                <span className="hidden sm:inline">Orders</span>
+                <span>Orders</span>
               </TabsTrigger>
-              <TabsTrigger value="tracking" className="flex items-center gap-2">
+              <TabsTrigger value="tracking" className="flex items-center justify-start gap-2 w-full">
                 <Truck className="h-4 w-4" />
-                <span className="hidden sm:inline">Tracking</span>
+                <span>Tracking</span>
               </TabsTrigger>
-              <TabsTrigger value="addresses" className="flex items-center gap-2">
+              <TabsTrigger value="addresses" className="flex items-center justify-start gap-2 w-full">
                 <MapPin className="h-4 w-4" />
-                <span className="hidden sm:inline">Addresses</span>
+                <span>Addresses</span>
               </TabsTrigger>
-              <TabsTrigger value="payment" className="flex items-center gap-2">
+              <TabsTrigger value="payment" className="flex items-center justify-start gap-2 w-full">
                 <CreditCard className="h-4 w-4" />
-                <span className="hidden sm:inline">Payment</span>
+                <span>Payment</span>
               </TabsTrigger>
-              <TabsTrigger value="delivery" className="flex items-center gap-2">
+              <TabsTrigger value="delivery" className="flex items-center justify-start gap-2 w-full">
                 <Truck className="h-4 w-4" />
-                <span className="hidden sm:inline">Delivery</span>
+                <span>Delivery</span>
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <TabsTrigger value="calendar" className="flex items-center justify-start gap-2 w-full">
                 <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">Calendar</span>
+                <span>Calendar</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="settings" className="space-y-6">
-              <ProfileSettings userId={user.id} />
-            </TabsContent>
+            <div className="flex-1 space-y-6">
 
-            <TabsContent value="orders" className="space-y-6">
-              <OrderHistory userId={user.id} />
-            </TabsContent>
+              <TabsContent value="settings">
+                <ProfileSettings userId={user.id} />
+              </TabsContent>
 
-            <TabsContent value="tracking" className="space-y-6">
-              <OrderTracking userId={user.id} />
-            </TabsContent>
+              <TabsContent value="orders">
+                <OrderHistory userId={user.id} />
+              </TabsContent>
 
-            <TabsContent value="addresses" className="space-y-6">
-              <AddressBook userId={user.id} />
-            </TabsContent>
+              <TabsContent value="tracking">
+                <OrderTracking userId={user.id} />
+              </TabsContent>
 
-            <TabsContent value="payment" className="space-y-6">
-              <PaymentMethods userId={user.id} />
-            </TabsContent>
+              <TabsContent value="addresses">
+                <AddressBook userId={user.id} />
+              </TabsContent>
 
-            <TabsContent value="delivery" className="space-y-6">
-              <DeliveryPreferences userId={user.id} />
-            </TabsContent>
+              <TabsContent value="payment">
+                <PaymentMethods userId={user.id} />
+              </TabsContent>
 
-            <TabsContent value="calendar" className="space-y-6">
-              <DeliveryCalendar userId={user.id} />
-            </TabsContent>
+              <TabsContent value="delivery">
+                <DeliveryPreferences userId={user.id} />
+              </TabsContent>
+
+              <TabsContent value="calendar">
+                <DeliveryCalendar userId={user.id} />
+              </TabsContent>
+            </div>
           </Tabs>
         </div>
       </main>
