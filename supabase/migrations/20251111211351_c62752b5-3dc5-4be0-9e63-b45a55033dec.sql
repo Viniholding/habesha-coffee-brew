@@ -1,155 +1,167 @@
--- --- Setup: table to track deletion flow ------------------------------------
-create table if not exists public.account_deletion_requests (
-  id                uuid primary key default gen_random_uuid(),
-  user_id           uuid not null references auth.users(id) on delete cascade,
-  token             uuid not null unique,
-  status            text not null default 'pending' check (status in ('pending','completed','expired','cancelled')),
-  created_at        timestamptz not null default now(),
-  expires_at        timestamptz not null,
-  completed_at      timestamptz
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Your existing hard-delete function (unchanged)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.delete_user()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  current_user_id uuid;
+BEGIN
+  current_user_id := auth.uid();
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  DELETE FROM public.cart_items WHERE user_id = current_user_id;
+  DELETE FROM public.order_issues WHERE user_id = current_user_id;
+  DELETE FROM public.order_items WHERE order_id IN (
+    SELECT id FROM public.orders WHERE user_id = current_user_id
+  );
+  DELETE FROM public.orders WHERE user_id = current_user_id;
+  DELETE FROM public.subscriptions WHERE user_id = current_user_id;
+  DELETE FROM public.addresses WHERE user_id = current_user_id;
+  DELETE FROM public.payment_methods WHERE user_id = current_user_id;
+  DELETE FROM public.notification_preferences WHERE user_id = current_user_id;
+  DELETE FROM public.delivery_preferences WHERE user_id = current_user_id;
+  DELETE FROM public.profiles WHERE id = current_user_id;
+  DELETE FROM auth.users WHERE id = current_user_id;
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Backing table for the two-step confirmation flow (unchanged if you already added it)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.account_deletion_requests (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  token        uuid NOT NULL UNIQUE,
+  status       text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','completed','expired','cancelled')),
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  expires_at   timestamptz NOT NULL,
+  completed_at timestamptz
 );
 
--- Limit visibility to the owner
-alter table public.account_deletion_requests enable row level security;
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='account_deletion_requests' and policyname='owner_can_view'
-  ) then
-    create policy owner_can_view on public.account_deletion_requests
-      for select using (auth.uid() = user_id);
-  end if;
-end $$;
+ALTER TABLE public.account_deletion_requests ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='public' AND tablename='account_deletion_requests' AND policyname='owner_can_view'
+  ) THEN
+    CREATE POLICY owner_can_view ON public.account_deletion_requests
+      FOR SELECT USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
--- --- Step 1: user clicks sub-tab → "Request deletion" -----------------------
--- Returns a short-lived token the frontend can use on the confirm screen
-create or replace function public.request_account_deletion()
-returns uuid
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
+CREATE INDEX IF NOT EXISTS idx_delreq_user_status
+  ON public.account_deletion_requests(user_id, status);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Step 1: request token when user opens the Delete Account sub-tab
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.request_account_deletion()
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
   uid uuid;
   tkn uuid;
-begin
+BEGIN
   uid := auth.uid();
-  if uid is null then
-    raise exception 'Not authenticated';
-  end if;
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
 
-  -- expire any older pending requests for this user
-  update public.account_deletion_requests
-     set status = 'expired'
-   where user_id = uid
-     and status = 'pending';
+  UPDATE public.account_deletion_requests
+     SET status = 'expired'
+   WHERE user_id = uid
+     AND status = 'pending';
 
   tkn := gen_random_uuid();
 
-  insert into public.account_deletion_requests(user_id, token, expires_at)
-  values (uid, tkn, now() + interval '30 minutes');
+  INSERT INTO public.account_deletion_requests(user_id, token, expires_at)
+  VALUES (uid, tkn, now() + interval '30 minutes');
 
-  return tkn;
-end;
+  RETURN tkn;
+END;
 $$;
 
--- --- Internal: actual hard-delete (isolated) --------------------------------
--- Kept internal so only confirm function can call it.
-create or replace function public.delete_user_now(_user_id uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if _user_id is null then
-    raise exception 'User id required';
-  end if;
-
-  -- Wrap in a transaction block to ensure all-or-nothing semantics
-  perform pg_advisory_xact_lock( ('x'||substr(replace(_user_id::text,'-',''),1,16))::bit(64)::bigint );
-
-  -- Delete user's cart items
-  delete from public.cart_items where user_id = _user_id;
-
-  -- Delete user's order issues
-  delete from public.order_issues where user_id = _user_id;
-
-  -- Delete user's order items via related orders
-  delete from public.order_items
-   where order_id in (select id from public.orders where user_id = _user_id);
-
-  -- Delete user's orders
-  delete from public.orders where user_id = _user_id;
-
-  -- Delete user's subscriptions
-  delete from public.subscriptions where user_id = _user_id;
-
-  -- Delete user's addresses
-  delete from public.addresses where user_id = _user_id;
-
-  -- Delete user's payment methods
-  delete from public.payment_methods where user_id = _user_id;
-
-  -- Delete user's notification preferences
-  delete from public.notification_preferences where user_id = _user_id;
-
-  -- Delete user's delivery preferences
-  delete from public.delivery_preferences where user_id = _user_id;
-
-  -- Delete user's profile
-  delete from public.profiles where id = _user_id;
-
-  -- Finally, remove from auth.users (Supabase) to revoke auth
-  delete from auth.users where id = _user_id;
-end;
-$$;
-
--- --- Step 2: confirm screen/link calls this with the token -------------------
-create or replace function public.confirm_account_deletion(_token uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Step 2: confirm; now requires the user to:
+--   • type the exact word DELETE
+--   • have re-authenticated (password) in the last X minutes (default 10)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.confirm_account_deletion(
+  _token uuid,
+  _confirmation_text text
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
   uid uuid;
   req record;
-begin
+  last_login timestamptz;
+  require_recent_login interval := interval '10 minutes'; -- adjust as needed
+BEGIN
   uid := auth.uid();
-  if uid is null then
-    raise exception 'Not authenticated';
-  end if;
+  IF uid IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
 
-  select *
-    into req
-    from public.account_deletion_requests
-   where token = _token
-     and user_id = uid
-   limit 1;
+  -- Require the destructive phrase
+  IF _confirmation_text IS DISTINCT FROM 'DELETE' THEN
+    RAISE EXCEPTION 'Confirmation text must be exactly "DELETE"';
+  END IF;
 
-  if req is null then
-    raise exception 'Invalid deletion token';
-  end if;
+  -- Validate token ownership & status
+  SELECT *
+    INTO req
+    FROM public.account_deletion_requests
+   WHERE token = _token
+     AND user_id = uid
+   LIMIT 1;
 
-  if req.status <> 'pending' then
-    raise exception 'Deletion request is not pending';
-  end if;
+  IF req IS NULL THEN
+    RAISE EXCEPTION 'Invalid or unauthorized deletion token';
+  END IF;
 
-  if now() > req.expires_at then
-    update public.account_deletion_requests
-       set status = 'expired'
-     where id = req.id;
-    raise exception 'Deletion token has expired';
-  end if;
+  IF req.status <> 'pending' THEN
+    RAISE EXCEPTION 'Deletion request is not pending';
+  END IF;
+
+  IF now() > req.expires_at THEN
+    UPDATE public.account_deletion_requests
+       SET status = 'expired'
+     WHERE id = req.id;
+    RAISE EXCEPTION 'Deletion token has expired';
+  END IF;
+
+  -- Enforce recent password confirmation via recent sign-in timestamp
+  SELECT u.last_sign_in_at
+    INTO last_login
+    FROM auth.users u
+   WHERE u.id = uid;
+
+  IF last_login IS NULL OR now() - last_login > require_recent_login THEN
+    RAISE EXCEPTION 'Recent password confirmation required. Please sign in again and retry.';
+  END IF;
 
   -- Perform the hard delete
-  perform public.delete_user_now(uid);
+  PERFORM public.delete_user();
 
-  -- Mark request as completed (best-effort in case user row is gone)
-  update public.account_deletion_requests
-     set status = 'completed',
+  -- Best-effort: mark request completed
+  UPDATE public.account_deletion_requests
+     SET status = 'completed',
          completed_at = now()
-   where id = req.id;
-end;
+   WHERE id = req.id;
+END;
 $$;
+
