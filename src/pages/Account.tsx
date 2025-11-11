@@ -22,6 +22,7 @@ const Account = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [firstName, setFirstName] = useState<string>("");
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -47,6 +48,33 @@ const Account = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserProfile();
+    }
+  }, [user?.id]);
+
+  const fetchUserProfile = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data?.full_name) {
+        const name = data.full_name.split(" ")[0];
+        setFirstName(name);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -86,7 +114,9 @@ const Account = () => {
                     <UserIcon className="h-8 w-8 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl">My Account</CardTitle>
+                    <CardTitle className="text-2xl">
+                      {firstName ? `Hi ${firstName}` : "My Account"}
+                    </CardTitle>
                     <CardDescription>{user.email}</CardDescription>
                   </div>
                 </div>
