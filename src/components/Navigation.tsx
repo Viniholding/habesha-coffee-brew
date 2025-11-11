@@ -21,7 +21,7 @@ const Navigation = () => {
         
         <div className="flex items-center gap-3">
           <Button variant="outline" size="lg" asChild>
-            <a href="/auth">Login</a>
+            <a href="/account">My Account</a>
           </Button>
           <Button variant="hero" size="lg" asChild>
             <a href="/products">Shop Now</a>
