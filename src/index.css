@@ -51,9 +51,9 @@ All colors MUST be HSL.
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Account page colors */
-    --account-bg: 30 25% 94%;
-    --account-card: 30 30% 97%;
-    --account-card-warm: 28 40% 92%;
+    --account-bg: 25 20% 10%;
+    --account-card: 22 20% 14%;
+    --account-card-warm: 25 22% 16%;
   }
 
   .dark {
