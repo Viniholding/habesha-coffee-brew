@@ -154,7 +154,7 @@ const Account = () => {
                 <Button 
                   variant="outline" 
                   onClick={handleLogout}
-                  className="border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 w-full sm:w-auto"
+                  className="border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 w-full sm:w-auto hover:scale-105 active:scale-95"
                 >
                   Sign Out
                 </Button>
