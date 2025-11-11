@@ -15,6 +15,7 @@ import PaymentMethods from "@/components/account/PaymentMethods";
 import DeliveryCalendar from "@/components/account/DeliveryCalendar";
 import ProfileSettings from "@/components/account/ProfileSettings";
 import SubscriptionManagement from "@/components/account/SubscriptionManagement";
+import ProfilePictureUpload from "@/components/account/ProfilePictureUpload";
 import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw } from "lucide-react";
 
 const Account = () => {
@@ -23,6 +24,7 @@ const Account = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -61,7 +63,7 @@ const Account = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name, avatar_url")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -70,6 +72,9 @@ const Account = () => {
       if (data?.full_name) {
         const name = data.full_name.split(" ")[0];
         setFirstName(name);
+      }
+      if (data?.avatar_url) {
+        setAvatarUrl(data.avatar_url);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -110,8 +115,19 @@ const Account = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <UserIcon className="h-8 w-8 text-primary" />
+                  <div className="relative h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <UserIcon className="h-8 w-8 text-primary" />
+                    )}
+                    {user && (
+                      <ProfilePictureUpload
+                        userId={user.id}
+                        currentAvatarUrl={avatarUrl}
+                        onAvatarUpdate={setAvatarUrl}
+                      />
+                    )}
                   </div>
                   <div>
                     <CardTitle className="text-2xl">
