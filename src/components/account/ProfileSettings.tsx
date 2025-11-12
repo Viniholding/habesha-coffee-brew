@@ -128,7 +128,7 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
     setIsDeleting(true);
     
     try {
-      // Verify password first
+      // Verify password first (this updates last_sign_in_at for recent login check)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: profile.email,
         password: deletePassword,
@@ -140,11 +140,26 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
         return;
       }
 
-      // Delete user account
-      const { error: deleteError } = await supabase.rpc('delete_user');
+      // Step 1: Request deletion token
+      const { data: token, error: requestError } = await supabase.rpc('request_account_deletion');
       
-      if (deleteError) {
-        toast.error("Failed to delete account. Please contact support.");
+      if (requestError || !token) {
+        toast.error("Failed to initiate account deletion. Please try again.");
+        setIsDeleting(false);
+        return;
+      }
+
+      // Step 2: Confirm deletion with token
+      const { error: confirmError } = await supabase.rpc('confirm_account_deletion', { _token: token });
+      
+      if (confirmError) {
+        if (confirmError.message.includes('Recent password confirmation required')) {
+          toast.error("Please sign in again and retry immediately.");
+        } else if (confirmError.message.includes('expired')) {
+          toast.error("Deletion request expired. Please try again.");
+        } else {
+          toast.error("Failed to delete account. Please contact support.");
+        }
         setIsDeleting(false);
         return;
       }

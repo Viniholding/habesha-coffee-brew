@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          status: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          status?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          status?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       addresses: {
         Row: {
           address_line1: string
@@ -532,7 +562,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_account_deletion: { Args: { _token: string }; Returns: undefined }
       delete_user: { Args: never; Returns: undefined }
+      request_account_deletion: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
