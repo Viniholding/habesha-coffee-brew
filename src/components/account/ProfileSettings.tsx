@@ -7,7 +7,17 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2, MapPin, CreditCard, AlertTriangle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ProfileSettingsProps {
   userId: string;
@@ -124,11 +134,11 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
 
   const handleDeleteAccount = async () => {
     if (!profile) return;
-    
+
     setIsDeleting(true);
-    
+
     try {
-      // Verify password first
+      // Verify password first (this updates last_sign_in_at for recent login check)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: profile.email,
         password: deletePassword,
@@ -140,17 +150,37 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
         return;
       }
 
-      // Delete user account
-      const { error: deleteError } = await supabase.rpc('delete_user');
-      
-      if (deleteError) {
-        toast.error("Failed to delete account. Please contact support.");
+      // Step 1: Request deletion token
+      const { data: token, error: requestError } = await supabase.rpc("request_account_deletion");
+
+      if (requestError || !token) {
+        toast.error("Failed to initiate account deletion. Please try again.");
+        setIsDeleting(false);
+        return;
+      }
+
+      // Step 2: Confirm deletion with token and confirmation text
+      const { error: confirmError } = await supabase.rpc("confirm_account_deletion", {
+        _token: token,
+        _confirmation_text: deleteConfirmation,
+      });
+
+      if (confirmError) {
+        if (confirmError.message.includes("Recent password confirmation required")) {
+          toast.error("Please sign in again and retry immediately.");
+        } else if (confirmError.message.includes("expired")) {
+          toast.error("Deletion request expired. Please try again.");
+        } else if (confirmError.message.includes("Confirmation text")) {
+          toast.error("You must type DELETE exactly to confirm.");
+        } else {
+          toast.error("Failed to delete account. Please contact support.");
+        }
         setIsDeleting(false);
         return;
       }
 
       toast.success("Account deleted successfully");
-      
+
       // Sign out and redirect
       await supabase.auth.signOut();
       navigate("/");
@@ -199,9 +229,7 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
               <Input
                 id="first_name"
                 value={profile.first_name || ""}
-                onChange={(e) =>
-                  setProfile({ ...profile, first_name: e.target.value })
-                }
+                onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
                 placeholder="Enter your first name"
               />
             </div>
@@ -211,9 +239,7 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
               <Input
                 id="last_name"
                 value={profile.last_name || ""}
-                onChange={(e) =>
-                  setProfile({ ...profile, last_name: e.target.value })
-                }
+                onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
                 placeholder="Enter your last name"
               />
             </div>
@@ -221,16 +247,8 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={profile.email}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-sm text-muted-foreground">
-              Email cannot be changed
-            </p>
+            <Input id="email" type="email" value={profile.email} disabled className="bg-muted" />
+            <p className="text-sm text-muted-foreground">Email cannot be changed</p>
           </div>
 
           <div className="space-y-2">
@@ -239,9 +257,7 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
               id="phone"
               type="tel"
               value={profile.phone || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, phone: e.target.value })
-              }
+              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
               placeholder="Enter your phone number"
             />
           </div>
@@ -252,9 +268,7 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
               id="date_of_birth"
               type="date"
               value={profile.date_of_birth || ""}
-              onChange={(e) =>
-                setProfile({ ...profile, date_of_birth: e.target.value })
-              }
+              onChange={(e) => setProfile({ ...profile, date_of_birth: e.target.value })}
             />
           </div>
 
@@ -281,19 +295,19 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="font-medium">{defaultAddress.full_name}</p>
+                <p className="text-sm text-muted-foreground">{defaultAddress.address_line1}</p>
                 <p className="text-sm text-muted-foreground">
-                  {defaultAddress.address_line1}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {defaultAddress.city}, {defaultAddress.state}{" "}
-                  {defaultAddress.postal_code}
+                  {defaultAddress.city}, {defaultAddress.state} {defaultAddress.postal_code}
                 </p>
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link to="#" onClick={() => {
-                  const addressTab = document.querySelector('[value="addresses"]');
-                  if (addressTab) (addressTab as HTMLElement).click();
-                }}>
+                <Link
+                  to="#"
+                  onClick={() => {
+                    const addressTab = document.querySelector('[value="addresses"]');
+                    if (addressTab) (addressTab as HTMLElement).click();
+                  }}
+                >
                   <MapPin className="mr-2 h-4 w-4" />
                   Manage
                 </Link>
@@ -301,14 +315,15 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-muted-foreground mb-4">
-                No shipping address on file
-              </p>
+              <p className="text-muted-foreground mb-4">No shipping address on file</p>
               <Button variant="outline" asChild>
-                <Link to="#" onClick={() => {
-                  const addressTab = document.querySelector('[value="addresses"]');
-                  if (addressTab) (addressTab as HTMLElement).click();
-                }}>
+                <Link
+                  to="#"
+                  onClick={() => {
+                    const addressTab = document.querySelector('[value="addresses"]');
+                    if (addressTab) (addressTab as HTMLElement).click();
+                  }}
+                >
                   <MapPin className="mr-2 h-4 w-4" />
                   Add Address
                 </Link>
@@ -327,20 +342,19 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
           {defaultPayment ? (
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="font-medium capitalize">
-                  {defaultPayment.card_brand || defaultPayment.payment_type}
-                </p>
+                <p className="font-medium capitalize">{defaultPayment.card_brand || defaultPayment.payment_type}</p>
                 {defaultPayment.card_last_four && (
-                  <p className="text-sm text-muted-foreground">
-                    •••• {defaultPayment.card_last_four}
-                  </p>
+                  <p className="text-sm text-muted-foreground">•••• {defaultPayment.card_last_four}</p>
                 )}
               </div>
               <Button variant="outline" size="sm" asChild>
-                <Link to="#" onClick={() => {
-                  const paymentTab = document.querySelector('[value="payment"]');
-                  if (paymentTab) (paymentTab as HTMLElement).click();
-                }}>
+                <Link
+                  to="#"
+                  onClick={() => {
+                    const paymentTab = document.querySelector('[value="payment"]');
+                    if (paymentTab) (paymentTab as HTMLElement).click();
+                  }}
+                >
                   <CreditCard className="mr-2 h-4 w-4" />
                   Manage
                 </Link>
@@ -348,14 +362,15 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-muted-foreground mb-4">
-                No payment method on file
-              </p>
+              <p className="text-muted-foreground mb-4">No payment method on file</p>
               <Button variant="outline" asChild>
-                <Link to="#" onClick={() => {
-                  const paymentTab = document.querySelector('[value="payment"]');
-                  if (paymentTab) (paymentTab as HTMLElement).click();
-                }}>
+                <Link
+                  to="#"
+                  onClick={() => {
+                    const paymentTab = document.querySelector('[value="payment"]');
+                    if (paymentTab) (paymentTab as HTMLElement).click();
+                  }}
+                >
                   <CreditCard className="mr-2 h-4 w-4" />
                   Add Payment Method
                 </Link>
@@ -376,77 +391,9 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="delete_password">Confirm Your Password</Label>
-            <Input
-              id="delete_password"
-              type="password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              placeholder="Enter your password"
-              className="border-destructive/30 focus-visible:ring-destructive"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="delete_confirmation">
-              Type <span className="font-mono font-bold">DELETE</span> to confirm
-            </Label>
-            <Input
-              id="delete_confirmation"
-              type="text"
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-              placeholder="Type DELETE"
-              className="border-destructive/30 focus-visible:ring-destructive"
-            />
-          </div>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button 
-                variant="destructive" 
-                className="w-full"
-                disabled={!isDeleteButtonEnabled || isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting Account...
-                  </>
-                ) : (
-                  "Delete My Account"
-                )}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-                  <AlertTriangle className="h-5 w-5" />
-                  Are you absolutely sure?
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete your account, including:
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>All your personal information</li>
-                    <li>Order history and subscriptions</li>
-                    <li>Saved addresses and payment methods</li>
-                    <li>All other associated data</li>
-                  </ul>
-                  <p className="mt-4 font-semibold">This action cannot be undone.</p>
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteAccount}
-                  className="bg-destructive hover:bg-destructive/90"
-                >
-                  Yes, Delete My Account
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <Button asChild variant="destructive" className="w-full">
+            <Link to="/account/delete">Delete My Account</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>
