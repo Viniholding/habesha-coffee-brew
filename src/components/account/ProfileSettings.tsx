@@ -149,14 +149,19 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
         return;
       }
 
-      // Step 2: Confirm deletion with token
-      const { error: confirmError } = await supabase.rpc('confirm_account_deletion', { _token: token });
+      // Step 2: Confirm deletion with token and confirmation text
+      const { error: confirmError } = await supabase.rpc('confirm_account_deletion', { 
+        _token: token,
+        _confirmation_text: deleteConfirmation
+      });
       
       if (confirmError) {
         if (confirmError.message.includes('Recent password confirmation required')) {
           toast.error("Please sign in again and retry immediately.");
         } else if (confirmError.message.includes('expired')) {
           toast.error("Deletion request expired. Please try again.");
+        } else if (confirmError.message.includes('Confirmation text')) {
+          toast.error("You must type DELETE exactly to confirm.");
         } else {
           toast.error("Failed to delete account. Please contact support.");
         }

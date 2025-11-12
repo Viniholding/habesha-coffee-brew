@@ -562,7 +562,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      confirm_account_deletion: { Args: { _token: string }; Returns: undefined }
+      confirm_account_deletion:
+        | { Args: { _token: string }; Returns: undefined }
+        | {
+            Args: { _confirmation_text: string; _token: string }
+            Returns: undefined
+          }
       delete_user: { Args: never; Returns: undefined }
       request_account_deletion: { Args: never; Returns: string }
     }
