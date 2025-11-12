@@ -14,9 +14,52 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
-import { Routes, Route } from "react-router-dom";
-import ProfileSettings from "@/pages/ProfileSettings"; 
-import AccountDelete from "@/pages/AccountDelete"; 
+
+// If these files live under ./pages, import from there:
+import ProfileSettings from "./pages/ProfileSettings";
+import AccountDelete from "./pages/AccountDelete";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+
+/** Small gate to fetch the current user and pass userId to children pages */
+function AuthGate({ children }: { children: (ctx: { userId: string }) => JSX.Element }) {
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (!mounted) return;
+      if (error || !data.user) {
+        setUserId(null);
+      } else {
+        setUserId(data.user.id);
+      }
+      setLoading(false);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // You can redirect to /auth if not logged in:
+  if (!userId) {
+    return <Auth />;
+  }
+
+  return children({ userId });
+}
 
 const queryClient = new QueryClient();
 
@@ -36,10 +79,19 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Account hub */}
           <Route path="/account" element={<Account />} />
-          <Route path="/account" element={<ProfileSettings userId="{someId}" />} />
-          <Route path="/account/delete" element={<AccountDelete />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+          {/* Profile settings (the page you pasted) */}
+          <Route
+            path="/account/profile"
+            element={<AuthGate>{({ userId }) => <ProfileSettings userId={userId} />}</AuthGate>}
+          />
+
+          {/* Delete flow page (password + type DELETE; shows DELETE PERMANENTLY) */}
+          <Route path="/account/delete" element={<AuthGate>{() => <AccountDelete />}</AuthGate>} />
+
+          {/* Keep this last */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
