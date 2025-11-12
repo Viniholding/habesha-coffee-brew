@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "./integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
-import { Label } from "./components/ui/label";
-import { Input } from "./components/ui/input";
-import { Button } from "./components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -30,7 +30,7 @@ export default function AccountDelete() {
   // Only enable the destructive button when both requirements are met
   const canDelete = useMemo(
     () => Boolean(password && confirmText === "DELETE" && token),
-    [password, confirmText, token],
+    [password, confirmText, token]
   );
 
   const confirmDelete = async () => {
@@ -60,8 +60,8 @@ export default function AccountDelete() {
       const msg = e?.message || "Failed to delete account. Please try again.";
       if (msg.includes("expired")) {
         toast.error("Deletion request expired. Refresh and try again.");
-      } else if (msg.includes("Confirmation text")) {
-        toast.error("You must type DELETE exactly to confirm.");
+      } else if (msg.includes('Confirmation text')) {
+        toast.error('You must type DELETE exactly to confirm.');
       } else if (msg.includes("Recent password")) {
         toast.error("Please sign in again and retry immediately.");
       } else {
@@ -77,7 +77,9 @@ export default function AccountDelete() {
       <Card>
         <CardHeader>
           <CardTitle className="text-red-600">Sorry to see you go</CardTitle>
-          <CardDescription>Deleting your account is permanent and cannot be undone.</CardDescription>
+          <CardDescription>
+            Deleting your account is permanent and cannot be undone.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -93,9 +95,7 @@ export default function AccountDelete() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="del">
-              Type <span className="font-mono font-bold">DELETE</span> to confirm
-            </Label>
+            <Label htmlFor="del">Type <span className="font-mono font-bold">DELETE</span> to confirm</Label>
             <Input
               id="del"
               value={confirmText}
@@ -106,14 +106,13 @@ export default function AccountDelete() {
           </div>
 
           {canDelete ? (
-            <Button variant="destructive" className="w-full" onClick={confirmDelete} disabled={busy}>
-              {busy ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting…
-                </>
-              ) : (
-                "DELETE PERMANENTLY"
-              )}
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={confirmDelete}
+              disabled={busy}
+            >
+              {busy ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting…</>) : "DELETE PERMANENTLY"}
             </Button>
           ) : (
             <Button variant="secondary" className="w-full" disabled>
@@ -129,3 +128,4 @@ export default function AccountDelete() {
     </div>
   );
 }
+
