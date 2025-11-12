@@ -14,7 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
-import AccountDelete from "@/pages/AccountDelete";
+import AccountDelete from "./pages/AccountDelete";
 
 const queryClient = new QueryClient();
 
