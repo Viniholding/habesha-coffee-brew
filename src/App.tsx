@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom"; // ✅ import ONCE
+
 import Index from "./pages/Index";
 import AboutPage from "./pages/About";
 import ProductsPage from "./pages/ProductsPage";
@@ -23,8 +24,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
+const queryClient = new QueryClient();
+
 /** Small gate to fetch the current user and pass userId to children pages */
-function AuthGate({ children }: { children: (ctx: { userId: string }) => JSX.Element }) {
+function AuthGate({
+  children,
+}: {
+  children: (ctx: { userId: string }) => JSX.Element;
+}) {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -61,8 +68,6 @@ function AuthGate({ children }: { children: (ctx: { userId: string }) => JSX.Ele
   return children({ userId });
 }
 
-const queryClient = new QueryClient();
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -79,17 +84,29 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+
           {/* Account hub */}
           <Route path="/account" element={<Account />} />
 
           {/* Profile settings (the page you pasted) */}
           <Route
             path="/account/profile"
-            element={<AuthGate>{({ userId }) => <ProfileSettings userId={userId} />}</AuthGate>}
+            element={
+              <AuthGate>
+                {({ userId }) => <ProfileSettings userId={userId} />}
+              </AuthGate>
+            }
           />
 
           {/* Delete flow page (password + type DELETE; shows DELETE PERMANENTLY) */}
-          <Route path="/account/delete" element={<AuthGate>{() => <AccountDelete />}</AuthGate>} />
+          <Route
+            path="/account/delete"
+            element={
+              <AuthGate>
+                {() => <AccountDelete />}
+              </AuthGate>
+            }
+          />
 
           {/* Keep this last */}
           <Route path="*" element={<NotFound />} />
@@ -100,3 +117,4 @@ const App = () => (
 );
 
 export default App;
+
