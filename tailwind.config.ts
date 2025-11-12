@@ -57,9 +57,6 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        "account-bg": "hsl(var(--account-bg))",
-        "account-card": "hsl(var(--account-card))",
-        "account-card-warm": "hsl(var(--account-card-warm))",
       },
       borderRadius: {
         lg: "var(--radius)",
