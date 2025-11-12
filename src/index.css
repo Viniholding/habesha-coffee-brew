@@ -49,6 +49,12 @@ All colors MUST be HSL.
     
     /* Animations */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --animation-float: float 6s ease-in-out infinite;
+
+    /* Account page colors */
+    --account-bg: 25 20% 15%;
+    --account-card: 22 20% 18%;
+    --account-card-warm: 25 22% 20%;
   }
 
   .dark {
@@ -89,5 +95,14 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
   }
 }
