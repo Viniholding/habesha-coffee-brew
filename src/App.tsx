@@ -14,7 +14,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
-import AccountDelete from "@/pages/AccountDelete"; 
 
 const queryClient = new QueryClient();
 
@@ -35,7 +34,6 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/account" element={<Account />} />
-          <Route path="/account/delete" element={<AccountDelete />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
