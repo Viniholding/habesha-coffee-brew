@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, Truck, MapPin, CheckCircle } from "lucide-react";
+import { MapPin } from "lucide-react";
+import { getTrackingSteps } from "@/components/orders/trackingSteps";
 
 interface Order {
   id: string;
@@ -33,13 +40,15 @@ const OrderTracking = ({ userId }: OrderTrackingProps) => {
     try {
       const { data, error } = await supabase
         .from("orders")
-        .select(`
+        .select(
+          `
           *,
           order_items (
             product_name,
             quantity
           )
-        `)
+        `
+        )
         .eq("user_id", userId)
         .in("status", ["processing", "shipped"])
         .order("created_at", { ascending: false });
@@ -51,16 +60,6 @@ const OrderTracking = ({ userId }: OrderTrackingProps) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getTrackingSteps = (status: string) => {
-    const steps = [
-      { label: "Order Placed", icon: Package, completed: true },
-      { label: "Processing", icon: Package, completed: status !== "pending" },
-      { label: "Shipped", icon: Truck, completed: status === "shipped" || status === "delivered" },
-      { label: "Delivered", icon: CheckCircle, completed: status === "delivered" },
-    ];
-    return steps;
   };
 
   if (loading) {
@@ -107,7 +106,9 @@ const OrderTracking = ({ userId }: OrderTrackingProps) => {
                   {order.tracking_number && (
                     <div className="bg-muted p-3 rounded-md">
                       <p className="text-sm font-medium">Tracking Number</p>
-                      <p className="text-sm text-muted-foreground">{order.tracking_number}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {order.tracking_number}
+                      </p>
                     </div>
                   )}
 
@@ -115,7 +116,10 @@ const OrderTracking = ({ userId }: OrderTrackingProps) => {
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-primary" />
                       <span>
-                        Estimated Delivery: {new Date(order.estimated_delivery_date).toLocaleDateString()}
+                        Estimated Delivery:{" "}
+                        {new Date(
+                          order.estimated_delivery_date
+                        ).toLocaleDateString()}
                       </span>
                     </div>
                   )}
@@ -126,7 +130,10 @@ const OrderTracking = ({ userId }: OrderTrackingProps) => {
                       {getTrackingSteps(order.status).map((step, idx) => {
                         const Icon = step.icon;
                         return (
-                          <div key={idx} className="flex flex-col items-center gap-2">
+                          <div
+                            key={idx}
+                            className="flex flex-col items-center gap-2"
+                          >
                             <div
                               className={`w-10 h-10 rounded-full flex items-center justify-center ${
                                 step.completed
@@ -136,7 +143,9 @@ const OrderTracking = ({ userId }: OrderTrackingProps) => {
                             >
                               <Icon className="h-5 w-5" />
                             </div>
-                            <span className="text-xs text-center max-w-20">{step.label}</span>
+                            <span className="text-xs text-center max-w-20">
+                              {step.label}
+                            </span>
                           </div>
                         );
                       })}
