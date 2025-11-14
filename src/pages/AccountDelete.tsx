@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 export default function AccountDelete() {
   const navigate = useNavigate();
@@ -73,58 +75,62 @@ export default function AccountDelete() {
   };
 
   return (
-    <div className="max-w-lg mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-red-600">Sorry to see you go</CardTitle>
-          <CardDescription>
-            Deleting your account is permanent and cannot be undone.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="pw">Password</Label>
-            <Input
-              id="pw"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              autoComplete="current-password"
-            />
-          </div>
+    <div className="min-h-screen">
+      <Navigation />
+      <div className="max-w-lg mx-auto py-12 px-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-destructive">Sorry to see you go</CardTitle>
+            <CardDescription>
+              Deleting your account is permanent and cannot be undone.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="pw">Password</Label>
+              <Input
+                id="pw"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="del">Type <span className="font-mono font-bold">DELETE</span> to confirm</Label>
-            <Input
-              id="del"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
-              placeholder="DELETE"
-              className="tracking-widest"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="del">Type <span className="font-mono font-bold">DELETE</span> to confirm</Label>
+              <Input
+                id="del"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
+                placeholder="DELETE"
+                className="tracking-widest"
+              />
+            </div>
 
-          {canDelete ? (
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={confirmDelete}
-              disabled={busy}
-            >
-              {busy ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting…</>) : "DELETE PERMANENTLY"}
+            {canDelete ? (
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={confirmDelete}
+                disabled={busy}
+              >
+                {busy ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting…</>) : "DELETE PERMANENTLY"}
+              </Button>
+            ) : (
+              <Button variant="secondary" className="w-full" disabled>
+                DELETE PERMANENTLY
+              </Button>
+            )}
+
+            <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
+              Cancel
             </Button>
-          ) : (
-            <Button variant="secondary" className="w-full" disabled>
-              DELETE PERMANENTLY
-            </Button>
-          )}
-
-          <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
-            Cancel
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
+      <Footer />
     </div>
   );
 }
