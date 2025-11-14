@@ -33,7 +33,7 @@ export default function AccountDelete() {
   // Only enable the destructive button when both requirements are met
   const canDelete = useMemo(
     () => Boolean(password && confirmText === "DELETE" && token),
-    [password, confirmText, token]
+    [password, confirmText, token],
   );
 
   const confirmDelete = async () => {
@@ -62,8 +62,8 @@ export default function AccountDelete() {
       const msg = e?.message || "Failed to schedule account deletion. Please try again.";
       if (msg.includes("expired")) {
         toast.error("Deletion request expired. Refresh and try again.");
-      } else if (msg.includes('Confirmation text')) {
-        toast.error('You must type DELETE exactly to confirm.');
+      } else if (msg.includes("Confirmation text")) {
+        toast.error("You must type DELETE exactly to confirm.");
       } else if (msg.includes("Recent password")) {
         toast.error("Please sign in again and retry immediately.");
       } else {
@@ -77,7 +77,7 @@ export default function AccountDelete() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
+      <div className="flex flex-col flex-1 justify-center items-center px-4 py-12 min-h-screen">
         <Card className="max-w-lg w-full border-destructive/50">
           <CardHeader>
             <CardTitle className="text-destructive">Sorry to See You Go</CardTitle>
@@ -89,8 +89,8 @@ export default function AccountDelete() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>30-Day Cooldown Period:</strong> Your account will remain active for 30 days. 
-                You can cancel the deletion anytime during this period by signing in.
+                <strong>30-Day Cooldown Period:</strong> Your account will remain active for 30 days. You can cancel the
+                deletion anytime during this period by signing in.
               </AlertDescription>
             </Alert>
 
@@ -120,12 +120,7 @@ export default function AccountDelete() {
             </div>
 
             {canDelete ? (
-              <Button
-                variant="destructive"
-                className="w-full"
-                onClick={confirmDelete}
-                disabled={busy}
-              >
+              <Button variant="destructive" className="w-full" onClick={confirmDelete} disabled={busy}>
                 {busy ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scheduling Deletion…
