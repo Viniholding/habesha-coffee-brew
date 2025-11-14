@@ -75,10 +75,10 @@ export default function AccountDelete() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Navigation />
-      <div className="max-w-lg mx-auto py-12 px-4">
-        <Card>
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <Card className="max-w-lg w-full">
           <CardHeader>
             <CardTitle className="text-destructive">Sorry to see you go</CardTitle>
             <CardDescription>
