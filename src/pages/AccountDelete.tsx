@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AccountDelete() {
   const navigate = useNavigate();
@@ -48,18 +49,17 @@ export default function AccountDelete() {
       const { error: authErr } = await supabase.auth.signInWithPassword({ email, password });
       if (authErr) throw new Error("Invalid password. Please try again.");
 
-      // Step 2: confirm with token + typed DELETE
+      // Step 2: confirm with token + typed DELETE (now schedules deletion for 30 days)
       const { error: confirmErr } = await supabase.rpc("confirm_account_deletion", {
         _token: token,
         _confirmation_text: confirmText,
       });
       if (confirmErr) throw new Error(confirmErr.message);
 
-      toast.success("Your account has been deleted.");
-      await supabase.auth.signOut();
-      navigate("/goodbye"); // or navigate("/") if you don't have a goodbye page
+      toast.success("Account deletion scheduled for 30 days from now.");
+      navigate("/account/deletion-scheduled");
     } catch (e: any) {
-      const msg = e?.message || "Failed to delete account. Please try again.";
+      const msg = e?.message || "Failed to schedule account deletion. Please try again.";
       if (msg.includes("expired")) {
         toast.error("Deletion request expired. Refresh and try again.");
       } else if (msg.includes('Confirmation text')) {
@@ -78,16 +78,24 @@ export default function AccountDelete() {
     <div className="min-h-screen flex flex-col">
       <Navigation />
       <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <Card className="max-w-lg w-full">
+        <Card className="max-w-lg w-full border-destructive/50">
           <CardHeader>
-            <CardTitle className="text-destructive">Sorry to see you go</CardTitle>
+            <CardTitle className="text-destructive">Sorry to See You Go</CardTitle>
             <CardDescription>
-              Deleting your account is permanent and cannot be undone.
+              Your account will be scheduled for deletion in 30 days. You can cancel anytime during this period.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>30-Day Cooldown Period:</strong> Your account will remain active for 30 days. 
+                You can cancel the deletion anytime during this period by signing in.
+              </AlertDescription>
+            </Alert>
+
             <div className="space-y-2">
-              <Label htmlFor="pw">Password</Label>
+              <Label htmlFor="pw">Confirm Your Password</Label>
               <Input
                 id="pw"
                 type="password"
@@ -99,7 +107,9 @@ export default function AccountDelete() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="del">Type <span className="font-mono font-bold">DELETE</span> to confirm</Label>
+              <Label htmlFor="del">
+                Type <span className="font-mono font-bold">DELETE</span> to confirm
+              </Label>
               <Input
                 id="del"
                 value={confirmText}
@@ -116,15 +126,21 @@ export default function AccountDelete() {
                 onClick={confirmDelete}
                 disabled={busy}
               >
-                {busy ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting…</>) : "DELETE PERMANENTLY"}
+                {busy ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scheduling Deletion…
+                  </>
+                ) : (
+                  "SCHEDULE DELETION (30 Days)"
+                )}
               </Button>
             ) : (
               <Button variant="secondary" className="w-full" disabled>
-                DELETE PERMANENTLY
+                SCHEDULE DELETION (30 Days)
               </Button>
             )}
 
-            <Button variant="outline" className="w-full" onClick={() => navigate(-1)}>
+            <Button variant="outline" className="w-full" onClick={() => navigate("/account")}>
               Cancel
             </Button>
           </CardContent>
