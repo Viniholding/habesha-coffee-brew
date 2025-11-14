@@ -16,6 +16,7 @@ import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 import AccountDelete from "./pages/AccountDelete";
 import Goodbye from "./pages/Goodbye";
+import DeletionScheduled from "./pages/DeletionScheduled";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/account" element={<Account />} />
           <Route path="/account/delete" element={<AccountDelete />} />
+          <Route path="/account/deletion-scheduled" element={<DeletionScheduled />} />
           <Route path="/goodbye" element={<Goodbye />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
