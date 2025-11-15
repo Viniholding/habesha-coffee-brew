@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          scheduled_deletion_at: string | null
           status: string
           token: string
           user_id: string
@@ -29,6 +30,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
+          scheduled_deletion_at?: string | null
           status?: string
           token: string
           user_id: string
@@ -38,6 +40,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          scheduled_deletion_at?: string | null
           status?: string
           token?: string
           user_id?: string
@@ -562,6 +565,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_account_deletion: { Args: never; Returns: undefined }
       confirm_account_deletion:
         | { Args: { _token: string }; Returns: undefined }
         | {
@@ -569,6 +573,13 @@ export type Database = {
             Returns: undefined
           }
       delete_user: { Args: never; Returns: undefined }
+      get_scheduled_deletion: {
+        Args: never
+        Returns: {
+          days_remaining: number
+          scheduled_at: string
+        }[]
+      }
       request_account_deletion: { Args: never; Returns: string }
     }
     Enums: {

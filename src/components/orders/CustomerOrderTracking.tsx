@@ -25,7 +25,6 @@ interface PublicOrder {
   tracking_number: string | null;
   estimated_delivery_date: string | null;
   created_at: string;
-  email: string;
   order_items: OrderItem[];
 }
 
@@ -54,6 +53,20 @@ const CustomerOrderTracking = () => {
     setLoading(true);
 
     try {
+      // First get user by email to verify ownership
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("email", email.trim())
+        .single();
+
+      if (!profileData) {
+        setError("We couldn't find an order with that number and email.");
+        setLoading(false);
+        setSearched(true);
+        return;
+      }
+
       const { data, error: supabaseError } = await supabase
         .from("orders")
         .select(
@@ -66,7 +79,7 @@ const CustomerOrderTracking = () => {
         `
         )
         .eq("order_number", orderNumber.trim())
-        .ilike("email", email.trim()) // case-insensitive match
+        .eq("user_id", profileData.id)
         .single();
 
       if (supabaseError) {
