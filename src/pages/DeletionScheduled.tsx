@@ -19,7 +19,7 @@ export default function DeletionScheduled() {
   useEffect(() => {
     const checkDeletionStatus = async () => {
       try {
-        const { data, error } = await supabase.rpc("get_scheduled_deletion");
+        const { data, error } = await supabase.rpc("get_scheduled_deletion" as any);
         
         if (error) {
           toast.error("Failed to load deletion information.");
@@ -27,15 +27,15 @@ export default function DeletionScheduled() {
           return;
         }
 
-        if (!data || data.length === 0) {
+        if (!data || (Array.isArray(data) && data.length === 0)) {
           // No scheduled deletion found
           navigate("/account");
           return;
         }
 
-        const deletionInfo = data[0];
-        setScheduledDate(new Date(deletionInfo.scheduled_at));
-        setDaysRemaining(Math.ceil(deletionInfo.days_remaining));
+        const deletionInfo = Array.isArray(data) ? data[0] : data;
+        setScheduledDate(new Date((deletionInfo as any).scheduled_at));
+        setDaysRemaining(Math.ceil((deletionInfo as any).days_remaining));
       } catch (error) {
         console.error("Error checking deletion status:", error);
         toast.error("An error occurred.");
@@ -51,7 +51,7 @@ export default function DeletionScheduled() {
   const handleCancel = async () => {
     setCanceling(true);
     try {
-      const { error } = await supabase.rpc("cancel_account_deletion");
+      const { error } = await supabase.rpc("cancel_account_deletion" as any);
       
       if (error) throw error;
 
