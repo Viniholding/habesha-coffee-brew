@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import SearchBar from "./SearchBar";
 import ShoppingCart from "./ShoppingCart";
+import { logger } from "@/lib/logger";
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ const Navigation = () => {
         setAvatarUrl(data.avatar_url);
       }
     } catch (error) {
-      console.error("Error fetching avatar:", error);
+      logger.error("Error fetching avatar:", error);
     }
   };
 
@@ -75,7 +76,7 @@ const Navigation = () => {
       if (error) throw error;
       setPendingOrdersCount(count || 0);
     } catch (error) {
-      console.error("Error fetching pending orders:", error);
+      logger.error("Error fetching pending orders:", error);
     }
   };
 

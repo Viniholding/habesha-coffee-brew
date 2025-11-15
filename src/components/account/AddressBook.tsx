@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Star } from "lucide-react";
+import { addressSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 interface Address {
   id: string;
@@ -61,7 +63,7 @@ const AddressBook = ({ userId }: AddressBookProps) => {
       if (error) throw error;
       setAddresses(data || []);
     } catch (error) {
-      console.error("Error fetching addresses:", error);
+      logger.error("Error fetching addresses:", error);
       toast.error("Failed to load addresses");
     } finally {
       setLoading(false);
@@ -71,11 +73,20 @@ const AddressBook = ({ userId }: AddressBookProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate address data
+    const validation = addressSchema.safeParse(formData);
+    
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
+
     try {
       if (editingAddress) {
         const { error } = await supabase
           .from("addresses")
-          .update(formData)
+          .update(validation.data)
           .eq("id", editingAddress.id);
 
         if (error) throw error;
@@ -83,7 +94,19 @@ const AddressBook = ({ userId }: AddressBookProps) => {
       } else {
         const { error } = await supabase
           .from("addresses")
-          .insert({ ...formData, user_id: userId });
+          .insert({
+            address_type: validation.data.address_type,
+            full_name: validation.data.full_name,
+            address_line1: validation.data.address_line1,
+            address_line2: validation.data.address_line2 || null,
+            city: validation.data.city,
+            state: validation.data.state,
+            postal_code: validation.data.postal_code,
+            country: validation.data.country,
+            phone: validation.data.phone || null,
+            user_id: userId,
+            is_default: false,
+          });
 
         if (error) throw error;
         toast.success("Address added successfully");
@@ -93,7 +116,7 @@ const AddressBook = ({ userId }: AddressBookProps) => {
       resetForm();
       fetchAddresses();
     } catch (error) {
-      console.error("Error saving address:", error);
+      logger.error("Error saving address:", error);
       toast.error("Failed to save address");
     }
   };
@@ -109,7 +132,7 @@ const AddressBook = ({ userId }: AddressBookProps) => {
       toast.success("Address deleted");
       fetchAddresses();
     } catch (error) {
-      console.error("Error deleting address:", error);
+      logger.error("Error deleting address:", error);
       toast.error("Failed to delete address");
     }
   };

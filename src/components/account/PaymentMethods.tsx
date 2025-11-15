@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, CreditCard, Trash2, Star } from "lucide-react";
+import { paymentMethodSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 interface PaymentMethod {
   id: string;
@@ -52,7 +54,7 @@ const PaymentMethods = ({ userId }: PaymentMethodsProps) => {
       if (error) throw error;
       setPaymentMethods(data || []);
     } catch (error) {
-      console.error("Error fetching payment methods:", error);
+      logger.error("Error fetching payment methods:", error);
       toast.error("Failed to load payment methods");
     } finally {
       setLoading(false);
@@ -62,16 +64,31 @@ const PaymentMethods = ({ userId }: PaymentMethodsProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate payment method data
+    const validation = paymentMethodSchema.safeParse({
+      payment_type: formData.payment_type,
+      card_last_four: formData.card_last_four || undefined,
+      card_brand: formData.card_brand || undefined,
+      card_exp_month: formData.card_exp_month ? parseInt(formData.card_exp_month) : undefined,
+      card_exp_year: formData.card_exp_year ? parseInt(formData.card_exp_year) : undefined,
+    });
+
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("payment_methods")
         .insert({
           user_id: userId,
-          payment_type: formData.payment_type,
-          card_last_four: formData.card_last_four,
-          card_brand: formData.card_brand,
-          card_exp_month: parseInt(formData.card_exp_month),
-          card_exp_year: parseInt(formData.card_exp_year),
+          payment_type: validation.data.payment_type,
+          card_last_four: validation.data.card_last_four || null,
+          card_brand: validation.data.card_brand || null,
+          card_exp_month: validation.data.card_exp_month || null,
+          card_exp_year: validation.data.card_exp_year || null,
           is_default: formData.is_default,
         });
 
@@ -81,7 +98,7 @@ const PaymentMethods = ({ userId }: PaymentMethodsProps) => {
       resetForm();
       fetchPaymentMethods();
     } catch (error) {
-      console.error("Error adding payment method:", error);
+      logger.error("Error adding payment method:", error);
       toast.error("Failed to add payment method");
     }
   };
@@ -97,7 +114,7 @@ const PaymentMethods = ({ userId }: PaymentMethodsProps) => {
       toast.success("Payment method deleted");
       fetchPaymentMethods();
     } catch (error) {
-      console.error("Error deleting payment method:", error);
+      logger.error("Error deleting payment method:", error);
       toast.error("Failed to delete payment method");
     }
   };
@@ -120,7 +137,7 @@ const PaymentMethods = ({ userId }: PaymentMethodsProps) => {
       toast.success("Default payment method updated");
       fetchPaymentMethods();
     } catch (error) {
-      console.error("Error setting default:", error);
+      logger.error("Error setting default:", error);
       toast.error("Failed to set default payment method");
     }
   };

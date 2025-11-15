@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { logger } from "@/lib/logger";
 
 interface Product {
   id: string;
@@ -59,7 +60,7 @@ const SearchBar = ({ isMobile = false, onOpenChange }: SearchBarProps) => {
       if (error) throw error;
       setProducts(data || []);
     } catch (error) {
-      console.error("Error searching products:", error);
+      logger.error("Error searching products:", error);
     }
   };
 

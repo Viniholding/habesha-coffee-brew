@@ -13,6 +13,7 @@ import {
 import { ShoppingCart as CartIcon, Trash2, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { logger } from "@/lib/logger";
 
 interface CartItem {
   id: string;
@@ -84,7 +85,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
       if (error) throw error;
       setCartItems(data || []);
     } catch (error) {
-      console.error("Error fetching cart items:", error);
+      logger.error("Error fetching cart items:", error);
     }
   };
 
@@ -101,7 +102,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
       if (error) throw error;
       toast.success("Cart updated");
     } catch (error) {
-      console.error("Error updating quantity:", error);
+      logger.error("Error updating quantity:", error);
       toast.error("Failed to update cart");
     } finally {
       setLoading(false);
@@ -119,7 +120,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
       if (error) throw error;
       toast.success("Item removed from cart");
     } catch (error) {
-      console.error("Error removing item:", error);
+      logger.error("Error removing item:", error);
       toast.error("Failed to remove item");
     } finally {
       setLoading(false);
