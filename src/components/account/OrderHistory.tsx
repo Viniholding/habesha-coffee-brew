@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Download, AlertCircle } from "lucide-react";
+import { orderIssueSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 interface Order {
   id: string;
@@ -57,7 +59,7 @@ const OrderHistory = ({ userId }: OrderHistoryProps) => {
       if (error) throw error;
       setOrders(data || []);
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      logger.error("Error fetching orders:", error);
       toast.error("Failed to load order history");
     } finally {
       setLoading(false);
@@ -98,8 +100,20 @@ Thank you for your order!
   };
 
   const handleReportIssue = async () => {
-    if (!selectedOrder || !issueType || !issueDescription) {
-      toast.error("Please fill in all fields");
+    // Validate issue data
+    const validation = orderIssueSchema.safeParse({
+      issue_type: issueType,
+      description: issueDescription,
+    });
+
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
+
+    if (!selectedOrder) {
+      toast.error("Please select an order");
       return;
     }
 
@@ -108,8 +122,8 @@ Thank you for your order!
       const { error } = await supabase.from("order_issues").insert({
         order_id: selectedOrder.id,
         user_id: userId,
-        issue_type: issueType,
-        description: issueDescription,
+        issue_type: validation.data.issue_type,
+        description: validation.data.description,
       });
 
       if (error) throw error;
@@ -119,7 +133,7 @@ Thank you for your order!
       setIssueDescription("");
       setSelectedOrder(null);
     } catch (error) {
-      console.error("Error reporting issue:", error);
+      logger.error("Error reporting issue:", error);
       toast.error("Failed to report issue");
     } finally {
       setReportingIssue(false);

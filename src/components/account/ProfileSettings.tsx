@@ -18,6 +18,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { profileSchema, passwordSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 interface ProfileSettingsProps {
   userId: string;
@@ -98,7 +100,7 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
       if (paymentError) throw paymentError;
       setPaymentMethods(paymentData || []);
     } catch (error: any) {
-      console.error("Error fetching data:", error);
+      logger.error("Error fetching data:", error);
       toast.error("Failed to load profile settings");
     } finally {
       setLoading(false);
@@ -107,6 +109,20 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
 
   const handleSave = async () => {
     if (!profile) return;
+
+    // Validate profile data
+    const validation = profileSchema.safeParse({
+      first_name: profile.first_name || "",
+      last_name: profile.last_name || "",
+      phone: profile.phone || "",
+      date_of_birth: profile.date_of_birth || "",
+    });
+
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
 
     try {
       setSaving(true);
@@ -125,7 +141,7 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
 
       toast.success("Profile updated successfully");
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      logger.error("Error updating profile:", error);
       toast.error("Failed to update profile");
     } finally {
       setSaving(false);
@@ -136,6 +152,18 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
     if (!profile) return;
 
     setIsDeleting(true);
+
+    if (deleteConfirmation !== "DELETE") {
+      toast.error("Please type DELETE exactly to confirm");
+      setIsDeleting(false);
+      return;
+    }
+
+    if (!deletePassword) {
+      toast.error("Please enter your password");
+      setIsDeleting(false);
+      return;
+    }
 
     try {
       // Verify password first (this updates last_sign_in_at for recent login check)
@@ -179,14 +207,11 @@ const ProfileSettings = ({ userId }: ProfileSettingsProps) => {
         return;
       }
 
-      toast.success("Account deleted successfully");
-
-      // Sign out and redirect
-      await supabase.auth.signOut();
-      navigate("/");
+      toast.success("Account deletion scheduled for 30 days from now. You can cancel anytime.");
+      navigate("/deletion-scheduled");
     } catch (error: any) {
-      console.error("Error deleting account:", error);
-      toast.error("An error occurred. Please try again.");
+      logger.error("Error deleting account:", error);
+      toast.error(error.message || "An error occurred");
     } finally {
       setIsDeleting(false);
     }

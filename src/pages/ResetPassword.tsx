@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import logo from "@/assets/logo.png";
 import sadCoffeeMug from "@/assets/sad-coffee-mug.png";
+import { passwordSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -34,23 +36,28 @@ const ResetPassword = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
 
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+    // Validate password with zod
+    const validation = passwordSchema.safeParse(password);
+    
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
     setLoading(true);
     
     const { error } = await supabase.auth.updateUser({
-      password: password,
+      password: validation.data,
     });
 
     if (error) {
+      logger.error("Password update error:", error);
       toast.error(error.message);
     } else {
       toast.success("Password updated successfully!");

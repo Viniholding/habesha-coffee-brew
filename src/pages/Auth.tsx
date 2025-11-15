@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/Navigation";
 import logo from "@/assets/logo.png";
 import loginBg from "@/assets/login-background.jpg";
+import { authSchema, loginSchema } from "@/lib/validation";
+import { logger } from "@/lib/logger";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -38,27 +40,27 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    // Validate input with zod
+    const validation = authSchema.safeParse({ email, password });
+    
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
     setLoading(true);
     
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: validation.data.email,
+      password: validation.data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
 
     if (error) {
+      logger.error("Sign up error:", error);
       if (error.message.includes("already registered")) {
         toast.error("This email is already registered. Please login instead.");
       } else {
@@ -74,19 +76,24 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
+    // Validate input with zod
+    const validation = loginSchema.safeParse({ email, password });
+    
+    if (!validation.success) {
+      const firstError = validation.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
     setLoading(true);
     
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: validation.data.email,
+      password: validation.data.password,
     });
 
     if (error) {
+      logger.error("Login error:", error);
       toast.error(error.message);
     } else {
       toast.success("Logged in successfully!");
