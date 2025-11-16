@@ -10,8 +10,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
+import { MapPin, ExternalLink } from "lucide-react";
 import { getTrackingSteps } from "@/components/orders/trackingSteps";
+import { getCarrierTrackingUrl, getCarrierName } from "@/lib/carriers";
 
 interface OrderItem {
   product_name: string;
@@ -23,6 +24,7 @@ interface PublicOrder {
   order_number: string;
   status: string;
   tracking_number: string | null;
+  carrier: string | null;
   estimated_delivery_date: string | null;
   created_at: string;
   order_items: OrderItem[];
@@ -175,14 +177,37 @@ const CustomerOrderTracking = () => {
               <Badge>{formatStatus(order.status)}</Badge>
             </div>
 
-            {order.tracking_number && (
-              <div className="bg-muted p-3 rounded-md">
-                <p className="text-sm font-medium">Tracking Number</p>
-                <p className="text-sm text-muted-foreground">
-                  {order.tracking_number}
-                </p>
-              </div>
-            )}
+                {order.tracking_number && (
+                  <div className="bg-muted p-3 rounded-md">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium mb-1">
+                          {getCarrierName(order.carrier)} Tracking
+                        </p>
+                        <p className="text-sm text-muted-foreground font-mono">
+                          {order.tracking_number}
+                        </p>
+                      </div>
+                      {getCarrierTrackingUrl(order.carrier, order.tracking_number) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                        >
+                          <a
+                            href={getCarrierTrackingUrl(order.carrier, order.tracking_number)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2"
+                          >
+                            Track Package
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
             {order.estimated_delivery_date && (
               <div className="flex items-center gap-2 text-sm">
