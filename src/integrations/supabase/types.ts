@@ -310,6 +310,7 @@ export type Database = {
       orders: {
         Row: {
           billing_address_id: string | null
+          carrier: string | null
           created_at: string | null
           delivered_at: string | null
           estimated_delivery_date: string | null
@@ -329,6 +330,7 @@ export type Database = {
         }
         Insert: {
           billing_address_id?: string | null
+          carrier?: string | null
           created_at?: string | null
           delivered_at?: string | null
           estimated_delivery_date?: string | null
@@ -348,6 +350,7 @@ export type Database = {
         }
         Update: {
           billing_address_id?: string | null
+          carrier?: string | null
           created_at?: string | null
           delivered_at?: string | null
           estimated_delivery_date?: string | null
