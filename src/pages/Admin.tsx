@@ -1,0 +1,52 @@
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { InventoryManagement } from '@/components/admin/InventoryManagement';
+import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import { Routes, Route } from 'react-router-dom';
+
+const AdminDashboardHome = () => {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+        <p className="text-muted-foreground mt-2">Welcome to your admin dashboard</p>
+      </div>
+      <AnalyticsDashboard />
+    </div>
+  );
+};
+
+const Admin = () => {
+  const { isAdmin, isLoading } = useAdminAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
+
+  return <AdminLayout />;
+};
+
+const AdminRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Admin />}>
+        <Route index element={<AdminDashboardHome />} />
+        <Route path="inventory" element={<InventoryManagement />} />
+        <Route path="analytics" element={<AnalyticsDashboard />} />
+      </Route>
+    </Routes>
+  );
+};
+
+export default AdminRoutes;
