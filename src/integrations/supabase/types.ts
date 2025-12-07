@@ -539,6 +539,115 @@ export type Database = {
         }
         Relationships: []
       }
+      promotion_uses: {
+        Row: {
+          discount_applied: number
+          id: string
+          order_id: string | null
+          promotion_id: string
+          subscription_id: string | null
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          discount_applied: number
+          id?: string
+          order_id?: string | null
+          promotion_id: string
+          subscription_id?: string | null
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          discount_applied?: number
+          id?: string
+          order_id?: string | null
+          promotion_id?: string
+          subscription_id?: string | null
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_uses_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_uses_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_uses_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotions: {
+        Row: {
+          applies_to: string
+          code: string
+          created_at: string
+          created_by: string | null
+          current_uses: number
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          max_uses_per_user: number | null
+          min_order_amount: number | null
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          description?: string | null
+          discount_type?: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          max_uses_per_user?: number | null
+          min_order_amount?: number | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          max_uses_per_user?: number | null
+          min_order_amount?: number | null
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           converted_at: string | null

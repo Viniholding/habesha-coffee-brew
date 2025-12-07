@@ -120,7 +120,7 @@ const SubscriptionReview = () => {
   const pricing = calculatePrice();
   const nextBillingDate = addDays(new Date(), frequencyData?.days || 14);
 
-  // Validate and apply coupon
+  // Validate and apply coupon from database
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
       setCouponError("Please enter a coupon code");
@@ -132,7 +132,7 @@ const SubscriptionReview = () => {
 
     try {
       // Check referral codes first
-      const { data: referral, error: referralError } = await supabase
+      const { data: referral } = await supabase
         .from("referrals")
         .select("*")
         .eq("referral_code", couponCode.toUpperCase())
@@ -149,22 +149,58 @@ const SubscriptionReview = () => {
         return;
       }
 
-      // Mock coupon validation (in production, validate against a coupons table)
-      const mockCoupons: Record<string, number> = {
-        "WELCOME10": 10,
-        "COFFEE15": 15,
-        "FIRST20": 20,
-        "HABESHA25": 25,
-      };
+      // Check promotions table for valid coupon
+      const { data: promotion, error: promoError } = await supabase
+        .from("promotions")
+        .select("*")
+        .eq("code", couponCode.toUpperCase())
+        .eq("is_active", true)
+        .maybeSingle();
 
-      const discount = mockCoupons[couponCode.toUpperCase()];
-      if (discount) {
-        setCouponApplied({ code: couponCode.toUpperCase(), discount });
-        toast.success(`Coupon applied! ${discount}% off`);
-        setCouponCode("");
-      } else {
-        setCouponError("Invalid or expired coupon code");
+      if (promoError) {
+        throw promoError;
       }
+
+      if (!promotion) {
+        setCouponError("Invalid coupon code");
+        return;
+      }
+
+      // Check expiration
+      if (promotion.expires_at && new Date(promotion.expires_at) < new Date()) {
+        setCouponError("This coupon has expired");
+        return;
+      }
+
+      // Check if not started yet
+      if (promotion.starts_at && new Date(promotion.starts_at) > new Date()) {
+        setCouponError("This coupon is not yet active");
+        return;
+      }
+
+      // Check usage limit
+      if (promotion.max_uses && promotion.current_uses >= promotion.max_uses) {
+        setCouponError("This coupon has reached its usage limit");
+        return;
+      }
+
+      // Check if applies to subscription
+      if (promotion.applies_to !== "all" && promotion.applies_to !== "subscription") {
+        setCouponError("This coupon cannot be used for subscriptions");
+        return;
+      }
+
+      // Apply discount
+      const discountValue = promotion.discount_type === "percentage" 
+        ? promotion.discount_value 
+        : promotion.discount_value; // For fixed amount, we'll handle differently in pricing
+
+      setCouponApplied({ 
+        code: couponCode.toUpperCase(), 
+        discount: discountValue,
+      });
+      toast.success(`Coupon applied! ${promotion.discount_type === "percentage" ? `${discountValue}%` : `$${discountValue}`} off`);
+      setCouponCode("");
     } catch (error) {
       setCouponError("Failed to validate coupon");
     } finally {
