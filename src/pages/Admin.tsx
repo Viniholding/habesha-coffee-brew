@@ -8,6 +8,9 @@ import SubscriptionAnalytics from '@/components/admin/SubscriptionAnalytics';
 import PromotionsManagement from '@/components/admin/PromotionsManagement';
 import PromotionAnalytics from '@/components/admin/PromotionAnalytics';
 import ProgramProductConfig from '@/components/admin/ProgramProductConfig';
+import CustomerManagement from '@/components/admin/CustomerManagement';
+import CustomerSegments from '@/components/admin/CustomerSegments';
+import AbandonedCarts from '@/components/admin/AbandonedCarts';
 import { Routes, Route } from 'react-router-dom';
 
 const AdminDashboardHome = () => {
@@ -56,6 +59,9 @@ const AdminRoutes = () => {
         <Route path="promotion-analytics" element={<PromotionAnalytics />} />
         <Route path="inventory" element={<InventoryManagement />} />
         <Route path="analytics" element={<AnalyticsDashboard />} />
+        <Route path="customers" element={<CustomerManagement />} />
+        <Route path="segments" element={<CustomerSegments />} />
+        <Route path="abandoned-carts" element={<AbandonedCarts />} />
       </Route>
     </Routes>
   );
