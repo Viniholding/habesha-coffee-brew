@@ -32,7 +32,7 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const { action, subscriptionId, newFrequency, newQuantity, skipDate } = await req.json();
+    const { action, subscriptionId, newFrequency, newQuantity, skipDate, resumeAt } = await req.json();
     logStep("Action requested", { action, subscriptionId });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -46,10 +46,17 @@ serve(async (req) => {
         await stripe.subscriptions.update(subscriptionId, {
           pause_collection: { behavior: "void" },
         });
-        // Update local DB
+        // Update local DB with optional resume_at date
+        const pauseUpdate: Record<string, any> = {
+          status: "paused",
+          paused_at: new Date().toISOString(),
+        };
+        if (resumeAt) {
+          pauseUpdate.resume_at = resumeAt;
+        }
         await supabaseClient
           .from("subscriptions")
-          .update({ status: "paused", paused_at: new Date().toISOString() })
+          .update(pauseUpdate)
           .eq("stripe_subscription_id", subscriptionId);
         // Log event
         const { data: pausedSub } = await supabaseClient
@@ -61,10 +68,15 @@ serve(async (req) => {
           await supabaseClient.from("subscription_events").insert({
             subscription_id: pausedSub.id,
             event_type: "paused",
+            event_data: resumeAt ? { scheduled_resume: resumeAt } : null,
             created_by: user.id,
           });
+          // Send email
+          await supabaseClient.functions.invoke("send-subscription-email", {
+            body: { type: "subscription_paused", subscriptionId: pausedSub.id },
+          });
         }
-        result = { message: "Subscription paused" };
+        result = { message: resumeAt ? `Subscription paused until ${resumeAt}` : "Subscription paused" };
         break;
 
       case "resume":
@@ -73,7 +85,7 @@ serve(async (req) => {
         });
         await supabaseClient
           .from("subscriptions")
-          .update({ status: "active", paused_at: null })
+          .update({ status: "active", paused_at: null, resume_at: null })
           .eq("stripe_subscription_id", subscriptionId);
         const { data: resumedSub } = await supabaseClient
           .from("subscriptions")
@@ -85,6 +97,10 @@ serve(async (req) => {
             subscription_id: resumedSub.id,
             event_type: "resumed",
             created_by: user.id,
+          });
+          // Send email
+          await supabaseClient.functions.invoke("send-subscription-email", {
+            body: { type: "subscription_resumed", subscriptionId: resumedSub.id },
           });
         }
         result = { message: "Subscription resumed" };

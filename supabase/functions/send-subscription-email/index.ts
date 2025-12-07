@@ -18,7 +18,9 @@ type EmailType =
   | "subscription_cancelled"
   | "upcoming_charge"
   | "order_shipped"
-  | "payment_failed";
+  | "payment_failed"
+  | "renewal_reminder"
+  | "low_stock_notification";
 
 interface EmailRequest {
   type: EmailType;
@@ -96,6 +98,35 @@ const emailTemplates: Record<EmailType, { subject: string; getHtml: (data: any) 
       <p>We were unable to process your payment for your ${data.productName} subscription.</p>
       <p>Please update your payment method to continue receiving your coffee deliveries.</p>
       <p><a href="${data.accountUrl}">Update Payment Method</a></p>
+    `,
+  },
+  renewal_reminder: {
+    subject: "Your Coffee Delivery is Coming Up!",
+    getHtml: (data) => `
+      <h1>Delivery Reminder</h1>
+      <p>Hi ${data.firstName || "there"},</p>
+      <p>Your next ${data.productName} delivery is scheduled for <strong>${data.deliveryDate}</strong>.</p>
+      <h3>Order Details:</h3>
+      <ul>
+        <li><strong>Product:</strong> ${data.productName}</li>
+        <li><strong>Quantity:</strong> ${data.quantity}</li>
+        <li><strong>Amount:</strong> $${data.amount}</li>
+      </ul>
+      <p>Want to make changes? <a href="${data.accountUrl}">Manage your subscription</a></p>
+      <p>Need to skip this delivery? You can do that from your account page.</p>
+    `,
+  },
+  low_stock_notification: {
+    subject: "Low Stock Alert - Subscription Product",
+    getHtml: (data) => `
+      <h1>Low Stock Alert</h1>
+      <p>The following product is running low:</p>
+      <ul>
+        <li><strong>Product:</strong> ${data.productName}</li>
+        <li><strong>Current Stock:</strong> ${data.currentStock}</li>
+        <li><strong>Active Subscriptions:</strong> ${data.activeSubscriptions}</li>
+      </ul>
+      <p>Please restock soon to avoid subscription fulfillment delays.</p>
     `,
   },
 };

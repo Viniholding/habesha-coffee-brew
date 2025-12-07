@@ -730,6 +730,7 @@ export type Database = {
           product_name: string
           program_id: string | null
           quantity: number
+          resume_at: string | null
           shipping_address_id: string | null
           status: string
           stripe_customer_id: string | null
@@ -763,6 +764,7 @@ export type Database = {
           product_name: string
           program_id?: string | null
           quantity?: number
+          resume_at?: string | null
           shipping_address_id?: string | null
           status?: string
           stripe_customer_id?: string | null
@@ -796,6 +798,7 @@ export type Database = {
           product_name?: string
           program_id?: string | null
           quantity?: number
+          resume_at?: string | null
           shipping_address_id?: string | null
           status?: string
           stripe_customer_id?: string | null
