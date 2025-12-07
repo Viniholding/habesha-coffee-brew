@@ -14,6 +14,8 @@ import { ShoppingCart as CartIcon, Trash2, Plus, Minus } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { logger } from "@/lib/logger";
+import { getGuestCart, getGuestCartTotal, updateGuestCartQuantity, removeFromGuestCart, GuestCartItem } from "@/lib/guestCart";
+import productBag from "@/assets/product-bag.jpg";
 
 interface CartItem {
   id: string;
@@ -22,8 +24,9 @@ interface CartItem {
     id: string;
     name: string;
     price: number;
-    image_url: string;
+    image_url: string | null;
   };
+  isGuest?: boolean;
 }
 
 interface ShoppingCartProps {
@@ -33,7 +36,56 @@ interface ShoppingCartProps {
 const ShoppingCart = ({ userId }: ShoppingCartProps) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [guestCartCount, setGuestCartCount] = useState(0);
   const navigate = useNavigate();
+
+  // Update guest cart count periodically
+  useEffect(() => {
+    if (!userId) {
+      const updateGuestCount = () => {
+        const { items } = getGuestCartTotal();
+        setGuestCartCount(items);
+      };
+      
+      updateGuestCount();
+      
+      // Listen for storage changes (from other tabs)
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === "guest_cart") {
+          updateGuestCount();
+        }
+      };
+      
+      window.addEventListener("storage", handleStorageChange);
+      
+      // Poll for changes in same tab
+      const interval = setInterval(updateGuestCount, 1000);
+      
+      return () => {
+        window.removeEventListener("storage", handleStorageChange);
+        clearInterval(interval);
+      };
+    }
+  }, [userId]);
+
+  // Load guest cart items when dropdown opens for non-logged-in users
+  const loadGuestCartItems = () => {
+    if (!userId) {
+      const guestItems = getGuestCart();
+      const items: CartItem[] = guestItems.map((item: GuestCartItem, index: number) => ({
+        id: `guest-${index}`,
+        quantity: item.quantity,
+        product: {
+          id: item.productId,
+          name: item.productName,
+          price: item.price,
+          image_url: item.imageUrl,
+        },
+        isGuest: true,
+      }));
+      setCartItems(items);
+    }
+  };
 
   useEffect(() => {
     if (userId) {
@@ -60,7 +112,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
         supabase.removeChannel(channel);
       };
     } else {
-      setCartItems([]);
+      loadGuestCartItems();
     }
   }, [userId]);
 
@@ -89,8 +141,17 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
     }
   };
 
-  const updateQuantity = async (itemId: string, newQuantity: number) => {
+  const updateQuantity = async (itemId: string, newQuantity: number, isGuest?: boolean) => {
     if (newQuantity < 1) return;
+    
+    if (isGuest) {
+      const item = cartItems.find(i => i.id === itemId);
+      if (item) {
+        updateGuestCartQuantity(item.product.id, newQuantity);
+        loadGuestCartItems();
+      }
+      return;
+    }
     
     setLoading(true);
     try {
@@ -109,7 +170,16 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
     }
   };
 
-  const removeItem = async (itemId: string) => {
+  const removeItem = async (itemId: string, isGuest?: boolean) => {
+    if (isGuest) {
+      const item = cartItems.find(i => i.id === itemId);
+      if (item) {
+        removeFromGuestCart(item.product.id);
+        loadGuestCartItems();
+      }
+      return;
+    }
+    
     setLoading(true);
     try {
       const { error } = await supabase
@@ -127,21 +197,13 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
     }
   };
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = userId 
+    ? cartItems.reduce((sum, item) => sum + item.quantity, 0)
+    : guestCartCount;
   const totalPrice = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
-  if (!userId) {
-    return (
-      <Button variant="ghost" size="icon" asChild>
-        <a href="/auth">
-          <CartIcon className="h-5 w-5" />
-        </a>
-      </Button>
-    );
-  }
-
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => open && !userId && loadGuestCartItems()}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative" data-cart-trigger>
           <CartIcon className="h-5 w-5" />
@@ -170,7 +232,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
                 <div key={item.id} className="px-2 py-3 border-b border-border last:border-0">
                   <div className="flex items-start gap-3">
                     <img 
-                      src={item.product.image_url} 
+                      src={item.product.image_url || productBag} 
                       alt={item.product.name}
                       className="h-12 w-12 rounded object-cover bg-muted"
                     />
@@ -184,7 +246,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
                           variant="outline"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.isGuest)}
                           disabled={loading || item.quantity <= 1}
                         >
                           <Minus className="h-3 w-3" />
@@ -194,7 +256,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
                           variant="outline"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.isGuest)}
                           disabled={loading}
                         >
                           <Plus className="h-3 w-3" />
@@ -203,7 +265,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 ml-auto text-destructive"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(item.id, item.isGuest)}
                           disabled={loading}
                         >
                           <Trash2 className="h-3 w-3" />

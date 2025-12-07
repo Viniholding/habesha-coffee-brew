@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,30 +12,41 @@ import logo from "@/assets/logo.png";
 import loginBg from "@/assets/login-background.jpg";
 import { authSchema, loginSchema } from "@/lib/validation";
 import { logger } from "@/lib/logger";
+import { mergeGuestCartToUser, getGuestCart } from "@/lib/guestCart";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  const redirectTo = searchParams.get("redirect") || "/";
 
   useEffect(() => {
     // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        navigate(redirectTo);
       }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/");
+        // Merge guest cart to user cart on login/signup
+        const guestCart = getGuestCart();
+        if (guestCart.length > 0) {
+          setTimeout(() => {
+            mergeGuestCartToUser(session.user.id);
+          }, 0);
+        }
+        navigate(redirectTo);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, redirectTo]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +108,7 @@ const Auth = () => {
       toast.error(error.message);
     } else {
       toast.success("Logged in successfully!");
-      navigate("/");
+      // Navigation happens in onAuthStateChange
     }
     
     setLoading(false);
