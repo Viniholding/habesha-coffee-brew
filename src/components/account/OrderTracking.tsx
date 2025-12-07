@@ -9,17 +9,20 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, ExternalLink } from "lucide-react";
+import { MapPin, ExternalLink, Copy, Check } from "lucide-react";
 import { getTrackingSteps } from "@/components/orders/trackingSteps";
 import { getCarrierTrackingUrl, getCarrierName } from "@/lib/carriers";
+import { toast } from "sonner";
 
 interface Order {
   id: string;
   order_number: string;
   status: string;
   tracking_number: string | null;
+  tracking_url: string | null;
   carrier: string | null;
   estimated_delivery_date: string | null;
+  shipped_at: string | null;
   created_at: string;
   order_items: Array<{
     product_name: string;
@@ -34,6 +37,18 @@ interface OrderTrackingProps {
 const OrderTracking = ({ userId }: OrderTrackingProps) => {
   const [activeOrders, setActiveOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, orderId: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(orderId);
+      toast.success("Tracking number copied!");
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
 
   useEffect(() => {
     fetchActiveOrders();
@@ -107,34 +122,57 @@ const OrderTracking = ({ userId }: OrderTrackingProps) => {
                   </div>
 
                   {order.tracking_number && (
-                    <div className="bg-muted p-3 rounded-md">
+                    <div className="bg-muted p-4 rounded-md space-y-3">
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex-1">
                           <p className="text-sm font-medium mb-1">
-                            {getCarrierName(order.carrier)} Tracking
+                            Carrier: {getCarrierName(order.carrier)}
                           </p>
-                          <p className="text-sm text-muted-foreground font-mono">
-                            {order.tracking_number}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm text-muted-foreground font-mono">
+                              {order.tracking_number}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => copyToClipboard(order.tracking_number!, order.id)}
+                            >
+                              {copiedId === order.id ? (
+                                <Check className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                        {getCarrierTrackingUrl(order.carrier, order.tracking_number) && (
+                        {getCarrierTrackingUrl(order.carrier, order.tracking_number, order.tracking_url) ? (
                           <Button
                             variant="outline"
                             size="sm"
                             asChild
                           >
                             <a
-                              href={getCarrierTrackingUrl(order.carrier, order.tracking_number)!}
+                              href={getCarrierTrackingUrl(order.carrier, order.tracking_number, order.tracking_url)!}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-2"
                             >
-                              Track Package
+                              Track my shipment
                               <ExternalLink className="h-4 w-4" />
                             </a>
                           </Button>
+                        ) : (
+                          <p className="text-xs text-muted-foreground max-w-[200px]">
+                            Tracking info is available, but we couldn't generate a tracking link. Please check with the carrier.
+                          </p>
                         )}
                       </div>
+                      {order.shipped_at && (
+                        <p className="text-xs text-muted-foreground">
+                          Shipped on {new Date(order.shipped_at).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   )}
 
