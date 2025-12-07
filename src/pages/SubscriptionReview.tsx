@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/Navigation";
@@ -10,14 +10,19 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  Coffee, Package, Calendar, DollarSign, Mail, ArrowLeft, 
-  ArrowRight, AlertCircle, Gift, CreditCard, User, Tag, Check, X, Loader2
+  Coffee, Package, Calendar as CalendarIcon, DollarSign, Mail, ArrowLeft, 
+  ArrowRight, AlertCircle, Gift, CreditCard, User, Tag, Check, X, Loader2,
+  Minus, Plus
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { subscriptionProducts, bagSizeOptions, frequencyOptions, grindOptions } from "@/lib/subscriptionProducts";
-import { addDays, format } from "date-fns";
+import { addDays, format, isBefore, startOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const prepaidOptions = [
   { value: 3, discount: 5 },
@@ -25,12 +30,33 @@ const prepaidOptions = [
   { value: 12, discount: 15 },
 ];
 
+const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 10;
+const MIN_FULFILLMENT_DAYS = 3; // Minimum days before first delivery
+
 const SubscriptionReview = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
+
+  // Editable subscription options
+  const [selectedBagSize, setSelectedBagSize] = useState(searchParams.get("bagSize") || "12oz");
+  const [selectedGrind, setSelectedGrind] = useState(searchParams.get("grind") || "whole_bean");
+  const [selectedQuantity, setSelectedQuantity] = useState(parseInt(searchParams.get("quantity") || "1"));
+  const [selectedFrequency, setSelectedFrequency] = useState(searchParams.get("frequency") || "biweekly");
+  const [selectedFirstDelivery, setSelectedFirstDelivery] = useState<Date>(() => {
+    const paramDate = searchParams.get("firstDelivery");
+    if (paramDate) {
+      const parsed = new Date(paramDate);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+    return addDays(new Date(), MIN_FULFILLMENT_DAYS);
+  });
+
+  // Validation errors
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Coupon code state
   const [couponCode, setCouponCode] = useState("");
@@ -46,19 +72,18 @@ const SubscriptionReview = () => {
 
   // Parse subscription data from URL params
   const productId = searchParams.get("product") || "";
-  const grind = searchParams.get("grind") || "whole_bean";
-  const bagSize = searchParams.get("bagSize") || "12oz";
-  const quantity = parseInt(searchParams.get("quantity") || "1");
-  const frequency = searchParams.get("frequency") || "biweekly";
   const subscriptionType = (searchParams.get("type") || "regular") as "regular" | "prepaid" | "gift";
   const prepaidMonths = parseInt(searchParams.get("prepaidMonths") || "6");
   const giftDuration = parseInt(searchParams.get("giftDuration") || "3");
 
   // Get data for display
   const productData = subscriptionProducts.find(p => p.id === productId);
-  const bagSizeData = bagSizeOptions.find(b => b.value === bagSize);
-  const frequencyData = frequencyOptions.find(f => f.value === frequency);
-  const grindData = grindOptions.find(g => g.value === grind);
+  const bagSizeData = bagSizeOptions.find(b => b.value === selectedBagSize);
+  const frequencyData = frequencyOptions.find(f => f.value === selectedFrequency);
+  const grindData = grindOptions.find(g => g.value === selectedGrind);
+
+  // Minimum delivery date
+  const minDeliveryDate = useMemo(() => addDays(startOfDay(new Date()), MIN_FULFILLMENT_DAYS), []);
 
   useEffect(() => {
     checkUser();
@@ -79,11 +104,22 @@ const SubscriptionReview = () => {
     }
   }, [productId, productData, navigate]);
 
+  // Sync URL params when selections change
+  useEffect(() => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("bagSize", selectedBagSize);
+    newParams.set("grind", selectedGrind);
+    newParams.set("quantity", selectedQuantity.toString());
+    newParams.set("frequency", selectedFrequency);
+    newParams.set("firstDelivery", format(selectedFirstDelivery, "yyyy-MM-dd"));
+    setSearchParams(newParams, { replace: true });
+  }, [selectedBagSize, selectedGrind, selectedQuantity, selectedFrequency, selectedFirstDelivery]);
+
   // Calculate pricing
   const calculatePrice = () => {
-    if (!productData || !bagSizeData) return { perDelivery: 0, total: 0, discount: 0, deliveries: 1, couponDiscount: 0 };
+    if (!productData || !bagSizeData) return { perDelivery: 0, total: 0, discount: 0, deliveries: 1, couponDiscount: 0, monthlyEstimate: 0 };
 
-    const basePrice = productData.price * bagSizeData.priceMultiplier * quantity;
+    const basePrice = productData.price * bagSizeData.priceMultiplier * selectedQuantity;
     let discountPercent = 10; // Base subscriber discount
 
     let totalDeliveries = 1;
@@ -108,17 +144,22 @@ const SubscriptionReview = () => {
       ? basePrice * (couponApplied.discount / 100) * (subscriptionType === "regular" ? 1 : totalDeliveries)
       : 0;
 
+    // Calculate monthly estimate based on frequency
+    const daysPerDelivery = frequencyData?.days || 14;
+    const deliveriesPerMonth = 30 / daysPerDelivery;
+    const monthlyEstimate = discountedPrice * deliveriesPerMonth;
+
     return {
       perDelivery: discountedPrice,
       total,
       discount: discountPercent,
       deliveries: totalDeliveries,
       couponDiscount,
+      monthlyEstimate,
     };
   };
 
   const pricing = calculatePrice();
-  const nextBillingDate = addDays(new Date(), frequencyData?.days || 14);
 
   // Validate and apply coupon from database
   const handleApplyCoupon = async () => {
@@ -193,7 +234,7 @@ const SubscriptionReview = () => {
       // Apply discount
       const discountValue = promotion.discount_type === "percentage" 
         ? promotion.discount_value 
-        : promotion.discount_value; // For fixed amount, we'll handle differently in pricing
+        : promotion.discount_value;
 
       setCouponApplied({ 
         code: couponCode.toUpperCase(), 
@@ -231,15 +272,54 @@ const SubscriptionReview = () => {
     return Object.keys(errors).length === 0;
   };
 
+  // Validate all fields
+  const validateFields = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    if (!selectedBagSize) {
+      errors.bagSize = "Please select a bag size";
+    }
+    if (!selectedGrind) {
+      errors.grind = "Please select a grind type";
+    }
+    if (selectedQuantity < MIN_QUANTITY || selectedQuantity > MAX_QUANTITY) {
+      errors.quantity = `Quantity must be between ${MIN_QUANTITY} and ${MAX_QUANTITY}`;
+    }
+    if (!selectedFrequency) {
+      errors.frequency = "Please select a delivery frequency";
+    }
+    if (!selectedFirstDelivery) {
+      errors.firstDelivery = "Please select a first delivery date";
+    } else if (isBefore(selectedFirstDelivery, minDeliveryDate)) {
+      errors.firstDelivery = `First delivery must be at least ${MIN_FULFILLMENT_DAYS} days from today`;
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleEditSelection = () => {
     navigate("/subscribe?showQuiz=true");
   };
 
+  const handleQuantityChange = (delta: number) => {
+    const newQuantity = selectedQuantity + delta;
+    if (newQuantity >= MIN_QUANTITY && newQuantity <= MAX_QUANTITY) {
+      setSelectedQuantity(newQuantity);
+      setValidationErrors(prev => ({ ...prev, quantity: "" }));
+    }
+  };
+
   const handleConfirmAndPay = async () => {
     if (!user) {
-      // Save current URL params and redirect to auth
       const currentParams = searchParams.toString();
       navigate(`/auth?redirect=/subscription/review?${currentParams}`);
+      return;
+    }
+
+    // Validate all fields
+    if (!validateFields()) {
+      toast.error("Please fill in all required fields correctly");
       return;
     }
 
@@ -258,10 +338,11 @@ const SubscriptionReview = () => {
           priceId: pricing.perDelivery.toFixed(2),
           productId: productData?.stripeProductId,
           productName: productData?.name,
-          quantity,
-          frequency,
-          grind,
-          bagSize,
+          quantity: selectedQuantity,
+          frequency: selectedFrequency,
+          grind: selectedGrind,
+          bagSize: selectedBagSize,
+          firstDeliveryDate: format(selectedFirstDelivery, "yyyy-MM-dd"),
           subscriptionType,
           isPrepaid: subscriptionType === "prepaid",
           prepaidMonths: subscriptionType === "prepaid" ? prepaidMonths : undefined,
@@ -303,6 +384,9 @@ const SubscriptionReview = () => {
     return null; // Will redirect in useEffect
   }
 
+  // Live summary text
+  const summaryText = `You'll get ${selectedQuantity} × ${bagSizeData?.label || selectedBagSize} bag${selectedQuantity > 1 ? "s" : ""} of ${grindData?.label || selectedGrind} every ${frequencyData?.label.replace("Every ", "").toLowerCase() || selectedFrequency} starting ${format(selectedFirstDelivery, "MMM d, yyyy")}`;
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -321,7 +405,7 @@ const SubscriptionReview = () => {
               </Badge>
               <h1 className="text-3xl md:text-4xl font-bold mb-2">Review Your Subscription</h1>
               <p className="text-muted-foreground">
-                Confirm your selection before proceeding to payment
+                Customize your selection before proceeding to payment
               </p>
             </motion.div>
 
@@ -353,51 +437,200 @@ const SubscriptionReview = () => {
                 </CardHeader>
 
                 <CardContent className="space-y-6">
-                  {/* Subscription Details */}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-sm">
+                  {/* Editable Subscription Details */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Bag Size */}
+                    <div className="space-y-2">
+                      <Label htmlFor="bagSize" className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-primary" />
-                        <span className="text-muted-foreground">Bag Size:</span>
-                        <span className="font-medium">{bagSizeData?.label}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
+                        Bag Size
+                      </Label>
+                      <Select
+                        value={selectedBagSize}
+                        onValueChange={(value) => {
+                          setSelectedBagSize(value);
+                          setValidationErrors(prev => ({ ...prev, bagSize: "" }));
+                        }}
+                      >
+                        <SelectTrigger id="bagSize" className={validationErrors.bagSize ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Select bag size" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background">
+                          {bagSizeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {validationErrors.bagSize && (
+                        <p className="text-xs text-destructive">{validationErrors.bagSize}</p>
+                      )}
+                    </div>
+
+                    {/* Grind */}
+                    <div className="space-y-2">
+                      <Label htmlFor="grind" className="flex items-center gap-2">
                         <Coffee className="h-4 w-4 text-primary" />
-                        <span className="text-muted-foreground">Grind:</span>
-                        <span className="font-medium">{grindData?.label}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
+                        Grind Type
+                      </Label>
+                      <Select
+                        value={selectedGrind}
+                        onValueChange={(value) => {
+                          setSelectedGrind(value);
+                          setValidationErrors(prev => ({ ...prev, grind: "" }));
+                        }}
+                      >
+                        <SelectTrigger id="grind" className={validationErrors.grind ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Select grind type" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background">
+                          {grindOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {validationErrors.grind && (
+                        <p className="text-xs text-destructive">{validationErrors.grind}</p>
+                      )}
+                    </div>
+
+                    {/* Quantity */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-primary" />
-                        <span className="text-muted-foreground">Quantity:</span>
-                        <span className="font-medium">{quantity} bag{quantity > 1 ? "s" : ""}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-sm">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span className="text-muted-foreground">Frequency:</span>
-                        <span className="font-medium">{frequencyData?.label}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span className="text-muted-foreground">First Delivery:</span>
-                        <span className="font-medium">{format(nextBillingDate, "MMM d, yyyy")}</span>
-                      </div>
-                      {subscriptionType === "prepaid" && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <CreditCard className="h-4 w-4 text-primary" />
-                          <span className="text-muted-foreground">Prepaid:</span>
-                          <span className="font-medium">{prepaidMonths} months ({pricing.deliveries} deliveries)</span>
+                        Quantity
+                      </Label>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleQuantityChange(-1)}
+                          disabled={selectedQuantity <= MIN_QUANTITY}
+                          className="h-10 w-10"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <div className="flex-1 text-center">
+                          <span className="text-lg font-semibold">{selectedQuantity} bag{selectedQuantity > 1 ? "s" : ""}</span>
                         </div>
-                      )}
-                      {subscriptionType === "gift" && (
-                        <div className="flex items-center gap-3 text-sm">
-                          <Gift className="h-4 w-4 text-primary" />
-                          <span className="text-muted-foreground">Gift Duration:</span>
-                          <span className="font-medium">{giftDuration} months ({pricing.deliveries} deliveries)</span>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleQuantityChange(1)}
+                          disabled={selectedQuantity >= MAX_QUANTITY}
+                          className="h-10 w-10"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {validationErrors.quantity && (
+                        <p className="text-xs text-destructive">{validationErrors.quantity}</p>
                       )}
                     </div>
+
+                    {/* Frequency */}
+                    <div className="space-y-2">
+                      <Label htmlFor="frequency" className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-primary" />
+                        Delivery Frequency
+                      </Label>
+                      <Select
+                        value={selectedFrequency}
+                        onValueChange={(value) => {
+                          setSelectedFrequency(value);
+                          setValidationErrors(prev => ({ ...prev, frequency: "" }));
+                        }}
+                      >
+                        <SelectTrigger id="frequency" className={validationErrors.frequency ? "border-destructive" : ""}>
+                          <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background">
+                          {frequencyOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {validationErrors.frequency && (
+                        <p className="text-xs text-destructive">{validationErrors.frequency}</p>
+                      )}
+                    </div>
+
+                    {/* First Delivery Date */}
+                    <div className="space-y-2 md:col-span-2">
+                      <Label className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-primary" />
+                        First Delivery Date
+                      </Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !selectedFirstDelivery && "text-muted-foreground",
+                              validationErrors.firstDelivery && "border-destructive"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {selectedFirstDelivery ? format(selectedFirstDelivery, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-background" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={selectedFirstDelivery}
+                            onSelect={(date) => {
+                              if (date) {
+                                setSelectedFirstDelivery(date);
+                                setValidationErrors(prev => ({ ...prev, firstDelivery: "" }));
+                              }
+                            }}
+                            disabled={(date) => isBefore(date, minDeliveryDate)}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {validationErrors.firstDelivery && (
+                        <p className="text-xs text-destructive">{validationErrors.firstDelivery}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Earliest available: {format(minDeliveryDate, "MMM d, yyyy")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Prepaid/Gift Info */}
+                  {subscriptionType === "prepaid" && (
+                    <div className="flex items-center gap-3 text-sm p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                      <CreditCard className="h-4 w-4 text-blue-500" />
+                      <span className="text-muted-foreground">Prepaid:</span>
+                      <span className="font-medium">{prepaidMonths} months ({pricing.deliveries} deliveries)</span>
+                    </div>
+                  )}
+                  {subscriptionType === "gift" && (
+                    <div className="flex items-center gap-3 text-sm p-3 bg-pink-50 dark:bg-pink-950/20 rounded-lg">
+                      <Gift className="h-4 w-4 text-pink-500" />
+                      <span className="text-muted-foreground">Gift Duration:</span>
+                      <span className="font-medium">{giftDuration} months ({pricing.deliveries} deliveries)</span>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* Live Summary */}
+                  <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                    <p className="text-sm font-medium text-primary">{summaryText}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Estimated monthly cost: ${pricing.monthlyEstimate.toFixed(2)}
+                    </p>
                   </div>
 
                   <Separator />
@@ -434,7 +667,6 @@ const SubscriptionReview = () => {
                                 <p className="text-xs text-destructive">{giftErrors.name}</p>
                               )}
                             </div>
-                            
                             <div className="space-y-2">
                               <Label htmlFor="recipientEmail">Recipient Email *</Label>
                               <Input
@@ -537,17 +769,17 @@ const SubscriptionReview = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Base price per delivery</span>
                       <span className="font-medium">
-                        ${(productData.price * (bagSizeData?.priceMultiplier || 1) * quantity).toFixed(2)}
+                        ${(productData.price * (bagSizeData?.priceMultiplier || 1) * selectedQuantity).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-green-600">
                       <span>Subscriber discount (10% off)</span>
-                      <span>-${((productData.price * (bagSizeData?.priceMultiplier || 1) * quantity) * 0.1).toFixed(2)}</span>
+                      <span>-${((productData.price * (bagSizeData?.priceMultiplier || 1) * selectedQuantity) * 0.1).toFixed(2)}</span>
                     </div>
                     {subscriptionType === "prepaid" && (
                       <div className="flex justify-between items-center text-green-600">
                         <span>Prepaid discount ({prepaidOptions.find(p => p.value === prepaidMonths)?.discount}% off)</span>
-                        <span>-${((productData.price * (bagSizeData?.priceMultiplier || 1) * quantity) * ((prepaidOptions.find(p => p.value === prepaidMonths)?.discount || 0) / 100)).toFixed(2)}</span>
+                        <span>-${((productData.price * (bagSizeData?.priceMultiplier || 1) * selectedQuantity) * ((prepaidOptions.find(p => p.value === prepaidMonths)?.discount || 0) / 100)).toFixed(2)}</span>
                       </div>
                     )}
                     {couponApplied && (
