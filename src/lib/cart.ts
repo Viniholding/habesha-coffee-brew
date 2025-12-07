@@ -1,17 +1,40 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { addToGuestCart } from "@/lib/guestCart";
 
 export interface AddToCartResult {
   success: boolean;
   requiresAuth: boolean;
+  isGuestCart?: boolean;
 }
 
-export const addToCart = async (productId: string, quantity: number = 1): Promise<AddToCartResult> => {
+export interface ProductForCart {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
+}
+
+export const addToCart = async (
+  productId: string, 
+  quantity: number = 1,
+  productDetails?: ProductForCart
+): Promise<AddToCartResult> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      // Return that auth is required instead of showing toast
+      // Use guest cart with localStorage if product details provided
+      if (productDetails) {
+        addToGuestCart({
+          productId: productDetails.id,
+          productName: productDetails.name,
+          price: productDetails.price,
+          imageUrl: productDetails.image_url,
+        }, quantity);
+        return { success: true, requiresAuth: false, isGuestCart: true };
+      }
+      // Fallback: require auth if no product details
       return { success: false, requiresAuth: true };
     }
 
