@@ -113,6 +113,7 @@ const Navigation = () => {
             <img src={logo} alt="Coffee Habesha Way" className="h-8 w-auto" />
           </a>
           <a href="/products" className="hover:text-primary transition-colors">Products</a>
+          <a href="/subscribe" className="hover:text-primary transition-colors">Subscribe</a>
           <a href="/cafe" className="hover:text-primary transition-colors">Café</a>
         </div>
         
@@ -221,6 +222,13 @@ const Navigation = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Products
+                </a>
+                <a 
+                  href="/subscribe" 
+                  className="text-lg font-medium hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Subscribe
                 </a>
                 <a 
                   href="/cafe" 
