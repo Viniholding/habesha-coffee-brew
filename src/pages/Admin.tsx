@@ -7,6 +7,7 @@ import AdminSubscriptionManagement from '@/components/admin/SubscriptionManageme
 import SubscriptionAnalytics from '@/components/admin/SubscriptionAnalytics';
 import PromotionsManagement from '@/components/admin/PromotionsManagement';
 import PromotionAnalytics from '@/components/admin/PromotionAnalytics';
+import ProgramProductConfig from '@/components/admin/ProgramProductConfig';
 import { Routes, Route } from 'react-router-dom';
 
 const AdminDashboardHome = () => {
@@ -49,6 +50,7 @@ const AdminRoutes = () => {
         <Route index element={<AdminDashboardHome />} />
         <Route path="subscriptions" element={<AdminSubscriptionManagement />} />
         <Route path="subscription-analytics" element={<SubscriptionAnalytics />} />
+        <Route path="program-config" element={<ProgramProductConfig />} />
         <Route path="orders" element={<OrderManagement />} />
         <Route path="promotions" element={<PromotionsManagement />} />
         <Route path="promotion-analytics" element={<PromotionAnalytics />} />

@@ -11,7 +11,8 @@ import {
   RefreshCw,
   ShoppingCart,
   TrendingUp,
-  Tag
+  Tag,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Subscriptions', href: '/admin/subscriptions', icon: RefreshCw },
   { name: 'Subscription Analytics', href: '/admin/subscription-analytics', icon: TrendingUp },
+  { name: 'Program Config', href: '/admin/program-config', icon: Settings },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Promotions', href: '/admin/promotions', icon: Tag },
   { name: 'Promotion Analytics', href: '/admin/promotion-analytics', icon: BarChart3 },
