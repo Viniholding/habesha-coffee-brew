@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Progress } from "@/components/ui/progress";
 import { 
   ShoppingBag, 
   User, 
@@ -19,11 +20,17 @@ import {
   ArrowLeft,
   CreditCard,
   Coffee,
-  RefreshCw
+  RefreshCw,
+  MapPin,
+  Check,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import SubscriptionRequiredModal from "@/components/checkout/SubscriptionRequiredModal";
+import CheckoutAddressForm from "@/components/checkout/CheckoutAddressForm";
+import CheckoutPaymentForm from "@/components/checkout/CheckoutPaymentForm";
 import { CoffeeBeanLoading } from "@/components/ui/CoffeeBeanSpinner";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CartItem {
   id: string;
@@ -37,11 +44,18 @@ interface CartItem {
   };
 }
 
+const checkoutSteps = [
+  { id: 1, label: "Account", icon: User },
+  { id: 2, label: "Shipping", icon: MapPin },
+  { id: 3, label: "Payment", icon: CreditCard },
+];
+
 const Checkout = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [currentStep, setCurrentStep] = useState(1);
   const [checkoutMode, setCheckoutMode] = useState<"guest" | "login" | "signup">("guest");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [processingCheckout, setProcessingCheckout] = useState(false);
@@ -51,14 +65,36 @@ const Checkout = () => {
   const [guestFirstName, setGuestFirstName] = useState("");
   const [guestLastName, setGuestLastName] = useState("");
 
+  // Address state
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [guestAddress, setGuestAddress] = useState<any>(null);
+
+  // Payment state
+  const [paymentData, setPaymentData] = useState({
+    cardNumber: "",
+    expiry: "",
+    cvc: "",
+    nameOnCard: "",
+  });
+
   useEffect(() => {
     checkAuth();
     fetchCartItems();
   }, []);
 
+  useEffect(() => {
+    // Auto-advance to step 2 if user is logged in
+    if (user && currentStep === 1) {
+      setCurrentStep(2);
+    }
+  }, [user]);
+
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+    if (user) {
+      setCurrentStep(2);
+    }
     setLoading(false);
   };
 
@@ -94,13 +130,9 @@ const Checkout = () => {
     }
   };
 
-  // Check if cart has subscription items
   const hasSubscriptionItems = cartItems.some(
     item => item.product.category?.toLowerCase() === "subscription"
   );
-
-  // Check if cart has only regular items
-  const hasOnlyRegularItems = cartItems.length > 0 && !hasSubscriptionItems;
 
   const totalPrice = cartItems.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
@@ -130,37 +162,88 @@ const Checkout = () => {
     toast.success("Subscription items removed from cart");
   };
 
-  const handleGuestCheckout = () => {
-    if (hasSubscriptionItems) {
-      setShowSubscriptionModal(true);
-      return;
+  const canProceedToNext = () => {
+    if (currentStep === 1) {
+      if (user) return true;
+      if (checkoutMode === "guest" && !hasSubscriptionItems) {
+        return guestEmail && guestFirstName && guestLastName;
+      }
+      return false;
     }
-    setCheckoutMode("guest");
+    if (currentStep === 2) {
+      return user ? !!selectedAddressId : isGuestAddressValid();
+    }
+    if (currentStep === 3) {
+      return isPaymentValid();
+    }
+    return false;
   };
 
-  const handleProceedToPayment = async () => {
-    if (!user && hasSubscriptionItems) {
+  const isGuestAddressValid = () => {
+    if (!guestAddress) return false;
+    const { full_name, address_line1, city, state, postal_code } = guestAddress;
+    return full_name && address_line1 && city && state && postal_code;
+  };
+
+  const isPaymentValid = () => {
+    const { cardNumber, expiry, cvc, nameOnCard } = paymentData;
+    return (
+      cardNumber.replace(/\s/g, "").length >= 15 &&
+      expiry.length === 5 &&
+      cvc.length >= 3 &&
+      nameOnCard.length > 0
+    );
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1 && !user && hasSubscriptionItems) {
       setShowSubscriptionModal(true);
       return;
     }
+    
+    if (canProceedToNext() && currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
 
-    if (!user && checkoutMode === "guest") {
-      if (!guestEmail || !guestFirstName || !guestLastName) {
-        toast.error("Please fill in all required fields");
-        return;
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      // Don't go back to step 1 if user is logged in
+      if (currentStep === 2 && user) {
+        navigate(-1);
+      } else {
+        setCurrentStep(currentStep - 1);
       }
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!canProceedToNext()) {
+      toast.error("Please complete all required fields");
+      return;
     }
 
     setProcessingCheckout(true);
     try {
-      // Here you would integrate with Stripe checkout
-      toast.success("Redirecting to payment...");
-      // For now, simulate processing
+      // Simulate order processing
       await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success("Order placed successfully!");
-      navigate("/");
+
+      // Clear cart after successful order
+      if (user) {
+        await supabase.from("cart_items").delete().eq("user_id", user.id);
+      }
+
+      // Navigate to success page
+      const hasSubscription = hasSubscriptionItems;
+      const successUrl = hasSubscription 
+        ? "/order-success?subscription=demo-sub-id"
+        : "/order-success?order=demo-order-id";
+      
+      navigate(successUrl);
     } catch (error) {
-      toast.error("Checkout failed");
+      toast.error("Order failed. Please try again.");
     } finally {
       setProcessingCheckout(false);
     }
@@ -201,6 +284,8 @@ const Checkout = () => {
     );
   }
 
+  const progress = (currentStep / 3) * 100;
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -209,231 +294,305 @@ const Checkout = () => {
         <Button
           variant="ghost"
           className="mb-6 gap-2"
-          onClick={() => navigate(-1)}
+          onClick={handlePreviousStep}
         >
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Checkout Options */}
-          <div className="lg:col-span-2 space-y-6">
-            <h1 className="text-3xl font-bold">Checkout</h1>
-
-            {/* Subscription Notice */}
-            {hasSubscriptionItems && !user && (
-              <Card className="border-primary bg-primary/5">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <RefreshCw className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-primary">
-                        Subscription items require an account
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Create an account to manage your subscription deliveries, update billing, 
-                        and pause or modify your plan anytime.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Checkout Options for Non-Logged Users */}
-            {!user && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>How would you like to checkout?</CardTitle>
-                  <CardDescription>
-                    {hasSubscriptionItems
-                      ? "Subscriptions require an account for delivery management"
-                      : "Continue as a guest or create an account for order tracking"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup
-                    value={checkoutMode}
-                    onValueChange={(v) => setCheckoutMode(v as any)}
-                    className="space-y-4"
+        {/* Progress Steps */}
+        <div className="max-w-3xl mx-auto mb-8">
+          <div className="flex justify-between items-center mb-4">
+            {checkoutSteps.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                <div
+                  className={`flex items-center gap-2 ${
+                    currentStep >= step.id ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                      currentStep > step.id
+                        ? "bg-primary text-primary-foreground"
+                        : currentStep === step.id
+                        ? "bg-primary text-primary-foreground ring-4 ring-primary/30"
+                        : "bg-muted text-muted-foreground"
+                    }`}
                   >
-                    {/* Guest Option - Only for non-subscription */}
-                    {!hasSubscriptionItems && (
-                      <div
-                        className={`flex items-center space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                          checkoutMode === "guest"
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50"
-                        }`}
-                        onClick={() => setCheckoutMode("guest")}
+                    {currentStep > step.id ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      <step.icon className="h-5 w-5" />
+                    )}
+                  </div>
+                  <span className="hidden sm:block text-sm font-medium">
+                    {step.label}
+                  </span>
+                </div>
+                {index < checkoutSteps.length - 1 && (
+                  <ChevronRight className="h-5 w-5 mx-4 text-muted-foreground hidden sm:block" />
+                )}
+              </div>
+            ))}
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {/* Left Column - Checkout Steps */}
+          <div className="lg:col-span-2 space-y-6">
+            <AnimatePresence mode="wait">
+              {/* Step 1: Account */}
+              {currentStep === 1 && (
+                <motion.div
+                  key="step1"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <h1 className="text-3xl font-bold mb-6">Checkout</h1>
+
+                  {/* Subscription Notice */}
+                  {hasSubscriptionItems && (
+                    <Card className="border-primary bg-primary/5 mb-6">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start gap-4">
+                          <div className="p-2 bg-primary/10 rounded-full">
+                            <RefreshCw className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-primary">
+                              Subscription items require an account
+                            </h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Create an account to manage your subscription deliveries, 
+                              update billing, and pause or modify your plan anytime.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>How would you like to checkout?</CardTitle>
+                      <CardDescription>
+                        {hasSubscriptionItems
+                          ? "Subscriptions require an account for delivery management"
+                          : "Continue as a guest or create an account for order tracking"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <RadioGroup
+                        value={checkoutMode}
+                        onValueChange={(v) => setCheckoutMode(v as any)}
+                        className="space-y-4"
                       >
-                        <RadioGroupItem value="guest" id="guest" />
-                        <Label htmlFor="guest" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <User className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                              <p className="font-medium">Continue as Guest</p>
-                              <p className="text-sm text-muted-foreground">
-                                Quick checkout without creating an account
-                              </p>
+                        {/* Guest Option */}
+                        {!hasSubscriptionItems && (
+                          <div
+                            className={`flex items-center space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                              checkoutMode === "guest"
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                            onClick={() => setCheckoutMode("guest")}
+                          >
+                            <RadioGroupItem value="guest" id="guest" />
+                            <Label htmlFor="guest" className="flex-1 cursor-pointer">
+                              <div className="flex items-center gap-3">
+                                <User className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                  <p className="font-medium">Continue as Guest</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Quick checkout without creating an account
+                                  </p>
+                                </div>
+                              </div>
+                            </Label>
+                          </div>
+                        )}
+
+                        {/* Login Option */}
+                        <div
+                          className={`flex items-center space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            checkoutMode === "login"
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => setCheckoutMode("login")}
+                        >
+                          <RadioGroupItem value="login" id="login" />
+                          <Label htmlFor="login" className="flex-1 cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              <LogIn className="h-5 w-5 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">Log In</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Use your existing account
+                                </p>
+                              </div>
+                            </div>
+                          </Label>
+                          {hasSubscriptionItems && (
+                            <Badge variant="secondary">Recommended</Badge>
+                          )}
+                        </div>
+
+                        {/* Signup Option */}
+                        <div
+                          className={`flex items-center space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            checkoutMode === "signup"
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => setCheckoutMode("signup")}
+                        >
+                          <RadioGroupItem value="signup" id="signup" />
+                          <Label htmlFor="signup" className="flex-1 cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              <UserPlus className="h-5 w-5 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">Create Account</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Track orders, manage subscriptions, earn rewards
+                                </p>
+                              </div>
+                            </div>
+                          </Label>
+                        </div>
+                      </RadioGroup>
+
+                      {/* Auth Buttons */}
+                      {(checkoutMode === "login" || checkoutMode === "signup") && (
+                        <div className="mt-6">
+                          <Button
+                            className="w-full"
+                            onClick={() =>
+                              navigate(`/auth?redirect=/checkout&mode=${checkoutMode}`)
+                            }
+                          >
+                            {checkoutMode === "login" ? "Continue to Login" : "Continue to Sign Up"}
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Guest Form */}
+                      {checkoutMode === "guest" && !hasSubscriptionItems && (
+                        <div className="mt-6 space-y-4">
+                          <Separator />
+                          <div className="grid sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="firstName">First Name *</Label>
+                              <Input
+                                id="firstName"
+                                value={guestFirstName}
+                                onChange={(e) => setGuestFirstName(e.target.value)}
+                                placeholder="John"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="lastName">Last Name *</Label>
+                              <Input
+                                id="lastName"
+                                value={guestLastName}
+                                onChange={(e) => setGuestLastName(e.target.value)}
+                                placeholder="Smith"
+                              />
                             </div>
                           </div>
-                        </Label>
-                      </div>
-                    )}
-
-                    {/* Login Option */}
-                    <div
-                      className={`flex items-center space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                        checkoutMode === "login"
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => setCheckoutMode("login")}
-                    >
-                      <RadioGroupItem value="login" id="login" />
-                      <Label htmlFor="login" className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <LogIn className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">Log In</p>
-                            <p className="text-sm text-muted-foreground">
-                              Use your existing account
-                            </p>
+                          <div className="space-y-2">
+                            <Label htmlFor="email">Email Address *</Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              value={guestEmail}
+                              onChange={(e) => setGuestEmail(e.target.value)}
+                              placeholder="john@example.com"
+                            />
                           </div>
                         </div>
-                      </Label>
-                      {hasSubscriptionItems && (
-                        <Badge variant="secondary">Recommended</Badge>
                       )}
-                    </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
 
-                    {/* Signup Option */}
-                    <div
-                      className={`flex items-center space-x-4 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                        checkoutMode === "signup"
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => setCheckoutMode("signup")}
-                    >
-                      <RadioGroupItem value="signup" id="signup" />
-                      <Label htmlFor="signup" className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <UserPlus className="h-5 w-5 text-muted-foreground" />
-                          <div>
-                            <p className="font-medium">Create Account</p>
-                            <p className="text-sm text-muted-foreground">
-                              Track orders, manage subscriptions, earn rewards
-                            </p>
-                          </div>
-                        </div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
+              {/* Step 2: Shipping Address */}
+              {currentStep === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <CheckoutAddressForm
+                    userId={user?.id}
+                    selectedAddressId={selectedAddressId}
+                    onAddressSelect={(id, data) => {
+                      setSelectedAddressId(id);
+                      if (data) setGuestAddress(data);
+                    }}
+                    guestMode={!user}
+                  />
+                </motion.div>
+              )}
 
-                  {/* Auth Buttons */}
-                  {(checkoutMode === "login" || checkoutMode === "signup") && (
-                    <div className="mt-6">
-                      <Button
-                        className="w-full"
-                        onClick={() =>
-                          navigate(`/auth?redirect=/checkout&mode=${checkoutMode}`)
-                        }
-                      >
-                        {checkoutMode === "login" ? "Continue to Login" : "Continue to Sign Up"}
-                      </Button>
-                    </div>
+              {/* Step 3: Payment */}
+              {currentStep === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <CheckoutPaymentForm
+                    paymentData={paymentData}
+                    onPaymentDataChange={setPaymentData}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-4">
+              <Button
+                variant="outline"
+                onClick={handlePreviousStep}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+
+              {currentStep < 3 ? (
+                <Button
+                  onClick={handleNextStep}
+                  disabled={!canProceedToNext()}
+                >
+                  Continue
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handlePlaceOrder}
+                  disabled={!canProceedToNext() || processingCheckout}
+                  className="gap-2"
+                >
+                  {processingCheckout ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4" />
+                      Place Order - ${totalPrice.toFixed(2)}
+                    </>
                   )}
-
-                  {/* Guest Form */}
-                  {checkoutMode === "guest" && !hasSubscriptionItems && (
-                    <div className="mt-6 space-y-4">
-                      <Separator />
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">First Name *</Label>
-                          <Input
-                            id="firstName"
-                            value={guestFirstName}
-                            onChange={(e) => setGuestFirstName(e.target.value)}
-                            placeholder="John"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Last Name *</Label>
-                          <Input
-                            id="lastName"
-                            value={guestLastName}
-                            onChange={(e) => setGuestLastName(e.target.value)}
-                            placeholder="Smith"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={guestEmail}
-                          onChange={(e) => setGuestEmail(e.target.value)}
-                          placeholder="john@example.com"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Logged-in User Info */}
-            {user && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Logged in as {user.email}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            )}
-
-            {/* Payment Section - Show when ready */}
-            {(user || (checkoutMode === "guest" && !hasSubscriptionItems)) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    Payment
-                  </CardTitle>
-                  <CardDescription>
-                    Secure checkout powered by Stripe
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={handleProceedToPayment}
-                    disabled={processingCheckout}
-                  >
-                    {processingCheckout ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Pay ${totalPrice.toFixed(2)}
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Right Column - Order Summary */}
