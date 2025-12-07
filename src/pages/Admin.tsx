@@ -4,6 +4,7 @@ import { InventoryManagement } from '@/components/admin/InventoryManagement';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
 import { OrderManagement } from '@/components/admin/OrderManagement';
 import AdminSubscriptionManagement from '@/components/admin/SubscriptionManagement';
+import SubscriptionAnalytics from '@/components/admin/SubscriptionAnalytics';
 import { Routes, Route } from 'react-router-dom';
 
 const AdminDashboardHome = () => {
@@ -45,6 +46,7 @@ const AdminRoutes = () => {
       <Route path="/" element={<Admin />}>
         <Route index element={<AdminDashboardHome />} />
         <Route path="subscriptions" element={<AdminSubscriptionManagement />} />
+        <Route path="subscription-analytics" element={<SubscriptionAnalytics />} />
         <Route path="orders" element={<OrderManagement />} />
         <Route path="inventory" element={<InventoryManagement />} />
         <Route path="analytics" element={<AnalyticsDashboard />} />

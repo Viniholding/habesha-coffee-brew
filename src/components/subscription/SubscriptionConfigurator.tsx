@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Coffee, Package, Truck, Tag, Loader2, Gift, CreditCard, Sparkles } from "lucide-react";
+import { Calendar, Coffee, Package, Truck, Tag, Loader2, Gift, CreditCard, Sparkles, Check } from "lucide-react";
 import { toast } from "sonner";
 import { subscriptionProducts, grindOptions, bagSizeOptions, frequencyOptions } from "@/lib/subscriptionProducts";
 
@@ -28,6 +27,7 @@ const prepaidOptions = [
 
 const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorProps) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [subscriptionType, setSubscriptionType] = useState<"regular" | "prepaid" | "gift">("regular");
@@ -40,6 +40,9 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
   const [frequency, setFrequency] = useState("biweekly");
   const [startDate, setStartDate] = useState<"now" | "future">("now");
   const [couponCode, setCouponCode] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [referralDiscount, setReferralDiscount] = useState(0);
+  const [referralApplied, setReferralApplied] = useState(false);
 
   // Prepaid state
   const [prepaidMonths, setPrepaidMonths] = useState("6");
@@ -52,11 +55,39 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
 
   useEffect(() => {
     checkUser();
-  }, []);
+    // Check for referral code in URL
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      validateReferralCode(refCode);
+    }
+  }, [searchParams]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+  };
+
+  const validateReferralCode = async (code: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("referrals")
+        .select("*")
+        .eq("referral_code", code)
+        .eq("status", "pending")
+        .single();
+
+      if (error || !data) {
+        console.error("Invalid referral code");
+        return;
+      }
+
+      setReferralCode(code);
+      setReferralDiscount(data.referee_discount_percent || 15);
+      setReferralApplied(true);
+      toast.success(`Referral code applied! You get ${data.referee_discount_percent || 15}% off your first order`);
+    } catch (error) {
+      console.error("Error validating referral code:", error);
+    }
   };
 
   const selectedProductData = subscriptionProducts.find(p => p.id === selectedProduct);
@@ -70,10 +101,14 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
     let discountPercent = 10; // Base subscription discount
     let totalDeliveries = 1;
 
+    // Add referral discount
+    if (referralApplied) {
+      discountPercent += referralDiscount;
+    }
+
     if (subscriptionType === "prepaid") {
       const prepaidOption = prepaidOptions.find(p => p.value === prepaidMonths);
       discountPercent += prepaidOption?.discount || 0;
-      // Calculate deliveries based on frequency
       const daysPerDelivery = frequencyData?.days || 14;
       const months = parseInt(prepaidMonths);
       totalDeliveries = Math.floor((months * 30) / daysPerDelivery);
@@ -127,12 +162,11 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
           grind,
           bagSize,
           couponCode: couponCode || undefined,
+          referralCode: referralApplied ? referralCode : undefined,
           subscriptionType,
-          // Prepaid fields
           isPrepaid: subscriptionType === "prepaid",
           prepaidMonths: subscriptionType === "prepaid" ? parseInt(prepaidMonths) : undefined,
           prepaidTotal: subscriptionType === "prepaid" ? pricing.total : undefined,
-          // Gift fields
           isGift: subscriptionType === "gift",
           giftRecipientName: subscriptionType === "gift" ? giftRecipientName : undefined,
           giftRecipientEmail: subscriptionType === "gift" ? giftRecipientEmail : undefined,

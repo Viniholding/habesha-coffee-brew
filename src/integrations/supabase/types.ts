@@ -539,6 +539,54 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          referee_credited: boolean
+          referee_discount_percent: number
+          referee_email: string | null
+          referee_user_id: string | null
+          referral_code: string
+          referrer_credited: boolean
+          referrer_discount_percent: number
+          referrer_user_id: string
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          referee_credited?: boolean
+          referee_discount_percent?: number
+          referee_email?: string | null
+          referee_user_id?: string | null
+          referral_code: string
+          referrer_credited?: boolean
+          referrer_discount_percent?: number
+          referrer_user_id: string
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          referee_credited?: boolean
+          referee_discount_percent?: number
+          referee_email?: string | null
+          referee_user_id?: string | null
+          referral_code?: string
+          referrer_credited?: boolean
+          referrer_discount_percent?: number
+          referrer_user_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       subscription_addons: {
         Row: {
           created_at: string

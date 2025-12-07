@@ -18,7 +18,8 @@ import SubscriptionManagement from "@/components/account/SubscriptionManagement"
 import ProfilePictureUpload from "@/components/account/ProfilePictureUpload";
 import AvatarGallery from "@/components/account/AvatarGallery";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
-import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw, Images, Bell } from "lucide-react";
+import ReferralProgram from "@/components/account/ReferralProgram";
+import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw, Images, Bell, Gift } from "lucide-react";
 
 const Account = () => {
   const navigate = useNavigate();
@@ -222,6 +223,13 @@ const Account = () => {
                 <span className="font-medium">Avatar Gallery</span>
               </TabsTrigger>
               <TabsTrigger 
+                value="referrals" 
+                className="flex items-center justify-start gap-3 w-full px-4 py-3 rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 hover:bg-muted/50"
+              >
+                <Gift className="h-4 w-4" />
+                <span className="font-medium">Referrals</span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="settings" 
                 className="flex items-center justify-start gap-3 w-full px-4 py-3 rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300 hover:bg-muted/50"
               >
@@ -265,6 +273,10 @@ const Account = () => {
                   currentAvatarUrl={avatarUrl}
                   onAvatarSelect={setAvatarUrl}
                 />
+              </TabsContent>
+
+              <TabsContent value="referrals" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
+                <ReferralProgram userId={user.id} />
               </TabsContent>
 
               <TabsContent value="settings" className="mt-0 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">

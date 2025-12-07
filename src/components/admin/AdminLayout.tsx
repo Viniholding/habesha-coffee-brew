@@ -10,7 +10,7 @@ import {
   Home,
   RefreshCw,
   ShoppingCart,
-  Users
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Subscriptions', href: '/admin/subscriptions', icon: RefreshCw },
+  { name: 'Subscription Analytics', href: '/admin/subscription-analytics', icon: TrendingUp },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Inventory', href: '/admin/inventory', icon: Package },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
