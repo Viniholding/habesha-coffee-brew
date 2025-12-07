@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Search, Eye, Package, Truck, CheckCircle, Clock, XCircle, RefreshCw, ExternalLink } from 'lucide-react';
+import { Search, Eye, Package, Truck, CheckCircle, Clock, XCircle, RefreshCw, ExternalLink, Mail, CheckSquare, Square } from 'lucide-react';
 import { format } from 'date-fns';
 import { ShippingTrackingForm } from './ShippingTrackingForm';
 import { shippingStatusOptions, getCarrierName } from '@/lib/carriers';
@@ -59,6 +59,8 @@ export const OrderManagement = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [savingTracking, setSavingTracking] = useState(false);
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -198,14 +200,13 @@ export const OrderManagement = () => {
 
   const handleSendShippingEmail = async (order: Order) => {
     try {
-      // Call edge function to send shipping email
-      const { error } = await supabase.functions.invoke('send-subscription-email', {
+      const { error } = await supabase.functions.invoke('send-shipping-notification', {
         body: {
-          type: 'shipping_confirmation',
           orderId: order.id,
           trackingNumber: order.tracking_number,
           trackingUrl: order.tracking_url,
           carrier: order.carrier,
+          estimatedDelivery: order.estimated_delivery_date,
         }
       });
 
@@ -215,6 +216,100 @@ export const OrderManagement = () => {
       console.error('Error sending email:', error);
       toast.error('Failed to send shipping email');
     }
+  };
+
+  const toggleOrderSelection = (orderId: string) => {
+    setSelectedOrders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllOrders = () => {
+    if (selectedOrders.size === filteredOrders.length) {
+      setSelectedOrders(new Set());
+    } else {
+      setSelectedOrders(new Set(filteredOrders.map(o => o.id)));
+    }
+  };
+
+  const handleBulkStatusUpdate = async (newStatus: string) => {
+    if (selectedOrders.size === 0) {
+      toast.error('No orders selected');
+      return;
+    }
+
+    setBulkUpdating(true);
+    try {
+      const updateData: Partial<Order> = { status: newStatus };
+      
+      if (newStatus === 'shipped') {
+        updateData.shipped_at = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .in('id', Array.from(selectedOrders));
+
+      if (error) throw error;
+
+      toast.success(`Updated ${selectedOrders.size} orders to ${newStatus}`);
+      setSelectedOrders(new Set());
+      fetchOrders();
+    } catch (error) {
+      toast.error('Failed to update orders');
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  const handleBulkSendEmails = async () => {
+    if (selectedOrders.size === 0) {
+      toast.error('No orders selected');
+      return;
+    }
+
+    setBulkUpdating(true);
+    const selectedOrdersList = orders.filter(o => selectedOrders.has(o.id));
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const order of selectedOrdersList) {
+      if (!order.tracking_number) {
+        failCount++;
+        continue;
+      }
+      try {
+        await supabase.functions.invoke('send-shipping-notification', {
+          body: {
+            orderId: order.id,
+            trackingNumber: order.tracking_number,
+            trackingUrl: order.tracking_url,
+            carrier: order.carrier,
+            estimatedDelivery: order.estimated_delivery_date,
+          }
+        });
+        successCount++;
+      } catch {
+        failCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`Sent ${successCount} shipping emails`);
+    }
+    if (failCount > 0) {
+      toast.error(`Failed to send ${failCount} emails (missing tracking info)`);
+    }
+    
+    setSelectedOrders(new Set());
+    setBulkUpdating(false);
   };
 
   const getStatusBadge = (status: string) => {
@@ -338,9 +433,60 @@ export const OrderManagement = () => {
             </Select>
           </div>
 
+          {/* Bulk Actions Bar */}
+          {selectedOrders.size > 0 && (
+            <div className="flex items-center gap-4 p-3 mb-4 bg-primary/10 rounded-lg border border-primary/20">
+              <span className="text-sm font-medium">
+                {selectedOrders.size} order{selectedOrders.size > 1 ? 's' : ''} selected
+              </span>
+              <div className="flex items-center gap-2">
+                <Select onValueChange={handleBulkStatusUpdate} disabled={bulkUpdating}>
+                  <SelectTrigger className="w-[160px] h-8">
+                    <SelectValue placeholder="Update Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map(status => (
+                      <SelectItem key={status.value} value={status.value}>
+                        {status.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBulkSendEmails}
+                  disabled={bulkUpdating}
+                >
+                  <Mail className="h-4 w-4 mr-1" />
+                  Send Emails
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedOrders(new Set())}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+          )}
+
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[40px]">
+                  <button
+                    onClick={toggleAllOrders}
+                    className="flex items-center justify-center"
+                  >
+                    {selectedOrders.size === filteredOrders.length && filteredOrders.length > 0 ? (
+                      <CheckSquare className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Square className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </TableHead>
                 <TableHead>Order #</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Status</TableHead>
@@ -353,6 +499,18 @@ export const OrderManagement = () => {
             <TableBody>
               {filteredOrders.map((order) => (
                 <TableRow key={order.id} className="hover:bg-muted/50 transition-colors">
+                  <TableCell>
+                    <button
+                      onClick={() => toggleOrderSelection(order.id)}
+                      className="flex items-center justify-center"
+                    >
+                      {selectedOrders.has(order.id) ? (
+                        <CheckSquare className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Square className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                  </TableCell>
                   <TableCell className="font-medium">{order.order_number}</TableCell>
                   <TableCell>{format(new Date(order.created_at), 'MMM dd, yyyy')}</TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
@@ -391,7 +549,7 @@ export const OrderManagement = () => {
               ))}
               {filteredOrders.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     No orders found
                   </TableCell>
                 </TableRow>
