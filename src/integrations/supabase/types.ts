@@ -539,47 +539,197 @@ export type Database = {
         }
         Relationships: []
       }
-      subscriptions: {
+      subscription_events: {
         Row: {
           created_at: string
-          frequency: string
+          created_by: string | null
+          event_data: Json | null
+          event_type: string
           id: string
+          subscription_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          subscription_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_programs: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          bag_size: string | null
+          cancelled_at: string | null
+          created_at: string
+          discount_code: string | null
+          discount_percent: number | null
+          frequency: string
+          gift_end_date: string | null
+          gift_message: string | null
+          gift_recipient_email: string | null
+          gift_recipient_name: string | null
+          grind: string | null
+          id: string
+          is_gift: boolean | null
+          is_prepaid: boolean | null
+          last_order_id: string | null
           next_delivery_date: string | null
+          paused_at: string | null
+          payment_method_id: string | null
+          prepaid_end_date: string | null
+          prepaid_months: number | null
           price: number
           product_id: string
           product_name: string
+          program_id: string | null
           quantity: number
+          shipping_address_id: string | null
           status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          bag_size?: string | null
+          cancelled_at?: string | null
           created_at?: string
+          discount_code?: string | null
+          discount_percent?: number | null
           frequency?: string
+          gift_end_date?: string | null
+          gift_message?: string | null
+          gift_recipient_email?: string | null
+          gift_recipient_name?: string | null
+          grind?: string | null
           id?: string
+          is_gift?: boolean | null
+          is_prepaid?: boolean | null
+          last_order_id?: string | null
           next_delivery_date?: string | null
+          paused_at?: string | null
+          payment_method_id?: string | null
+          prepaid_end_date?: string | null
+          prepaid_months?: number | null
           price: number
           product_id: string
           product_name: string
+          program_id?: string | null
           quantity?: number
+          shipping_address_id?: string | null
           status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          bag_size?: string | null
+          cancelled_at?: string | null
           created_at?: string
+          discount_code?: string | null
+          discount_percent?: number | null
           frequency?: string
+          gift_end_date?: string | null
+          gift_message?: string | null
+          gift_recipient_email?: string | null
+          gift_recipient_name?: string | null
+          grind?: string | null
           id?: string
+          is_gift?: boolean | null
+          is_prepaid?: boolean | null
+          last_order_id?: string | null
           next_delivery_date?: string | null
+          paused_at?: string | null
+          payment_method_id?: string | null
+          prepaid_end_date?: string | null
+          prepaid_months?: number | null
           price?: number
           product_id?: string
           product_name?: string
+          program_id?: string | null
           quantity?: number
+          shipping_address_id?: string | null
           status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_shipping_address_id_fkey"
+            columns: ["shipping_address_id"]
+            isOneToOne: false
+            referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
