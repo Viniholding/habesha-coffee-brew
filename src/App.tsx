@@ -19,6 +19,7 @@ import Goodbye from "./pages/Goodbye";
 import DeletionScheduled from "./pages/DeletionScheduled";
 import Admin from "./pages/Admin";
 import Subscribe from "./pages/Subscribe";
+import SubscriptionReview from "./pages/SubscriptionReview";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/account/deletion-scheduled" element={<DeletionScheduled />} />
           <Route path="/goodbye" element={<Goodbye />} />
           <Route path="/subscribe" element={<Subscribe />} />
+          <Route path="/subscription/review" element={<SubscriptionReview />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/admin/*" element={<Admin />} />

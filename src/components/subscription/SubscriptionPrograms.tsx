@@ -25,6 +25,9 @@ interface SubscriptionProgramsProps {
     bagSize: string;
     quantity: number;
     frequency: string;
+    subscriptionType: "regular" | "prepaid" | "gift";
+    prepaidMonths?: number;
+    giftDuration?: number;
   }) => void;
   showQuiz?: boolean;
   onShowQuizChange?: (show: boolean) => void;
@@ -53,6 +56,13 @@ const SubscriptionPrograms = ({
 
   const handleBuildYourOwnClick = (programId: string) => {
     onShowQuizChange?.(true);
+    // Scroll to quiz after a short delay to allow animation to start
+    setTimeout(() => {
+      document.getElementById("build-your-own-quiz")?.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "center" 
+      });
+    }, 100);
   };
 
   const handleQuizComplete = (selections: {
@@ -62,6 +72,9 @@ const SubscriptionPrograms = ({
     bagSize: string;
     quantity: number;
     frequency: string;
+    subscriptionType: "regular" | "prepaid" | "gift";
+    prepaidMonths?: number;
+    giftDuration?: number;
   }) => {
     onQuizComplete?.(selections);
   };
@@ -164,6 +177,7 @@ const SubscriptionPrograms = ({
         <AnimatePresence>
           {showQuiz && (
             <motion.div
+              id="build-your-own-quiz"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
