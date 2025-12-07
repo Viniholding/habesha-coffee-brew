@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, Coffee, Star, Leaf, Palette, X } from "lucide-react";
+import { ArrowRight, Sparkles, Coffee, Star, Leaf, Palette, X, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import CoffeeQuiz from "./CoffeeQuiz";
 
@@ -39,6 +40,7 @@ const programIcons: Record<string, any> = {
   "Best Sellers": Star,
   "Seasonal Collection": Leaf,
   "Build Your Own": Palette,
+  "Shop All": ShoppingBag,
 };
 
 const SubscriptionPrograms = ({ 
@@ -47,6 +49,7 @@ const SubscriptionPrograms = ({
   showQuiz = false,
   onShowQuizChange
 }: SubscriptionProgramsProps) => {
+  const navigate = useNavigate();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -171,6 +174,32 @@ const SubscriptionPrograms = ({
               </Card>
             );
           })}
+          
+          {/* Shop All Subscriptions Card */}
+          <Card 
+            className="relative overflow-hidden transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)] border-dashed border-2"
+          >
+            <CardHeader>
+              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-4">
+                <ShoppingBag className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle className="text-xl">Shop All Subscriptions</CardTitle>
+              <CardDescription className="text-base">
+                Browse our complete collection of subscription coffees and find your perfect match.
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate("/products?category=coffee")}
+              >
+                View All Coffees
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Build Your Own Quiz Panel */}
