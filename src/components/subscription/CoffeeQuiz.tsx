@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronLeft, ChevronRight, Coffee, HelpCircle, Sparkles, Check, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coffee, HelpCircle, Sparkles, Check, Package, Gift, CreditCard, RefreshCw } from "lucide-react";
 
 // Flavor profiles
 const flavorProfiles = [
@@ -108,6 +109,21 @@ const grindExplanations = {
   },
 };
 
+// Prepaid options
+const prepaidMonthOptions = [
+  { value: 3, label: "3 Months", discount: "5% off" },
+  { value: 6, label: "6 Months", discount: "10% off", recommended: true },
+  { value: 12, label: "12 Months", discount: "15% off" },
+];
+
+// Gift duration options
+const giftDurationOptions = [
+  { value: 1, label: "1 Month" },
+  { value: 3, label: "3 Months", popular: true },
+  { value: 6, label: "6 Months" },
+  { value: 12, label: "12 Months" },
+];
+
 interface CoffeeQuizProps {
   onComplete: (selections: {
     flavorProfile: string;
@@ -116,6 +132,9 @@ interface CoffeeQuizProps {
     bagSize: string;
     quantity: number;
     frequency: string;
+    subscriptionType: "regular" | "prepaid" | "gift";
+    prepaidMonths?: number;
+    giftDuration?: number;
   }) => void;
   initialValues?: {
     flavorProfile?: string;
@@ -123,6 +142,7 @@ interface CoffeeQuizProps {
     bagSize?: string;
     quantity?: number;
     frequency?: string;
+    subscriptionType?: "regular" | "prepaid" | "gift";
   };
 }
 
@@ -133,6 +153,11 @@ const CoffeeQuiz = ({ onComplete, initialValues }: CoffeeQuizProps) => {
   const [bagSize, setBagSize] = useState(initialValues?.bagSize || "");
   const [quantityOption, setQuantityOption] = useState("");
   const [showGrindInfo, setShowGrindInfo] = useState(false);
+  const [subscriptionType, setSubscriptionType] = useState<"regular" | "prepaid" | "gift">(
+    initialValues?.subscriptionType || "regular"
+  );
+  const [prepaidMonths, setPrepaidMonths] = useState(6);
+  const [giftDuration, setGiftDuration] = useState(3);
 
   const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
@@ -150,9 +175,12 @@ const CoffeeQuiz = ({ onComplete, initialValues }: CoffeeQuizProps) => {
         bagSize,
         quantity: selectedQuantity.bags,
         frequency: selectedQuantity.frequency,
+        subscriptionType,
+        prepaidMonths: subscriptionType === "prepaid" ? prepaidMonths : undefined,
+        giftDuration: subscriptionType === "gift" ? giftDuration : undefined,
       });
     }
-  }, [flavorProfile, brewMethod, bagSize, quantityOption]);
+  }, [flavorProfile, brewMethod, bagSize, quantityOption, subscriptionType, prepaidMonths, giftDuration]);
 
   const canProceed = () => {
     if (step === 1) return !!flavorProfile;
@@ -171,6 +199,92 @@ const CoffeeQuiz = ({ onComplete, initialValues }: CoffeeQuizProps) => {
 
   return (
     <div className="space-y-8">
+      {/* Subscription Type Tabs */}
+      <div className="flex justify-center">
+        <Tabs value={subscriptionType} onValueChange={(v) => setSubscriptionType(v as typeof subscriptionType)}>
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="regular" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Regular</span>
+            </TabsTrigger>
+            <TabsTrigger value="prepaid" className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">Prepaid</span>
+            </TabsTrigger>
+            <TabsTrigger value="gift" className="gap-2">
+              <Gift className="h-4 w-4" />
+              <span className="hidden sm:inline">Gift</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Subscription Type Info */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={subscriptionType}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          className="text-center"
+        >
+          {subscriptionType === "regular" && (
+            <p className="text-sm text-muted-foreground">
+              Flexible recurring delivery. Pause, skip, or cancel anytime.
+            </p>
+          )}
+          {subscriptionType === "prepaid" && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Pay upfront and save! Choose your prepaid duration:
+              </p>
+              <div className="flex justify-center gap-2">
+                {prepaidMonthOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={prepaidMonths === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPrepaidMonths(option.value)}
+                    className="relative"
+                  >
+                    {option.label}
+                    {option.recommended && (
+                      <Badge className="absolute -top-2 -right-2 text-[10px] px-1 py-0">Best</Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-green-600 font-medium">
+                {prepaidMonthOptions.find(o => o.value === prepaidMonths)?.discount}
+              </p>
+            </div>
+          )}
+          {subscriptionType === "gift" && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Give the gift of great coffee! Choose gift duration:
+              </p>
+              <div className="flex justify-center gap-2">
+                {giftDurationOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={giftDuration === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setGiftDuration(option.value)}
+                    className="relative"
+                  >
+                    {option.label}
+                    {option.popular && (
+                      <Badge className="absolute -top-2 -right-2 text-[10px] px-1 py-0">Popular</Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
       {/* Progress Bar */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
