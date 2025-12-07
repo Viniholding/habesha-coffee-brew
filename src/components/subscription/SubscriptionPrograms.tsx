@@ -1,0 +1,135 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Sparkles, Coffee, Star, Leaf, Palette } from "lucide-react";
+
+interface Program {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+}
+
+interface SubscriptionProgramsProps {
+  onProgramSelect: (programId: string) => void;
+}
+
+const programIcons: Record<string, any> = {
+  "Roaster's Choice": Sparkles,
+  "Espresso Lovers": Coffee,
+  "Best Sellers": Star,
+  "Seasonal Collection": Leaf,
+  "Build Your Own": Palette,
+};
+
+const SubscriptionPrograms = ({ onProgramSelect }: SubscriptionProgramsProps) => {
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPrograms();
+  }, []);
+
+  const fetchPrograms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("subscription_programs")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order");
+
+      if (error) throw error;
+      setPrograms(data || []);
+    } catch (error) {
+      console.error("Error fetching programs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded w-3/4" />
+                  <div className="h-4 bg-muted rounded w-full mt-2" />
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <Badge variant="outline" className="border-primary text-primary mb-4">
+            Our Programs
+          </Badge>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Choose Your Experience
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Select from our curated subscription programs or build your own custom experience.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {programs.map((program) => {
+            const Icon = programIcons[program.name] || Coffee;
+            const isBuildYourOwn = program.name === "Build Your Own";
+            
+            return (
+              <Card 
+                key={program.id}
+                className={`relative overflow-hidden transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)] ${
+                  isBuildYourOwn ? "md:col-span-2 lg:col-span-1 border-primary/30 bg-gradient-to-br from-card to-primary/5" : ""
+                }`}
+              >
+                {isBuildYourOwn && (
+                  <Badge className="absolute top-4 right-4 bg-primary">
+                    Most Flexible
+                  </Badge>
+                )}
+                
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-4">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">{program.name}</CardTitle>
+                  <CardDescription className="text-base">
+                    {program.description}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent>
+                  <Button 
+                    variant={isBuildYourOwn ? "hero" : "outline"} 
+                    className="w-full"
+                    onClick={() => onProgramSelect(program.id)}
+                  >
+                    {isBuildYourOwn ? "Start Building" : "Subscribe"}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default SubscriptionPrograms;
