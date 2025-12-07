@@ -284,6 +284,7 @@ export type Database = {
           email_newsletter: boolean
           email_order_updates: boolean
           email_promotional: boolean
+          email_shipping_updates: boolean
           id: string
           sms_order_updates: boolean
           sms_phone_number: string | null
@@ -296,6 +297,7 @@ export type Database = {
           email_newsletter?: boolean
           email_order_updates?: boolean
           email_promotional?: boolean
+          email_shipping_updates?: boolean
           id?: string
           sms_order_updates?: boolean
           sms_phone_number?: string | null
@@ -308,6 +310,7 @@ export type Database = {
           email_newsletter?: boolean
           email_order_updates?: boolean
           email_promotional?: boolean
+          email_shipping_updates?: boolean
           id?: string
           sms_order_updates?: boolean
           sms_phone_number?: string | null
