@@ -31,6 +31,8 @@ import CheckoutAddressForm from "@/components/checkout/CheckoutAddressForm";
 import CheckoutPaymentForm from "@/components/checkout/CheckoutPaymentForm";
 import { CoffeeBeanLoading } from "@/components/ui/CoffeeBeanSpinner";
 import { motion, AnimatePresence } from "framer-motion";
+import { getGuestCart, removeFromGuestCart, clearGuestCart, GuestCartItem } from "@/lib/guestCart";
+import productBag from "@/assets/product-bag.jpg";
 
 interface CartItem {
   id: string;
@@ -39,9 +41,10 @@ interface CartItem {
     id: string;
     name: string;
     price: number;
-    image_url: string;
+    image_url: string | null;
     category: string | null;
   };
+  isGuest?: boolean;
 }
 
 const checkoutSteps = [
@@ -78,8 +81,11 @@ const Checkout = () => {
   });
 
   useEffect(() => {
-    checkAuth();
-    fetchCartItems();
+    const init = async () => {
+      await checkAuth();
+      await fetchCartItems();
+    };
+    init();
   }, []);
 
   useEffect(() => {
@@ -95,12 +101,27 @@ const Checkout = () => {
     if (user) {
       setCurrentStep(2);
     }
-    setLoading(false);
   };
 
   const fetchCartItems = async () => {
     const { data: { user } } = await supabase.auth.getUser();
+    
     if (!user) {
+      // Load guest cart from localStorage
+      const guestItems = getGuestCart();
+      const guestCartItems: CartItem[] = guestItems.map((item: GuestCartItem, index: number) => ({
+        id: `guest-${index}`,
+        quantity: item.quantity,
+        product: {
+          id: item.productId,
+          name: item.productName,
+          price: item.price,
+          image_url: item.imageUrl,
+          category: null,
+        },
+        isGuest: true,
+      }));
+      setCartItems(guestCartItems);
       setLoading(false);
       return;
     }
@@ -139,7 +160,17 @@ const Checkout = () => {
     0
   );
 
-  const removeItem = async (itemId: string) => {
+  const removeItem = async (itemId: string, isGuest?: boolean) => {
+    if (isGuest) {
+      // Find the item to get the productId
+      const item = cartItems.find(i => i.id === itemId);
+      if (item) {
+        removeFromGuestCart(item.product.id);
+        setCartItems(items => items.filter(i => i.id !== itemId));
+      }
+      return;
+    }
+    
     try {
       await supabase.from("cart_items").delete().eq("id", itemId);
       setCartItems(items => items.filter(i => i.id !== itemId));
@@ -233,6 +264,9 @@ const Checkout = () => {
       // Clear cart after successful order
       if (user) {
         await supabase.from("cart_items").delete().eq("user_id", user.id);
+      } else {
+        // Clear guest cart
+        clearGuestCart();
       }
 
       // Navigate to success page
@@ -260,7 +294,7 @@ const Checkout = () => {
     );
   }
 
-  if (cartItems.length === 0 && user) {
+  if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -605,7 +639,7 @@ const Checkout = () => {
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex gap-3">
                     <img
-                      src={item.product.image_url}
+                      src={item.product.image_url || productBag}
                       alt={item.product.name}
                       className="w-16 h-16 rounded-md object-cover bg-muted"
                     />
@@ -629,7 +663,7 @@ const Checkout = () => {
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(item.id, item.isGuest)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

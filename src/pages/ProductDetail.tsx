@@ -108,14 +108,18 @@ const ProductDetail = () => {
       return;
     }
 
-    // One-time purchase - add to cart
+    // One-time purchase - add to cart (works for guests and logged-in users)
     setAddingToCart(true);
     try {
-      const result = await addToCart(product.id, quantity);
-      if (result.requiresAuth) {
-        // Switch to subscription tab instead of showing error
-        toast.info("Sign in required for cart. Try subscribing instead!");
-        setPurchaseType("subscription");
+      const result = await addToCart(product.id, quantity, {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image_url: product.image_url,
+      });
+      if (result.isGuestCart) {
+        // Guest cart - notify user they can continue shopping or checkout
+        toast.info("Continue shopping or checkout as guest!");
       }
     } catch (error) {
       console.error("Error adding to cart:", error);

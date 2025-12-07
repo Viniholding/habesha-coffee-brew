@@ -1,11 +1,15 @@
 // Subscription product configuration with Stripe product IDs
+import coffeeYirgacheffe from "@/assets/coffee-yirgacheffe.jpg";
+import coffeeSidamo from "@/assets/coffee-sidamo.jpg";
+import coffeeHarar from "@/assets/coffee-harar.jpg";
+
 export interface SubscriptionProduct {
   id: string;
   name: string;
   description: string;
   price: number;
   stripeProductId: string;
-  imageUrl?: string;
+  imageUrl: string;
 }
 
 // These are mapped to the Stripe products created
@@ -16,7 +20,7 @@ export const subscriptionProducts: SubscriptionProduct[] = [
     description: "Light roast with floral notes and citrus undertones",
     price: 18.99,
     stripeProductId: "prod_TYeCF06JT7TT0T",
-    imageUrl: "/lovable-uploads/coffee-yirgacheffe.jpg",
+    imageUrl: coffeeYirgacheffe,
   },
   {
     id: "sidamo-dark-roast",
@@ -24,7 +28,7 @@ export const subscriptionProducts: SubscriptionProduct[] = [
     description: "Bold and rich with chocolate notes",
     price: 16.99,
     stripeProductId: "prod_TYeCYP1mJoA0Kn",
-    imageUrl: "/lovable-uploads/coffee-sidamo.jpg",
+    imageUrl: coffeeSidamo,
   },
   {
     id: "harar-heritage-blend",
@@ -32,7 +36,7 @@ export const subscriptionProducts: SubscriptionProduct[] = [
     description: "Medium roast with wine-like acidity",
     price: 19.99,
     stripeProductId: "prod_TYeDcUTgXeRQQM",
-    imageUrl: "/lovable-uploads/coffee-harar.jpg",
+    imageUrl: coffeeHarar,
   },
 ];
 
