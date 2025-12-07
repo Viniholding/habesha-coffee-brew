@@ -16,6 +16,7 @@ export const subscriptionProducts: SubscriptionProduct[] = [
     description: "Light roast with floral notes and citrus undertones",
     price: 18.99,
     stripeProductId: "prod_TYeCF06JT7TT0T",
+    imageUrl: "/lovable-uploads/coffee-yirgacheffe.jpg",
   },
   {
     id: "sidamo-dark-roast",
@@ -23,6 +24,7 @@ export const subscriptionProducts: SubscriptionProduct[] = [
     description: "Bold and rich with chocolate notes",
     price: 16.99,
     stripeProductId: "prod_TYeCYP1mJoA0Kn",
+    imageUrl: "/lovable-uploads/coffee-sidamo.jpg",
   },
   {
     id: "harar-heritage-blend",
@@ -30,6 +32,7 @@ export const subscriptionProducts: SubscriptionProduct[] = [
     description: "Medium roast with wine-like acidity",
     price: 19.99,
     stripeProductId: "prod_TYeDcUTgXeRQQM",
+    imageUrl: "/lovable-uploads/coffee-harar.jpg",
   },
 ];
 

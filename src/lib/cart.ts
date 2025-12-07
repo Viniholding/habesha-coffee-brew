@@ -1,13 +1,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const addToCart = async (productId: string, quantity: number = 1) => {
+export interface AddToCartResult {
+  success: boolean;
+  requiresAuth: boolean;
+}
+
+export const addToCart = async (productId: string, quantity: number = 1): Promise<AddToCartResult> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      toast.error("Please sign in to add items to cart");
-      return false;
+      // Return that auth is required instead of showing toast
+      return { success: false, requiresAuth: true };
     }
 
     // Check if item already exists in cart
@@ -42,10 +47,10 @@ export const addToCart = async (productId: string, quantity: number = 1) => {
     }
 
     toast.success("Added to cart");
-    return true;
+    return { success: true, requiresAuth: false };
   } catch (error) {
     console.error("Error adding to cart:", error);
     toast.error("Failed to add to cart");
-    return false;
+    return { success: false, requiresAuth: false };
   }
 };

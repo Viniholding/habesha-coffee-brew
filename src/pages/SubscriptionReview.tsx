@@ -423,10 +423,25 @@ const SubscriptionReview = () => {
             >
               <Card className="border-primary/20">
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Coffee className="h-8 w-8 text-primary" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      {/* Product Image */}
+                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-primary/10 flex-shrink-0">
+                        {productData?.imageUrl ? (
+                          <img 
+                            src={productData.imageUrl} 
+                            alt={productData.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center"><svg class="h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg></div>';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Coffee className="h-8 w-8 text-primary" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1">
                         <div className="space-y-2">
@@ -438,15 +453,33 @@ const SubscriptionReview = () => {
                               setValidationErrors(prev => ({ ...prev, product: "" }));
                             }}
                           >
-                            <SelectTrigger id="product" className={cn("w-full md:w-[280px]", validationErrors.product ? "border-destructive" : "")}>
+                            <SelectTrigger id="product" className={cn("w-full md:w-[300px]", validationErrors.product ? "border-destructive" : "")}>
                               <SelectValue placeholder="Select coffee" />
                             </SelectTrigger>
                             <SelectContent className="bg-background">
                               {subscriptionProducts.map((product) => (
                                 <SelectItem key={product.id} value={product.id}>
-                                  <div className="flex flex-col items-start">
-                                    <span className="font-medium">{product.name}</span>
-                                    <span className="text-xs text-muted-foreground">${product.price.toFixed(2)}</span>
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded bg-primary/10 flex-shrink-0 overflow-hidden">
+                                      {product.imageUrl ? (
+                                        <img 
+                                          src={product.imageUrl} 
+                                          alt={product.name}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                          }}
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <Coffee className="h-4 w-4 text-primary" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="flex flex-col items-start">
+                                      <span className="font-medium">{product.name}</span>
+                                      <span className="text-xs text-muted-foreground">${product.price.toFixed(2)}</span>
+                                    </div>
                                   </div>
                                 </SelectItem>
                               ))}

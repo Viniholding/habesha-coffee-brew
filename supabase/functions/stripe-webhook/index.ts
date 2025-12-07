@@ -68,22 +68,33 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     .eq("id", userId)
     .single();
 
-  // Calculate next delivery date based on frequency
-  const frequencyDays: Record<string, number> = {
-    weekly: 7,
-    biweekly: 14,
-    every_3_weeks: 21,
-    every_4_weeks: 28,
-    monthly: 30,
-  };
-  const days = frequencyDays[metadata.frequency] || 14;
-  const nextDeliveryDate = new Date();
-  nextDeliveryDate.setDate(nextDeliveryDate.getDate() + days);
+  // Calculate next delivery date - use firstDeliveryDate from metadata if provided
+  let nextDeliveryDate: Date;
+  const firstDeliveryDateStr = metadata.first_delivery_date;
+  
+  if (firstDeliveryDateStr && firstDeliveryDateStr.trim() !== "") {
+    // Use the user-selected first delivery date
+    nextDeliveryDate = new Date(firstDeliveryDateStr);
+    logStep("Using user-selected first delivery date", { firstDeliveryDate: firstDeliveryDateStr });
+  } else {
+    // Fallback to calculated date based on frequency
+    const frequencyDays: Record<string, number> = {
+      weekly: 7,
+      biweekly: 14,
+      every_3_weeks: 21,
+      every_4_weeks: 28,
+      monthly: 30,
+    };
+    const days = frequencyDays[metadata.frequency] || 14;
+    nextDeliveryDate = new Date();
+    nextDeliveryDate.setDate(nextDeliveryDate.getDate() + days);
+    logStep("Using calculated delivery date", { days, frequency: metadata.frequency });
+  }
 
   // Create subscription in database
   const subscriptionData: any = {
     user_id: userId,
-    product_id: metadata.product_id,
+    product_id: metadata.internal_product_id || metadata.product_id,
     product_name: metadata.product_name,
     grind: metadata.grind || "whole_bean",
     bag_size: metadata.bag_size || "12oz",
@@ -92,6 +103,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     price: (session.amount_total || 0) / 100,
     status: "active",
     next_delivery_date: nextDeliveryDate.toISOString().split("T")[0],
+    discount_code: metadata.discount_code || null,
+    discount_percent: parseFloat(metadata.discount_percent) || 0,
   };
 
   if (session.subscription) {

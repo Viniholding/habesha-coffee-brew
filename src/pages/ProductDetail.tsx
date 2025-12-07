@@ -111,8 +111,12 @@ const ProductDetail = () => {
     // One-time purchase - add to cart
     setAddingToCart(true);
     try {
-      await addToCart(product.id, quantity);
-      toast.success("Added to cart!");
+      const result = await addToCart(product.id, quantity);
+      if (result.requiresAuth) {
+        // Switch to subscription tab instead of showing error
+        toast.info("Sign in required for cart. Try subscribing instead!");
+        setPurchaseType("subscription");
+      }
     } catch (error) {
       console.error("Error adding to cart:", error);
       toast.error("Failed to add to cart");
