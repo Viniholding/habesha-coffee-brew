@@ -35,12 +35,16 @@ serve(async (req) => {
     const { 
       priceId, 
       productId, 
-      productName, 
+      productName,
+      internalProductId,
       quantity, 
       frequency, 
       grind, 
-      bagSize, 
+      bagSize,
+      firstDeliveryDate,
       couponCode,
+      discountCode,
+      discountPercent,
       subscriptionType,
       // Prepaid fields
       isPrepaid,
@@ -54,7 +58,10 @@ serve(async (req) => {
       giftDuration,
     } = await req.json();
     
-    logStep("Request body", { priceId, productId, productName, quantity, frequency, subscriptionType, isPrepaid, isGift });
+    logStep("Request body", { 
+      priceId, productId, productName, internalProductId, quantity, frequency, 
+      subscriptionType, isPrepaid, isGift, firstDeliveryDate 
+    });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -104,11 +111,13 @@ serve(async (req) => {
         metadata: {
           user_id: user.id,
           product_id: productId,
+          internal_product_id: internalProductId || "",
           product_name: productName,
           grind: grind || "whole_bean",
           bag_size: bagSize || "12oz",
           frequency: frequency,
           quantity: String(quantity || 1),
+          first_delivery_date: firstDeliveryDate || "",
           is_prepaid: String(isPrepaid || false),
           prepaid_months: String(prepaidMonths || 0),
           is_gift: String(isGift || false),
@@ -116,6 +125,8 @@ serve(async (req) => {
           gift_recipient_email: giftRecipientEmail || "",
           gift_message: giftMessage || "",
           gift_duration: String(giftDuration || 0),
+          discount_code: discountCode || "",
+          discount_percent: String(discountPercent || 0),
         },
       };
 
@@ -149,20 +160,26 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         product_id: productId,
+        internal_product_id: internalProductId || "",
         product_name: productName,
         grind: grind || "whole_bean",
         bag_size: bagSize || "12oz",
         frequency: frequency,
         quantity: String(quantity || 1),
+        first_delivery_date: firstDeliveryDate || "",
+        discount_code: discountCode || couponCode || "",
+        discount_percent: String(discountPercent || 0),
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
           product_id: productId,
+          internal_product_id: internalProductId || "",
           product_name: productName,
           grind: grind || "whole_bean",
           bag_size: bagSize || "12oz",
           frequency: frequency,
+          first_delivery_date: firstDeliveryDate || "",
         },
       },
     };
