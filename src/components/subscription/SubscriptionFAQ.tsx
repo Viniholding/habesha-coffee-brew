@@ -37,11 +37,7 @@ const faqs = [
     answer:
       "Yes! Gift subscriptions are available for 3, 6, or 12 months. The recipient will receive a notification and can manage their deliveries. Contact us for details.",
   },
-  {
-    question: "What if I'm not satisfied with my coffee?",
-    answer:
-      "We stand behind our coffee 100%. If you're not satisfied, contact us and we'll make it right with a replacement or refund.",
-  },
+  {},
 ];
 
 const SubscriptionFAQ = () => {
