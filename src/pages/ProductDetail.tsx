@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import RelatedProducts from "@/components/product/RelatedProducts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -397,6 +398,14 @@ const ProductDetail = () => {
               </div>
             </div>
           </div>
+
+          {/* Related Products */}
+          {product && (
+            <RelatedProducts 
+              currentProductId={product.id} 
+              category={product.category} 
+            />
+          )}
         </div>
       </div>
       <Footer />

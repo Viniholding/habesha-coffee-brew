@@ -311,6 +311,7 @@ export type Database = {
         Row: {
           billing_address_id: string | null
           carrier: string | null
+          carrier_code: string | null
           created_at: string | null
           delivered_at: string | null
           estimated_delivery_date: string | null
@@ -318,6 +319,7 @@ export type Database = {
           notes: string | null
           order_number: string
           payment_method_id: string | null
+          shipped_at: string | null
           shipping: number
           shipping_address_id: string | null
           status: string
@@ -325,12 +327,14 @@ export type Database = {
           tax: number
           total: number
           tracking_number: string | null
+          tracking_url: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           billing_address_id?: string | null
           carrier?: string | null
+          carrier_code?: string | null
           created_at?: string | null
           delivered_at?: string | null
           estimated_delivery_date?: string | null
@@ -338,6 +342,7 @@ export type Database = {
           notes?: string | null
           order_number: string
           payment_method_id?: string | null
+          shipped_at?: string | null
           shipping?: number
           shipping_address_id?: string | null
           status: string
@@ -345,12 +350,14 @@ export type Database = {
           tax?: number
           total: number
           tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           billing_address_id?: string | null
           carrier?: string | null
+          carrier_code?: string | null
           created_at?: string | null
           delivered_at?: string | null
           estimated_delivery_date?: string | null
@@ -358,6 +365,7 @@ export type Database = {
           notes?: string | null
           order_number?: string
           payment_method_id?: string | null
+          shipped_at?: string | null
           shipping?: number
           shipping_address_id?: string | null
           status?: string
@@ -365,6 +373,7 @@ export type Database = {
           tax?: number
           total?: number
           tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string | null
           user_id?: string
         }
