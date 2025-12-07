@@ -10,6 +10,7 @@ import { Loader2, Mail, MessageSquare } from "lucide-react";
 
 interface NotificationPreference {
   email_order_updates: boolean;
+  email_shipping_updates: boolean;
   email_promotional: boolean;
   email_newsletter: boolean;
   sms_order_updates: boolean;
@@ -24,6 +25,7 @@ interface NotificationPreferencesProps {
 const NotificationPreferences = ({ userId }: NotificationPreferencesProps) => {
   const [preferences, setPreferences] = useState<NotificationPreference>({
     email_order_updates: true,
+    email_shipping_updates: true,
     email_promotional: false,
     email_newsletter: false,
     sms_order_updates: false,
@@ -50,6 +52,7 @@ const NotificationPreferences = ({ userId }: NotificationPreferencesProps) => {
       if (data) {
         setPreferences({
           email_order_updates: data.email_order_updates,
+          email_shipping_updates: (data as any).email_shipping_updates ?? true,
           email_promotional: data.email_promotional,
           email_newsletter: data.email_newsletter,
           sms_order_updates: data.sms_order_updates,
@@ -132,6 +135,22 @@ const NotificationPreferences = ({ userId }: NotificationPreferencesProps) => {
               id="email_order_updates"
               checked={preferences.email_order_updates}
               onCheckedChange={(checked) => updatePreference("email_order_updates", checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between py-3 border-b border-border/50">
+            <div className="space-y-0.5">
+              <Label htmlFor="email_shipping_updates" className="text-base font-medium">
+                Shipping Notifications
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Receive emails when your order ships and tracking updates
+              </p>
+            </div>
+            <Switch
+              id="email_shipping_updates"
+              checked={preferences.email_shipping_updates}
+              onCheckedChange={(checked) => updatePreference("email_shipping_updates", checked)}
             />
           </div>
 
