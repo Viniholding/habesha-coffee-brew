@@ -2,6 +2,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { InventoryManagement } from '@/components/admin/InventoryManagement';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import { OrderManagement } from '@/components/admin/OrderManagement';
+import AdminSubscriptionManagement from '@/components/admin/SubscriptionManagement';
 import { Routes, Route } from 'react-router-dom';
 
 const AdminDashboardHome = () => {
@@ -42,6 +44,8 @@ const AdminRoutes = () => {
     <Routes>
       <Route path="/" element={<Admin />}>
         <Route index element={<AdminDashboardHome />} />
+        <Route path="subscriptions" element={<AdminSubscriptionManagement />} />
+        <Route path="orders" element={<OrderManagement />} />
         <Route path="inventory" element={<InventoryManagement />} />
         <Route path="analytics" element={<AnalyticsDashboard />} />
       </Route>

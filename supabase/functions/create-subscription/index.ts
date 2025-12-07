@@ -32,8 +32,29 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { priceId, productId, productName, quantity, frequency, grind, bagSize, couponCode } = await req.json();
-    logStep("Request body", { priceId, productId, productName, quantity, frequency, grind, bagSize });
+    const { 
+      priceId, 
+      productId, 
+      productName, 
+      quantity, 
+      frequency, 
+      grind, 
+      bagSize, 
+      couponCode,
+      subscriptionType,
+      // Prepaid fields
+      isPrepaid,
+      prepaidMonths,
+      prepaidTotal,
+      // Gift fields
+      isGift,
+      giftRecipientName,
+      giftRecipientEmail,
+      giftMessage,
+      giftDuration,
+    } = await req.json();
+    
+    logStep("Request body", { priceId, productId, productName, quantity, frequency, subscriptionType, isPrepaid, isGift });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -41,7 +62,7 @@ serve(async (req) => {
 
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
+    let customerId: string | undefined;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Found existing customer", { customerId });
@@ -57,8 +78,57 @@ serve(async (req) => {
     };
 
     const intervalConfig = frequencyMap[frequency] || { interval: "week", interval_count: 2 };
+    const origin = req.headers.get("origin") || "https://localhost:3000";
 
-    // Create checkout session with subscription metadata
+    // Handle different subscription types
+    if (isPrepaid || isGift) {
+      // For prepaid and gift, we create a one-time payment
+      const totalAmount = parseFloat(prepaidTotal || priceId) * 100;
+      
+      const sessionParams: Stripe.Checkout.SessionCreateParams = {
+        customer: customerId,
+        customer_email: customerId ? undefined : user.email,
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product: productId,
+              unit_amount: Math.round(totalAmount),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: `${origin}/account?tab=subscriptions&success=true`,
+        cancel_url: `${origin}/subscribe?canceled=true`,
+        metadata: {
+          user_id: user.id,
+          product_id: productId,
+          product_name: productName,
+          grind: grind || "whole_bean",
+          bag_size: bagSize || "12oz",
+          frequency: frequency,
+          quantity: String(quantity || 1),
+          is_prepaid: String(isPrepaid || false),
+          prepaid_months: String(prepaidMonths || 0),
+          is_gift: String(isGift || false),
+          gift_recipient_name: giftRecipientName || "",
+          gift_recipient_email: giftRecipientEmail || "",
+          gift_message: giftMessage || "",
+          gift_duration: String(giftDuration || 0),
+        },
+      };
+
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      logStep("Prepaid/Gift checkout session created", { sessionId: session.id });
+
+      return new Response(JSON.stringify({ url: session.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Regular subscription
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -67,15 +137,15 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product: productId,
-            unit_amount: Math.round(Number(priceId) * 100), // Convert price to cents
+            unit_amount: Math.round(Number(priceId) * 100),
             recurring: intervalConfig,
           },
           quantity: quantity || 1,
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/account?tab=subscriptions&success=true`,
-      cancel_url: `${req.headers.get("origin")}/subscribe?canceled=true`,
+      success_url: `${origin}/account?tab=subscriptions&success=true`,
+      cancel_url: `${origin}/subscribe?canceled=true`,
       metadata: {
         user_id: user.id,
         product_id: productId,
