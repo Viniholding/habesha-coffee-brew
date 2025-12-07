@@ -1,63 +1,82 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Star, CheckCircle2 } from "lucide-react";
+import { ShoppingCart, Star, RefreshCw, Eye } from "lucide-react";
 import productBag from "@/assets/product-bag.jpg";
-import groundCoffee from "@/assets/ground-coffee.jpg";
-import wholeBeans from "@/assets/whole-beans.jpg";
+import { addToCart } from "@/lib/cart";
 
-const products = [
-  {
-    id: 1,
-    name: "Premium Whole Bean",
-    subtitle: "Ethiopian Arabica - Single Origin",
-    price: 24.99,
-    weight: "12 oz (340g)",
-    image: wholeBeans,
-    featured: true,
-    description: "Our signature whole bean coffee, perfect for those who want to grind fresh at home. Complex flavor notes with hints of berry and chocolate.",
-    features: [
-      "100% Arabica Beans",
-      "Hand-picked & Selected",
-      "Small Batch Roasted",
-      "Single Origin Ethiopia",
-    ],
-  },
-  {
-    id: 2,
-    name: "Ground Coffee",
-    subtitle: "Medium Roast - Ready to Brew",
-    price: 22.99,
-    weight: "12 oz (340g)",
-    image: groundCoffee,
-    featured: false,
-    description: "Expertly ground to perfection, ready for your preferred brewing method. Smooth, balanced flavor with elegant notes.",
-    features: [
-      "Freshly Ground",
-      "Medium Roast Profile",
-      "Versatile Brewing",
-      "Rich Aroma",
-    ],
-  },
-  {
-    id: 3,
-    name: "Premium Gift Set",
-    subtitle: "Complete Coffee Experience",
-    price: 44.99,
-    weight: "24 oz total (680g)",
-    image: productBag,
-    featured: true,
-    description: "The perfect gift for coffee lovers. Includes both whole bean and ground varieties, beautifully packaged.",
-    features: [
-      "2 Premium Varieties",
-      "Gift-Ready Packaging",
-      "Tasting Notes Included",
-      "Best Value",
-    ],
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image_url: string | null;
+  category: string | null;
+  in_stock: boolean;
+}
 
 const Products = () => {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, description, price, image_url, category, in_stock")
+        .eq("in_stock", true)
+        .order("name");
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAddingToCart(productId);
+    await addToCart(productId, 1);
+    setAddingToCart(null);
+  };
+
+  const handleSubscribe = (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/products/${productId}?subscribe=true`);
+  };
+
+  if (loading) {
+    return (
+      <section id="products" className="py-24 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="overflow-hidden animate-pulse">
+                <div className="h-80 bg-muted" />
+                <div className="p-6 space-y-4">
+                  <div className="h-6 bg-muted rounded w-3/4" />
+                  <div className="h-4 bg-muted rounded w-full" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="products" className="py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -78,63 +97,79 @@ const Products = () => {
           {products.map((product) => (
             <Card 
               key={product.id}
-              className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.2)] group relative"
+              className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.2)] group relative cursor-pointer"
+              onClick={() => navigate(`/products/${product.id}`)}
             >
-              {product.featured && (
+              {product.category === "coffee" && (
                 <Badge className="absolute top-4 right-4 z-10 bg-primary text-primary-foreground shadow-lg">
-                  Popular
+                  Coffee
                 </Badge>
               )}
               
               <div className="relative h-80 overflow-hidden bg-card">
                 <img 
-                  src={product.image} 
+                  src={product.image_url || productBag} 
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                  <Button 
+                    variant="secondary" 
+                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/products/${product.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Details
+                  </Button>
+                </div>
               </div>
               
               <div className="p-6 space-y-4">
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold">{product.name}</h3>
-                  <p className="text-sm text-primary">{product.subtitle}</p>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {product.description}
+                  <p className="text-sm text-primary">{product.category || "Premium Coffee"}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
+                    {product.description || "Premium Ethiopian coffee with exceptional flavor notes."}
                   </p>
-                </div>
-                
-                <div className="space-y-3">
-                  {product.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
                 </div>
                 
                 <div className="pt-4 border-t border-border space-y-4">
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-bold">${product.price}</span>
-                      <span className="text-muted-foreground ml-2 text-sm">{product.weight}</span>
+                      <span className="text-3xl font-bold">${product.price.toFixed(2)}</span>
                     </div>
                     <div className="flex items-center gap-1 text-primary">
-                      <Star className="h-4 w-4 fill-primary" />
-                      <Star className="h-4 w-4 fill-primary" />
-                      <Star className="h-4 w-4 fill-primary" />
-                      <Star className="h-4 w-4 fill-primary" />
-                      <Star className="h-4 w-4 fill-primary" />
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="h-4 w-4 fill-primary" />
+                      ))}
                     </div>
                   </div>
                   
-                  <Button 
-                    variant="hero" 
-                    className="w-full" 
-                    size="lg"
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="hero" 
+                      className="flex-1" 
+                      size="lg"
+                      disabled={addingToCart === product.id}
+                      onClick={(e) => handleAddToCart(product.id, e)}
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      {addingToCart === product.id ? "Adding..." : "Add to Cart"}
+                    </Button>
+                    {product.category === "coffee" && (
+                      <Button 
+                        variant="outline" 
+                        size="lg"
+                        onClick={(e) => handleSubscribe(product.id, e)}
+                        title="Subscribe & Save 10%"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

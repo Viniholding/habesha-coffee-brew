@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { User, Menu } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import SearchBar from "./SearchBar";
@@ -99,22 +99,20 @@ const Navigation = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center">
-          <a href="/">
-            <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
-          </a>
-        </div>
+        <Link to="/">
+          <img src={logo} alt="Coffee Habesha" className="h-12 w-auto" />
+        </Link>
         
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-8">
-          <a href="/" className="hover:text-primary transition-colors">Home</a>
-          <a href="/about" className="hover:text-primary transition-colors">The Journey</a>
-          <a href="/learn" className="hover:opacity-80 transition-opacity flex items-center">
+          <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+          <Link to="/about" className="hover:text-primary transition-colors">The Journey</Link>
+          <Link to="/learn" className="hover:opacity-80 transition-opacity flex items-center">
             <img src={logo} alt="Coffee Habesha Way" className="h-8 w-auto" />
-          </a>
-          <a href="/products" className="hover:text-primary transition-colors">Products</a>
-          <a href="/subscribe" className="hover:text-primary transition-colors">Subscribe</a>
-          <a href="/cafe" className="hover:text-primary transition-colors">Café</a>
+          </Link>
+          <Link to="/products" className="hover:text-primary transition-colors">Products</Link>
+          <Link to="/subscribe" className="hover:text-primary transition-colors">Subscribe</Link>
+          <Link to="/cafe" className="hover:text-primary transition-colors">Café</Link>
         </div>
         
         {/* Desktop Search & Actions */}
@@ -147,11 +145,11 @@ const Navigation = () => {
             </Button>
           ) : (
             <Button variant="outline" size="lg" asChild>
-              <a href="/account">My Account</a>
+              <Link to="/auth">My Account</Link>
             </Button>
           )}
           <Button variant="hero" size="lg" asChild>
-            <a href="/products">Shop Now</a>
+            <Link to="/products">Shop Now</Link>
           </Button>
         </div>
 
@@ -195,57 +193,57 @@ const Navigation = () => {
                   <SearchBar isMobile />
                 </div>
                 
-                <a 
-                  href="/" 
+                <Link 
+                  to="/" 
                   className="text-lg font-medium hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Home
-                </a>
-                <a 
-                  href="/about" 
+                </Link>
+                <Link 
+                  to="/about" 
                   className="text-lg font-medium hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   The Journey
-                </a>
-                <a 
-                  href="/learn" 
+                </Link>
+                <Link 
+                  to="/learn" 
                   className="text-lg font-medium hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Coffee Habesha Way
-                </a>
-                <a 
-                  href="/products" 
+                </Link>
+                <Link 
+                  to="/products" 
                   className="text-lg font-medium hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Products
-                </a>
-                <a 
-                  href="/subscribe" 
+                </Link>
+                <Link 
+                  to="/subscribe" 
                   className="text-lg font-medium hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Subscribe
-                </a>
-                <a 
-                  href="/cafe" 
+                </Link>
+                <Link 
+                  to="/cafe" 
                   className="text-lg font-medium hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Café
-                </a>
+                </Link>
                 
                 <div className="pt-6 border-t border-border space-y-3">
                   {!isLoggedIn && (
                     <Button variant="outline" size="lg" className="w-full" asChild>
-                      <a href="/account" onClick={() => setMobileMenuOpen(false)}>My Account</a>
+                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
                     </Button>
                   )}
                   <Button variant="hero" size="lg" className="w-full" asChild>
-                    <a href="/products" onClick={() => setMobileMenuOpen(false)}>Shop Now</a>
+                    <Link to="/products" onClick={() => setMobileMenuOpen(false)}>Shop Now</Link>
                   </Button>
                 </div>
               </div>
