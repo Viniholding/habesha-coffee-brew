@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Package, DollarSign, Pause, Play, X, SkipForward, Edit, Loader2, ExternalLink } from "lucide-react";
+import { Calendar, Package, DollarSign, Pause, Play, X, SkipForward, Edit, Loader2, ExternalLink, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import SubscriptionDetailDialog from "./SubscriptionDetailDialog";
 import SubscriptionAddons from "./SubscriptionAddons";
+import PauseScheduleDialog from "./PauseScheduleDialog";
 interface Subscription {
   id: string;
   status: string;
@@ -22,6 +23,7 @@ interface Subscription {
   grind?: string;
   bag_size?: string;
   stripe_subscription_id?: string;
+  resume_at?: string | null;
 }
 
 interface SubscriptionManagementProps {
@@ -34,6 +36,9 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [pauseDialogOpen, setPauseDialogOpen] = useState(false);
+  const [subscriptionToPause, setSubscriptionToPause] = useState<Subscription | null>(null);
+  const [pauseLoading, setPauseLoading] = useState(false);
 
   useEffect(() => {
     fetchSubscriptions();
@@ -57,7 +62,7 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
     }
   };
 
-  const handleAction = async (subscriptionId: string, stripeSubId: string | undefined, action: string) => {
+  const handleAction = async (subscriptionId: string, stripeSubId: string | undefined, action: string, resumeAt?: string | null) => {
     if (!stripeSubId) {
       toast.error("Subscription not linked to payment system");
       return;
@@ -66,23 +71,42 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
     setActionLoading(`${subscriptionId}-${action}`);
     try {
       const { error } = await supabase.functions.invoke("manage-subscription", {
-        body: { action, subscriptionId: stripeSubId },
+        body: { action, subscriptionId: stripeSubId, resumeAt },
       });
 
       if (error) throw error;
 
-      toast.success(
-        action === "pause" ? "Subscription paused" :
-        action === "resume" ? "Subscription resumed" :
-        action === "cancel" ? "Subscription cancelled" :
-        action === "skip" ? "Next delivery skipped" : "Action completed"
-      );
+      const message = action === "pause" && resumeAt
+        ? `Subscription paused until ${format(new Date(resumeAt), "MMM d, yyyy")}`
+        : action === "pause" ? "Subscription paused" 
+        : action === "resume" ? "Subscription resumed"
+        : action === "cancel" ? "Subscription cancelled"
+        : action === "skip" ? "Next delivery skipped" 
+        : "Action completed";
+        
+      toast.success(message);
       fetchSubscriptions();
     } catch (error: any) {
       console.error(`Error ${action}ing subscription:`, error);
       toast.error(error.message || `Failed to ${action} subscription`);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handlePauseWithSchedule = async (resumeDate: Date | null) => {
+    if (!subscriptionToPause) return;
+    setPauseLoading(true);
+    try {
+      await handleAction(
+        subscriptionToPause.id,
+        subscriptionToPause.stripe_subscription_id,
+        "pause",
+        resumeDate?.toISOString() || null
+      );
+    } finally {
+      setPauseLoading(false);
+      setSubscriptionToPause(null);
     }
   };
 
@@ -175,6 +199,12 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
                       <Badge variant="outline" className={getStatusColor(subscription.status)}>
                         {subscription.status}
                       </Badge>
+                      {subscription.status === "paused" && subscription.resume_at && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <CalendarClock className="h-3 w-3" />
+                          Resumes {format(new Date(subscription.resume_at), "MMM d")}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {formatGrind(subscription.grind)} • {subscription.bag_size || "12oz"} • {subscription.frequency.charAt(0).toUpperCase() + subscription.frequency.slice(1)} delivery
@@ -227,7 +257,10 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleAction(subscription.id, subscription.stripe_subscription_id, "pause")}
+                        onClick={() => {
+                          setSubscriptionToPause(subscription);
+                          setPauseDialogOpen(true);
+                        }}
                         disabled={actionLoading === `${subscription.id}-pause`}
                       >
                         {actionLoading === `${subscription.id}-pause` ? (
@@ -249,7 +282,7 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
                         ) : (
                           <Play className="h-4 w-4 mr-2" />
                         )}
-                        Resume
+                        Resume Now
                       </Button>
                     )}
 
@@ -294,6 +327,13 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
         onUpdate={fetchSubscriptions}
+      />
+
+      <PauseScheduleDialog
+        open={pauseDialogOpen}
+        onOpenChange={setPauseDialogOpen}
+        onConfirm={handlePauseWithSchedule}
+        loading={pauseLoading}
       />
     </div>
   );
