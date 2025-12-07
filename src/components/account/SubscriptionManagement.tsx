@@ -3,13 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Package, DollarSign, Pause, Play, X, SkipForward, Edit, Loader2, ExternalLink, CalendarClock } from "lucide-react";
+import { Calendar, Package, DollarSign, Pause, Play, X, SkipForward, Edit, Loader2, ExternalLink, CalendarClock, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import SubscriptionDetailDialog from "./SubscriptionDetailDialog";
 import SubscriptionAddons from "./SubscriptionAddons";
 import PauseScheduleDialog from "./PauseScheduleDialog";
+import EditResumeDialog from "./EditResumeDialog";
 interface Subscription {
   id: string;
   status: string;
@@ -39,6 +40,8 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
   const [pauseDialogOpen, setPauseDialogOpen] = useState(false);
   const [subscriptionToPause, setSubscriptionToPause] = useState<Subscription | null>(null);
   const [pauseLoading, setPauseLoading] = useState(false);
+  const [editResumeDialogOpen, setEditResumeDialogOpen] = useState(false);
+  const [subscriptionToEditResume, setSubscriptionToEditResume] = useState<Subscription | null>(null);
 
   useEffect(() => {
     fetchSubscriptions();
@@ -200,10 +203,19 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
                         {subscription.status}
                       </Badge>
                       {subscription.status === "paused" && subscription.resume_at && (
-                        <Badge variant="secondary" className="flex items-center gap-1">
-                          <CalendarClock className="h-3 w-3" />
-                          Resumes {format(new Date(subscription.resume_at), "MMM d")}
-                        </Badge>
+                        <button
+                          onClick={() => {
+                            setSubscriptionToEditResume(subscription);
+                            setEditResumeDialogOpen(true);
+                          }}
+                          className="flex items-center gap-1 hover:opacity-80"
+                        >
+                          <Badge variant="secondary" className="flex items-center gap-1 cursor-pointer">
+                            <CalendarClock className="h-3 w-3" />
+                            Resumes {format(new Date(subscription.resume_at), "MMM d")}
+                            <Pencil className="h-3 w-3 ml-1" />
+                          </Badge>
+                        </button>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -335,6 +347,16 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
         onConfirm={handlePauseWithSchedule}
         loading={pauseLoading}
       />
+
+      {subscriptionToEditResume && (
+        <EditResumeDialog
+          open={editResumeDialogOpen}
+          onOpenChange={setEditResumeDialogOpen}
+          subscriptionId={subscriptionToEditResume.id}
+          currentResumeAt={subscriptionToEditResume.resume_at || null}
+          onUpdate={fetchSubscriptions}
+        />
+      )}
     </div>
   );
 };
