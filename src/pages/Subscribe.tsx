@@ -35,9 +35,55 @@ const Subscribe = () => {
     setUser(user);
   };
 
-  const handleProgramSelect = (programId: string) => {
+  const handleProgramSelect = async (programId: string) => {
     setSelectedProgram(programId);
-    document.getElementById("configurator")?.scrollIntoView({ behavior: "smooth" });
+    
+    // Fetch the program to get the default product
+    const { data: program, error } = await supabase
+      .from("subscription_programs")
+      .select("default_product_id, name")
+      .eq("id", programId)
+      .single();
+    
+    if (error || !program?.default_product_id) {
+      toast.error("Could not load program details");
+      return;
+    }
+
+    // Fetch the product details
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("name")
+      .eq("id", program.default_product_id)
+      .single();
+
+    if (productError || !product) {
+      toast.error("Could not load product details");
+      return;
+    }
+
+    // Map product name to product ID used in subscriptionProducts
+    const productIdMap: Record<string, string> = {
+      "Ethiopian Yirgacheffe": "ethiopian-yirgacheffe",
+      "Sidamo Dark Roast": "sidamo-dark-roast",
+      "Harar Heritage Blend": "harar-heritage-blend",
+      "Limu Organic": "limu-organic",
+    };
+
+    const productId = productIdMap[product.name] || "ethiopian-yirgacheffe";
+
+    // Navigate to review page with the program's default product
+    const params = new URLSearchParams({
+      product: productId,
+      grind: "whole_bean",
+      bagSize: "12oz",
+      quantity: "1",
+      frequency: "biweekly",
+      type: "regular",
+      program: programId,
+    });
+
+    navigate(`/subscription/review?${params.toString()}`);
   };
 
   const handleQuizComplete = (selections: {

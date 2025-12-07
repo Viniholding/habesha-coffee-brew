@@ -782,6 +782,7 @@ export type Database = {
       subscription_programs: {
         Row: {
           created_at: string
+          default_product_id: string | null
           description: string | null
           id: string
           image_url: string | null
@@ -792,6 +793,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_product_id?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -802,6 +804,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_product_id?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
@@ -810,7 +813,15 @@ export type Database = {
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscription_programs_default_product_id_fkey"
+            columns: ["default_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {

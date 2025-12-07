@@ -2,13 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Tag, TrendingUp, DollarSign, Users, Percent, 
-  ArrowUpRight, ArrowDownRight, BarChart3 
+  ArrowUpRight, BarChart3, Download 
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 interface PromotionWithStats {
   id: string;
@@ -112,6 +114,41 @@ const PromotionAnalytics = () => {
 
   const isLoading = loadingPromos || loadingUsage;
 
+  // CSV Export function
+  const exportToCSV = () => {
+    const headers = ["Code", "Description", "Discount Type", "Discount Value", "Redemptions", "Max Uses", "Total Discounts Given", "Est. Revenue", "Conversion Rate", "Status", "Created At"];
+    
+    const rows = analytics.map(promo => [
+      promo.code,
+      promo.description || "",
+      promo.discount_type,
+      promo.discount_value,
+      promo.current_uses,
+      promo.max_uses || "Unlimited",
+      promo.total_discount_given.toFixed(2),
+      promo.estimated_revenue.toFixed(2),
+      `${promo.conversion_rate.toFixed(1)}%`,
+      promo.is_active ? "Active" : "Inactive",
+      format(new Date(promo.created_at), "yyyy-MM-dd")
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `promotion-analytics-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Promotion data exported successfully");
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -130,6 +167,14 @@ const PromotionAnalytics = () => {
 
   return (
     <div className="space-y-6">
+      {/* Export Button */}
+      <div className="flex justify-end">
+        <Button onClick={exportToCSV} variant="outline" className="gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
