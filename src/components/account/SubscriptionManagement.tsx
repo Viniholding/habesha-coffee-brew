@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import SubscriptionDetailDialog from "./SubscriptionDetailDialog";
-
+import SubscriptionAddons from "./SubscriptionAddons";
 interface Subscription {
   id: string;
   status: string;
@@ -201,6 +201,13 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
                     </div>
                   )}
                 </div>
+
+                {subscription.status === "active" && (
+                  <SubscriptionAddons
+                    subscriptionId={subscription.id}
+                    nextDeliveryDate={subscription.next_delivery_date}
+                  />
+                )}
 
                 {(subscription.status === "active" || subscription.status === "paused") && (
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
