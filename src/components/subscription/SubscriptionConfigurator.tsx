@@ -97,11 +97,13 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
     flavorProfile: string;
     brewMethod: string;
     grind: string;
+    bagSize: string;
     quantity: number;
     frequency: string;
   }) => {
     setSelectedProduct(flavorProductMap[selections.flavorProfile] || "");
     setGrind(selections.grind);
+    setBagSize(selections.bagSize);
     setQuantity(selections.quantity);
     setFrequency(selections.frequency);
     setQuizComplete(true);

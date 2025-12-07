@@ -19,6 +19,7 @@ import Goodbye from "./pages/Goodbye";
 import DeletionScheduled from "./pages/DeletionScheduled";
 import Admin from "./pages/Admin";
 import Subscribe from "./pages/Subscribe";
+import Checkout from "./pages/Checkout";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/account/deletion-scheduled" element={<DeletionScheduled />} />
           <Route path="/goodbye" element={<Goodbye />} />
           <Route path="/subscribe" element={<Subscribe />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/admin/*" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
