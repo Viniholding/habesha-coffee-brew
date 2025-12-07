@@ -7,13 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Coffee, Package, Truck, Tag, Loader2, Gift, CreditCard, Sparkles, Check } from "lucide-react";
+import { Coffee, Gift, CreditCard, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { subscriptionProducts, grindOptions, bagSizeOptions, frequencyOptions } from "@/lib/subscriptionProducts";
+import CoffeeQuiz from "./CoffeeQuiz";
+import SubscriptionSummary from "./SubscriptionSummary";
 
 interface SubscriptionConfiguratorProps {
   initialProgram?: string | null;
@@ -25,12 +25,20 @@ const prepaidOptions = [
   { value: "12", label: "12 Months", discount: 15, badge: "Best Value" },
 ];
 
+// Map flavor profiles to products
+const flavorProductMap: Record<string, string> = {
+  bold: "sidamo-dark-roast",
+  bright: "ethiopian-yirgacheffe",
+  balanced: "harar-heritage-blend",
+};
+
 const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [subscriptionType, setSubscriptionType] = useState<"regular" | "prepaid" | "gift">("regular");
+  const [quizComplete, setQuizComplete] = useState(false);
 
   // Configuration state
   const [selectedProduct, setSelectedProduct] = useState<string>("");
@@ -38,7 +46,6 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
   const [bagSize, setBagSize] = useState("12oz");
   const [quantity, setQuantity] = useState(1);
   const [frequency, setFrequency] = useState("biweekly");
-  const [startDate, setStartDate] = useState<"now" | "future">("now");
   const [couponCode, setCouponCode] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [referralDiscount, setReferralDiscount] = useState(0);
@@ -55,7 +62,6 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
 
   useEffect(() => {
     checkUser();
-    // Check for referral code in URL
     const refCode = searchParams.get("ref");
     if (refCode) {
       validateReferralCode(refCode);
@@ -76,10 +82,7 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
         .eq("status", "pending")
         .single();
 
-      if (error || !data) {
-        console.error("Invalid referral code");
-        return;
-      }
+      if (error || !data) return;
 
       setReferralCode(code);
       setReferralDiscount(data.referee_discount_percent || 15);
@@ -90,28 +93,40 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
     }
   };
 
+  const handleQuizComplete = (selections: {
+    flavorProfile: string;
+    brewMethod: string;
+    grind: string;
+    quantity: number;
+    frequency: string;
+  }) => {
+    setSelectedProduct(flavorProductMap[selections.flavorProfile] || "");
+    setGrind(selections.grind);
+    setQuantity(selections.quantity);
+    setFrequency(selections.frequency);
+    setQuizComplete(true);
+  };
+
   const selectedProductData = subscriptionProducts.find(p => p.id === selectedProduct);
   const bagSizeData = bagSizeOptions.find(b => b.value === bagSize);
   const frequencyData = frequencyOptions.find(f => f.value === frequency);
 
   const calculatePrice = () => {
-    if (!selectedProductData || !bagSizeData) return { perDelivery: 0, total: 0, discount: 0 };
-    
-    const basePrice = selectedProductData.price * bagSizeData.priceMultiplier * quantity;
-    let discountPercent = 10; // Base subscription discount
-    let totalDeliveries = 1;
+    if (!selectedProductData || !bagSizeData) return { perDelivery: "0", total: "0" };
 
-    // Add referral discount
+    const basePrice = selectedProductData.price * bagSizeData.priceMultiplier * quantity;
+    let discountPercent = 10;
+
     if (referralApplied) {
       discountPercent += referralDiscount;
     }
 
+    let totalDeliveries = 1;
     if (subscriptionType === "prepaid") {
       const prepaidOption = prepaidOptions.find(p => p.value === prepaidMonths);
       discountPercent += prepaidOption?.discount || 0;
       const daysPerDelivery = frequencyData?.days || 14;
-      const months = parseInt(prepaidMonths);
-      totalDeliveries = Math.floor((months * 30) / daysPerDelivery);
+      totalDeliveries = Math.floor((parseInt(prepaidMonths) * 30) / daysPerDelivery);
     } else if (subscriptionType === "gift") {
       const months = parseInt(giftDuration);
       const daysPerDelivery = frequencyData?.days || 14;
@@ -124,8 +139,6 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
     return {
       perDelivery: discountedPrice.toFixed(2),
       total: total.toFixed(2),
-      discount: discountPercent,
-      deliveries: totalDeliveries,
     };
   };
 
@@ -139,15 +152,13 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
     }
 
     if (!selectedProduct) {
-      toast.error("Please select a coffee");
+      toast.error("Please complete the quiz to select a coffee");
       return;
     }
 
-    if (subscriptionType === "gift") {
-      if (!giftRecipientEmail || !giftRecipientName) {
-        toast.error("Please fill in recipient details");
-        return;
-      }
+    if (subscriptionType === "gift" && (!giftRecipientEmail || !giftRecipientName)) {
+      toast.error("Please fill in recipient details");
+      return;
     }
 
     setLoading(true);
@@ -198,12 +209,15 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             Customize Your Experience
           </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Answer a few quick questions and we'll craft the perfect subscription for you
+          </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Subscription Type Tabs */}
           <Tabs value={subscriptionType} onValueChange={(v) => setSubscriptionType(v as any)} className="mb-8">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
               <TabsTrigger value="regular" className="flex items-center gap-2">
                 <Coffee className="h-4 w-4" />
                 Regular
@@ -219,7 +233,7 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
             </TabsList>
 
             <TabsContent value="prepaid" className="mt-6">
-              <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5">
+              <Card className="max-w-2xl mx-auto border-primary/30 bg-gradient-to-br from-card to-primary/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-primary" />
@@ -252,7 +266,7 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
             </TabsContent>
 
             <TabsContent value="gift" className="mt-6">
-              <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5">
+              <Card className="max-w-2xl mx-auto border-primary/30 bg-gradient-to-br from-card to-primary/5">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Gift className="h-5 w-5 text-primary" />
@@ -294,18 +308,12 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
                   <div className="space-y-2">
                     <Label>Gift Duration</Label>
                     <RadioGroup value={giftDuration} onValueChange={setGiftDuration} className="flex gap-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="3" id="gift-3" />
-                        <Label htmlFor="gift-3" className="cursor-pointer">3 Months</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="6" id="gift-6" />
-                        <Label htmlFor="gift-6" className="cursor-pointer">6 Months</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="12" id="gift-12" />
-                        <Label htmlFor="gift-12" className="cursor-pointer">12 Months</Label>
-                      </div>
+                      {["3", "6", "12"].map((months) => (
+                        <div key={months} className="flex items-center space-x-2">
+                          <RadioGroupItem value={months} id={`gift-${months}`} />
+                          <Label htmlFor={`gift-${months}`} className="cursor-pointer">{months} Months</Label>
+                        </div>
+                      ))}
                     </RadioGroup>
                   </div>
                 </CardContent>
@@ -313,314 +321,40 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
             </TabsContent>
           </Tabs>
 
+          {/* Main Content Grid */}
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Configuration Form */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Step 1: Product Selection */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                      1
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Choose Your Coffee</CardTitle>
-                      <CardDescription>Select your preferred blend</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={selectedProduct} onValueChange={setSelectedProduct} className="space-y-3">
-                    {subscriptionProducts.map((product) => (
-                      <div key={product.id} className="flex items-center space-x-3">
-                        <RadioGroupItem value={product.id} id={product.id} />
-                        <Label htmlFor={product.id} className="flex-1 cursor-pointer">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">{product.name}</p>
-                              <p className="text-sm text-muted-foreground">{product.description}</p>
-                            </div>
-                            <span className="font-semibold">${product.price}</span>
-                          </div>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-
-              {/* Step 2: Grind & Size */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                      2
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Grind & Size</CardTitle>
-                      <CardDescription>Customize to your brewing method</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Grind Type</Label>
-                    <Select value={grind} onValueChange={setGrind}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {grindOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Bag Size</Label>
-                    <RadioGroup value={bagSize} onValueChange={setBagSize} className="flex gap-4">
-                      {bagSizeOptions.map((option) => (
-                        <div key={option.value} className="flex items-center space-x-2">
-                          <RadioGroupItem value={option.value} id={`size-${option.value}`} />
-                          <Label htmlFor={`size-${option.value}`} className="cursor-pointer">
-                            {option.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Quantity (bags per delivery)</Label>
-                    <div className="flex items-center gap-4">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        disabled={quantity <= 1}
-                      >
-                        -
-                      </Button>
-                      <span className="text-xl font-semibold w-8 text-center">{quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setQuantity(Math.min(5, quantity + 1))}
-                        disabled={quantity >= 5}
-                      >
-                        +
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Step 3: Delivery Schedule */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                      3
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Delivery Schedule</CardTitle>
-                      <CardDescription>Set your frequency and start date</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Delivery Frequency</Label>
-                    <Select value={frequency} onValueChange={setFrequency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {frequencyOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {subscriptionType === "regular" && (
-                    <div className="space-y-2">
-                      <Label>Start Date</Label>
-                      <RadioGroup value={startDate} onValueChange={(v) => setStartDate(v as "now" | "future")} className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="now" id="start-now" />
-                          <Label htmlFor="start-now" className="cursor-pointer">Ship Immediately</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="future" id="start-future" />
-                          <Label htmlFor="start-future" className="cursor-pointer">Choose Date</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label>Coupon Code (optional)</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter code"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                      />
-                      <Button variant="outline" size="sm">
-                        <Tag className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+            {/* Quiz Section */}
+            <div className="lg:col-span-2">
+              <Card className="border-primary/20">
+                <CardContent className="pt-6">
+                  <CoffeeQuiz onComplete={handleQuizComplete} />
                 </CardContent>
               </Card>
             </div>
 
-            {/* Order Summary */}
-            <div className="lg:col-span-1">
-              <Card className="sticky top-4 border-primary/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {subscriptionType === "gift" && <Gift className="h-5 w-5 text-primary" />}
-                    {subscriptionType === "prepaid" && <CreditCard className="h-5 w-5 text-primary" />}
-                    Order Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {selectedProductData ? (
-                    <>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Coffee className="h-4 w-4 text-primary" />
-                          <span className="font-medium">{selectedProductData.name}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground pl-6">
-                          {grindOptions.find(g => g.value === grind)?.label} • {bagSizeOptions.find(b => b.value === bagSize)?.label}
-                        </p>
-                      </div>
-
-                      {subscriptionType === "gift" && giftRecipientName && (
-                        <div className="p-3 bg-primary/10 rounded-lg">
-                          <p className="text-sm font-medium">Gift for: {giftRecipientName}</p>
-                          <p className="text-xs text-muted-foreground">{giftRecipientEmail}</p>
-                        </div>
-                      )}
-
-                      <Separator />
-
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="flex items-center gap-2">
-                            <Package className="h-4 w-4" />
-                            Quantity
-                          </span>
-                          <span>{quantity} bag(s)</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            Frequency
-                          </span>
-                          <span>{frequencyData?.label}</span>
-                        </div>
-                        {(subscriptionType === "prepaid" || subscriptionType === "gift") && (
-                          <div className="flex justify-between">
-                            <span>Deliveries</span>
-                            <span>{pricing.deliveries}x</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="flex items-center gap-2">
-                            <Truck className="h-4 w-4" />
-                            Shipping
-                          </span>
-                          <span className="text-primary">Free</span>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-primary">
-                          <span>Total Discount</span>
-                          <span>-{pricing.discount}%</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Per delivery</span>
-                          <span>${pricing.perDelivery}</span>
-                        </div>
-                        {(subscriptionType === "prepaid" || subscriptionType === "gift") && (
-                          <>
-                            <Separator />
-                            <div className="flex justify-between text-lg font-bold">
-                              <span>Total (one-time)</span>
-                              <span>${pricing.total}</span>
-                            </div>
-                          </>
-                        )}
-                        {subscriptionType === "regular" && (
-                          <>
-                            <Separator />
-                            <div className="flex justify-between text-lg font-bold">
-                              <span>Total per delivery</span>
-                              <span>${pricing.perDelivery}</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      <Button 
-                        className="w-full" 
-                        size="lg" 
-                        variant="hero"
-                        onClick={handleSubscribe}
-                        disabled={loading || !selectedProduct}
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Processing...
-                          </>
-                        ) : subscriptionType === "gift" ? (
-                          <>
-                            <Gift className="h-4 w-4 mr-2" />
-                            Send Gift
-                          </>
-                        ) : subscriptionType === "prepaid" ? (
-                          <>
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            Pay ${pricing.total}
-                          </>
-                        ) : (
-                          "Subscribe Now"
-                        )}
-                      </Button>
-
-                      <p className="text-xs text-center text-muted-foreground">
-                        {subscriptionType === "regular" 
-                          ? "Cancel or pause anytime. No commitments."
-                          : subscriptionType === "prepaid"
-                          ? "One-time payment. No recurring charges."
-                          : "Recipient can manage their subscription."}
-                      </p>
-                    </>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Coffee className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Select a coffee to see your order summary</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            {/* Summary Sidebar */}
+            <SubscriptionSummary
+              selectedProduct={selectedProduct}
+              grind={grind}
+              bagSize={bagSize}
+              quantity={quantity}
+              frequency={frequency}
+              subscriptionType={subscriptionType}
+              prepaidMonths={parseInt(prepaidMonths)}
+              giftDuration={parseInt(giftDuration)}
+              referralDiscount={referralDiscount}
+              couponCode={couponCode}
+              onCouponChange={setCouponCode}
+              onSubscribe={handleSubscribe}
+              loading={loading}
+              quizComplete={quizComplete}
+            />
           </div>
         </div>
       </div>
+
+      {/* Mobile spacing for fixed bottom bar */}
+      <div className="h-32 lg:hidden" />
     </section>
   );
 };
