@@ -322,8 +322,23 @@ serve(async (req) => {
       nextDeliveryDate: subscription.next_delivery_date,
       accountUrl: `${baseUrl}/account?tab=subscriptions`,
       subscribeUrl: `${baseUrl}/subscribe`,
+      signupUrl: `${baseUrl}/auth`,
+      quantity: subscription.quantity,
+      giftDuration: subscription.prepaid_months || additionalData?.giftDuration,
+      giftRecipientName: subscription.gift_recipient_name || additionalData?.giftRecipientName,
+      giftMessage: subscription.gift_message || additionalData?.giftMessage,
+      senderName: profile.first_name || additionalData?.senderName,
       ...additionalData,
     };
+
+    // Determine recipient email
+    let recipientEmail = profile.email;
+    
+    // For gift subscription notification, send to the gift recipient
+    if (type === "gift_subscription_sent" && subscription.gift_recipient_email) {
+      recipientEmail = subscription.gift_recipient_email;
+      logStep("Sending gift notification to recipient", { recipientEmail });
+    }
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -333,7 +348,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Habesha Coffee <onboarding@resend.dev>",
-        to: [profile.email],
+        to: [recipientEmail],
         subject: template.subject,
         html: template.getHtml(emailData),
       }),
@@ -345,7 +360,7 @@ serve(async (req) => {
     }
 
     const result = await response.json();
-    logStep("Email sent successfully", { emailId: result.id });
+    logStep("Email sent successfully", { emailId: result.id, to: recipientEmail });
 
     return new Response(JSON.stringify({ success: true, emailId: result.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
