@@ -1,4 +1,5 @@
 // Guest cart management using localStorage
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface GuestCartItem {
@@ -72,4 +73,52 @@ export const getGuestCartTotal = (): { items: number; price: number } => {
     items: cart.reduce((sum, item) => sum + item.quantity, 0),
     price: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
   };
+};
+
+// Merge guest cart items into user's cart in database
+export const mergeGuestCartToUser = async (userId: string): Promise<void> => {
+  const guestCart = getGuestCart();
+  
+  if (guestCart.length === 0) return;
+
+  try {
+    // For each guest cart item, add to user's cart
+    for (const item of guestCart) {
+      // Check if item already exists in user's cart
+      const { data: existingItem, error: fetchError } = await supabase
+        .from("cart_items")
+        .select("id, quantity")
+        .eq("user_id", userId)
+        .eq("product_id", item.productId)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("Error checking existing cart item:", fetchError);
+        continue;
+      }
+
+      if (existingItem) {
+        // Update quantity if item exists
+        await supabase
+          .from("cart_items")
+          .update({ quantity: existingItem.quantity + item.quantity })
+          .eq("id", existingItem.id);
+      } else {
+        // Insert new item
+        await supabase
+          .from("cart_items")
+          .insert({
+            user_id: userId,
+            product_id: item.productId,
+            quantity: item.quantity,
+          });
+      }
+    }
+
+    // Clear guest cart after successful merge
+    clearGuestCart();
+    toast.success("Your cart has been synced!");
+  } catch (error) {
+    console.error("Error merging guest cart:", error);
+  }
 };
