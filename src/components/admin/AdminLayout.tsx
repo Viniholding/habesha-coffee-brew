@@ -21,10 +21,12 @@ import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Customers', href: '/admin/customers', icon: Users },
+  { name: 'Segments', href: '/admin/segments', icon: TrendingUp },
+  { name: 'Abandoned Carts', href: '/admin/abandoned-carts', icon: ShoppingCart },
   { name: 'Subscriptions', href: '/admin/subscriptions', icon: RefreshCw },
-  { name: 'Subscription Analytics', href: '/admin/subscription-analytics', icon: TrendingUp },
   { name: 'Program Config', href: '/admin/program-config', icon: Settings },
-  { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Orders', href: '/admin/orders', icon: Package },
   { name: 'Promotions', href: '/admin/promotions', icon: Tag },
   { name: 'Promotion Analytics', href: '/admin/promotion-analytics', icon: BarChart3 },
   { name: 'Inventory', href: '/admin/inventory', icon: Package },

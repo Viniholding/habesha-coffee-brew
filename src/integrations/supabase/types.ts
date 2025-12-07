@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_carts: {
+        Row: {
+          cart_value: number | null
+          created_at: string
+          email: string | null
+          id: string
+          items: Json | null
+          last_activity_at: string
+          last_step: string | null
+          recovered_at: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cart_value?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          items?: Json | null
+          last_activity_at?: string
+          last_step?: string | null
+          recovered_at?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cart_value?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          items?: Json | null
+          last_activity_at?: string
+          last_step?: string | null
+          recovered_at?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       account_deletion_requests: {
         Row: {
           completed_at: string | null
@@ -106,6 +145,33 @@ export type Database = {
           },
         ]
       }
+      analytics_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -140,6 +206,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      customer_segments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          rules: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          rules?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          rules?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       delivery_preferences: {
         Row: {
@@ -704,6 +803,35 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      segment_members: {
+        Row: {
+          added_at: string
+          id: string
+          segment_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          segment_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          segment_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "segment_members_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "customer_segments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_addons: {
         Row: {
