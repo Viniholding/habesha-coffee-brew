@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronLeft, ChevronRight, Coffee, Droplets, Scale, HelpCircle, Sparkles, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coffee, HelpCircle, Sparkles, Check, Package } from "lucide-react";
 
 // Flavor profiles
 const flavorProfiles = [
@@ -38,6 +38,37 @@ const brewMethods = [
   { id: "french_press", name: "French Press", icon: "🍵", grind: "french_press", description: "Coarse grind for full immersion" },
   { id: "drip", name: "Drip Machine", icon: "🏠", grind: "drip", description: "Medium grind for automatic brewers" },
   { id: "whole_bean", name: "I Grind My Own", icon: "🫘", grind: "whole_bean", description: "Fresh whole beans for home grinding" },
+];
+
+// Bag size options with visual comparison
+const bagSizeOptions = [
+  { 
+    id: "12oz", 
+    label: "12 oz", 
+    cups: "~24 cups", 
+    duration: "1-2 weeks",
+    icon: "☕",
+    priceLabel: "Standard",
+    visual: 1,
+  },
+  { 
+    id: "2lb", 
+    label: "2 lb", 
+    cups: "~64 cups", 
+    duration: "3-4 weeks",
+    icon: "☕☕",
+    priceLabel: "Best Value",
+    visual: 2.5,
+  },
+  { 
+    id: "5lb", 
+    label: "5 lb", 
+    cups: "~160 cups", 
+    duration: "6-8 weeks",
+    icon: "☕☕☕",
+    priceLabel: "Bulk Savings",
+    visual: 5.5,
+  },
 ];
 
 // Quantity/Frequency options
@@ -82,12 +113,14 @@ interface CoffeeQuizProps {
     flavorProfile: string;
     brewMethod: string;
     grind: string;
+    bagSize: string;
     quantity: number;
     frequency: string;
   }) => void;
   initialValues?: {
     flavorProfile?: string;
     brewMethod?: string;
+    bagSize?: string;
     quantity?: number;
     frequency?: string;
   };
@@ -97,10 +130,11 @@ const CoffeeQuiz = ({ onComplete, initialValues }: CoffeeQuizProps) => {
   const [step, setStep] = useState(1);
   const [flavorProfile, setFlavorProfile] = useState(initialValues?.flavorProfile || "");
   const [brewMethod, setBrewMethod] = useState(initialValues?.brewMethod || "");
+  const [bagSize, setBagSize] = useState(initialValues?.bagSize || "");
   const [quantityOption, setQuantityOption] = useState("");
   const [showGrindInfo, setShowGrindInfo] = useState(false);
 
-  const totalSteps = 3;
+  const totalSteps = 4;
   const progress = (step / totalSteps) * 100;
 
   const selectedBrewMethod = brewMethods.find(b => b.id === brewMethod);
@@ -108,28 +142,31 @@ const CoffeeQuiz = ({ onComplete, initialValues }: CoffeeQuizProps) => {
 
   useEffect(() => {
     // Auto-complete when all selections are made
-    if (flavorProfile && brewMethod && quantityOption && selectedQuantity) {
+    if (flavorProfile && brewMethod && bagSize && quantityOption && selectedQuantity) {
       onComplete({
         flavorProfile,
         brewMethod,
         grind: selectedBrewMethod?.grind || "whole_bean",
+        bagSize,
         quantity: selectedQuantity.bags,
         frequency: selectedQuantity.frequency,
       });
     }
-  }, [flavorProfile, brewMethod, quantityOption]);
+  }, [flavorProfile, brewMethod, bagSize, quantityOption]);
 
   const canProceed = () => {
     if (step === 1) return !!flavorProfile;
     if (step === 2) return !!brewMethod;
-    if (step === 3) return !!quantityOption;
+    if (step === 3) return !!bagSize;
+    if (step === 4) return !!quantityOption;
     return false;
   };
 
   const stepTitles = [
-    "Choose Your Coffee",
-    "Set Your Plan",
-    "Review & Checkout",
+    "Flavor Profile",
+    "Brew Method",
+    "Bag Size",
+    "Quantity & Frequency",
   ];
 
   return (
@@ -150,7 +187,7 @@ const CoffeeQuiz = ({ onComplete, initialValues }: CoffeeQuizProps) => {
               >
                 {step > index + 1 ? <Check className="h-4 w-4" /> : index + 1}
               </div>
-              <span className={`hidden sm:block text-sm ${step === index + 1 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+              <span className={`hidden md:block text-xs ${step === index + 1 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
                 {title}
               </span>
             </div>
@@ -283,6 +320,85 @@ const CoffeeQuiz = ({ onComplete, initialValues }: CoffeeQuizProps) => {
             className="space-y-6"
           >
             <div className="text-center">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Choose your bag size</h2>
+              <p className="text-muted-foreground">Select the size that fits your coffee needs</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {bagSizeOptions.map((size) => (
+                <button
+                  key={size.id}
+                  onClick={() => setBagSize(size.id)}
+                  className={`relative p-6 rounded-xl border-2 transition-all text-center group hover:scale-[1.02] ${
+                    bagSize === size.id
+                      ? "border-primary bg-primary/10 shadow-lg"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  {bagSize === size.id && (
+                    <div className="absolute top-3 right-3">
+                      <Check className="h-5 w-5 text-primary" />
+                    </div>
+                  )}
+                  {size.priceLabel === "Best Value" && (
+                    <Badge className="absolute top-3 left-3 bg-primary text-xs">
+                      {size.priceLabel}
+                    </Badge>
+                  )}
+                  
+                  {/* Visual Size Comparison */}
+                  <div className="flex justify-center items-end gap-1 h-20 mb-4">
+                    {[...Array(3)].map((_, idx) => (
+                      <motion.div
+                        key={idx}
+                        className={`rounded-t-lg transition-all ${
+                          idx < Math.ceil(size.visual)
+                            ? "bg-primary"
+                            : "bg-muted"
+                        }`}
+                        style={{
+                          width: "24px",
+                          height: `${20 + (idx + 1) * 20}px`,
+                        }}
+                        initial={{ scaleY: 0 }}
+                        animate={{ scaleY: bagSize === size.id ? 1 : 0.8 }}
+                        transition={{ delay: idx * 0.1 }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Package className="h-5 w-5 text-primary" />
+                    <h3 className="font-bold text-xl">{size.label}</h3>
+                  </div>
+                  
+                  <p className="text-sm font-medium text-primary">{size.cups}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Lasts {size.duration}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* Size Comparison Info */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-muted/50 rounded-lg p-4 text-center text-sm text-muted-foreground"
+            >
+              <HelpCircle className="h-4 w-4 inline mr-2" />
+              Larger bags offer better value per cup and stay fresh for weeks when stored properly.
+            </motion.div>
+          </motion.div>
+        )}
+
+        {step === 4 && (
+          <motion.div
+            key="step4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="text-center">
               <h2 className="text-2xl md:text-3xl font-bold mb-2">How much coffee does your household drink?</h2>
               <p className="text-muted-foreground">We'll set up the perfect delivery schedule</p>
             </div>
@@ -330,7 +446,7 @@ const CoffeeQuiz = ({ onComplete, initialValues }: CoffeeQuizProps) => {
           Back
         </Button>
 
-        {step < 3 ? (
+        {step < 4 ? (
           <Button
             onClick={() => setStep(step + 1)}
             disabled={!canProceed()}
