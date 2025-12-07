@@ -20,7 +20,9 @@ type EmailType =
   | "order_shipped"
   | "payment_failed"
   | "renewal_reminder"
-  | "low_stock_notification";
+  | "low_stock_notification"
+  | "payment_receipt"
+  | "gift_subscription_sent";
 
 interface EmailRequest {
   type: EmailType;
@@ -127,6 +129,142 @@ const emailTemplates: Record<EmailType, { subject: string; getHtml: (data: any) 
         <li><strong>Active Subscriptions:</strong> ${data.activeSubscriptions}</li>
       </ul>
       <p>Please restock soon to avoid subscription fulfillment delays.</p>
+    `,
+  },
+  payment_receipt: {
+    subject: "Payment Receipt - Habesha Coffee Subscription",
+    getHtml: (data) => `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; }
+          .header { background: linear-gradient(135deg, #2d1810 0%, #4a2c1d 100%); color: white; padding: 40px 30px; text-align: center; }
+          .content { padding: 30px; }
+          .receipt-box { background: #faf8f5; border: 1px solid #e8e4df; border-radius: 8px; padding: 20px; margin: 20px 0; }
+          .line-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e8e4df; }
+          .line-item:last-child { border-bottom: none; font-weight: bold; font-size: 18px; }
+          .footer { background: #faf8f5; padding: 20px 30px; text-align: center; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0;">Payment Receipt</h1>
+            <p style="margin: 10px 0 0; opacity: 0.9;">Thank you for your subscription!</p>
+          </div>
+          <div class="content">
+            <p>Hi ${data.firstName || "there"},</p>
+            <p>Your payment has been successfully processed. Here's your receipt:</p>
+            
+            <div class="receipt-box">
+              <h3 style="margin-top: 0;">Order Details</h3>
+              <div class="line-item">
+                <span>Receipt #</span>
+                <span>${data.receiptNumber || data.subscriptionId?.substring(0, 8).toUpperCase()}</span>
+              </div>
+              <div class="line-item">
+                <span>Date</span>
+                <span>${data.paymentDate || new Date().toLocaleDateString()}</span>
+              </div>
+              <div class="line-item">
+                <span>${data.productName} (${data.quantity}x ${data.bagSize})</span>
+                <span>$${data.subtotal}</span>
+              </div>
+              ${data.discountAmount > 0 ? `
+              <div class="line-item" style="color: #22c55e;">
+                <span>Discount (${data.discountCode || 'Subscriber'})</span>
+                <span>-$${data.discountAmount}</span>
+              </div>
+              ` : ''}
+              <div class="line-item">
+                <span>Shipping</span>
+                <span>${data.shipping || 'FREE'}</span>
+              </div>
+              <div class="line-item">
+                <span>Total Charged</span>
+                <span>$${data.total}</span>
+              </div>
+            </div>
+            
+            <p style="font-size: 14px; color: #666;">
+              Next scheduled delivery: <strong>${data.nextDeliveryDate}</strong>
+            </p>
+            
+            <p>
+              <a href="${data.accountUrl}" style="display: inline-block; background: #4a2c1d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                Manage Subscription
+              </a>
+            </p>
+          </div>
+          <div class="footer">
+            <p>Habesha Coffee Co. | Premium Ethiopian Coffee</p>
+            <p>Questions? Reply to this email or visit our website.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  },
+  gift_subscription_sent: {
+    subject: "You've Received a Coffee Gift! 🎁",
+    getHtml: (data) => `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; }
+          .header { background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); color: white; padding: 40px 30px; text-align: center; }
+          .content { padding: 30px; }
+          .gift-box { background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 2px solid #f9a8d4; border-radius: 12px; padding: 25px; margin: 20px 0; text-align: center; }
+          .message { background: #faf8f5; border-left: 4px solid #ec4899; padding: 15px; margin: 20px 0; font-style: italic; }
+          .footer { background: #faf8f5; padding: 20px 30px; text-align: center; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0; font-size: 32px;">🎁 You've Been Gifted!</h1>
+            <p style="margin: 10px 0 0; opacity: 0.9;">Premium Ethiopian Coffee, delivered to your door</p>
+          </div>
+          <div class="content">
+            <p>Hi ${data.giftRecipientName || "there"},</p>
+            <p><strong>${data.senderName || "Someone special"}</strong> has gifted you a Habesha Coffee subscription!</p>
+            
+            <div class="gift-box">
+              <h2 style="margin-top: 0; color: #be185d;">${data.productName}</h2>
+              <p style="font-size: 18px; margin: 10px 0;">${data.giftDuration} months of premium coffee</p>
+              <p style="color: #666; margin: 0;">${data.quantity}x ${data.bagSize} bags, ${data.frequency} delivery</p>
+            </div>
+            
+            ${data.giftMessage ? `
+            <div class="message">
+              <p style="margin: 0;">"${data.giftMessage}"</p>
+              <p style="margin: 10px 0 0; text-align: right;">— ${data.senderName || "Your friend"}</p>
+            </div>
+            ` : ''}
+            
+            <p>Your first delivery will arrive on <strong>${data.nextDeliveryDate}</strong>!</p>
+            
+            <p>To manage your gift subscription and track deliveries, create a free account:</p>
+            
+            <p>
+              <a href="${data.signupUrl}" style="display: inline-block; background: #ec4899; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Activate Your Gift
+              </a>
+            </p>
+          </div>
+          <div class="footer">
+            <p>Habesha Coffee Co. | Premium Ethiopian Coffee</p>
+            <p>Ethically sourced, freshly roasted, delivered with care.</p>
+          </div>
+        </div>
+      </body>
+      </html>
     `,
   },
 };
