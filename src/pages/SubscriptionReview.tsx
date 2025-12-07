@@ -70,14 +70,16 @@ const SubscriptionReview = () => {
   const [giftMessage, setGiftMessage] = useState("");
   const [giftErrors, setGiftErrors] = useState<{ name?: string; email?: string }>({});
 
+  // Editable product selection
+  const [selectedProductId, setSelectedProductId] = useState(searchParams.get("product") || "");
+  
   // Parse subscription data from URL params
-  const productId = searchParams.get("product") || "";
   const subscriptionType = (searchParams.get("type") || "regular") as "regular" | "prepaid" | "gift";
   const prepaidMonths = parseInt(searchParams.get("prepaidMonths") || "6");
   const giftDuration = parseInt(searchParams.get("giftDuration") || "3");
 
   // Get data for display
-  const productData = subscriptionProducts.find(p => p.id === productId);
+  const productData = subscriptionProducts.find(p => p.id === selectedProductId);
   const bagSizeData = bagSizeOptions.find(b => b.value === selectedBagSize);
   const frequencyData = frequencyOptions.find(f => f.value === selectedFrequency);
   const grindData = grindOptions.find(g => g.value === selectedGrind);
@@ -98,22 +100,23 @@ const SubscriptionReview = () => {
 
   // Redirect if no valid subscription data
   useEffect(() => {
-    if (!productId || !productData) {
+    if (!selectedProductId || !productData) {
       toast.error("Please choose a subscription first");
       navigate("/subscribe");
     }
-  }, [productId, productData, navigate]);
+  }, [selectedProductId, productData, navigate]);
 
   // Sync URL params when selections change
   useEffect(() => {
     const newParams = new URLSearchParams(searchParams);
+    newParams.set("product", selectedProductId);
     newParams.set("bagSize", selectedBagSize);
     newParams.set("grind", selectedGrind);
     newParams.set("quantity", selectedQuantity.toString());
     newParams.set("frequency", selectedFrequency);
     newParams.set("firstDelivery", format(selectedFirstDelivery, "yyyy-MM-dd"));
     setSearchParams(newParams, { replace: true });
-  }, [selectedBagSize, selectedGrind, selectedQuantity, selectedFrequency, selectedFirstDelivery]);
+  }, [selectedProductId, selectedBagSize, selectedGrind, selectedQuantity, selectedFrequency, selectedFirstDelivery]);
 
   // Calculate pricing
   const calculatePrice = () => {
@@ -276,6 +279,9 @@ const SubscriptionReview = () => {
   const validateFields = (): boolean => {
     const errors: Record<string, string> = {};
     
+    if (!selectedProductId) {
+      errors.product = "Please select a coffee product";
+    }
     if (!selectedBagSize) {
       errors.bagSize = "Please select a bag size";
     }
@@ -338,6 +344,7 @@ const SubscriptionReview = () => {
           priceId: pricing.perDelivery.toFixed(2),
           productId: productData?.stripeProductId,
           productName: productData?.name,
+          internalProductId: selectedProductId,
           quantity: selectedQuantity,
           frequency: selectedFrequency,
           grind: selectedGrind,
@@ -421,9 +428,37 @@ const SubscriptionReview = () => {
                       <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center">
                         <Coffee className="h-8 w-8 text-primary" />
                       </div>
-                      <div>
-                        <CardTitle className="text-xl">{productData.name}</CardTitle>
-                        <p className="text-muted-foreground text-sm">{productData.description}</p>
+                      <div className="flex-1">
+                        <div className="space-y-2">
+                          <Label htmlFor="product" className="text-sm text-muted-foreground">Coffee Selection</Label>
+                          <Select
+                            value={selectedProductId}
+                            onValueChange={(value) => {
+                              setSelectedProductId(value);
+                              setValidationErrors(prev => ({ ...prev, product: "" }));
+                            }}
+                          >
+                            <SelectTrigger id="product" className={cn("w-full md:w-[280px]", validationErrors.product ? "border-destructive" : "")}>
+                              <SelectValue placeholder="Select coffee" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background">
+                              {subscriptionProducts.map((product) => (
+                                <SelectItem key={product.id} value={product.id}>
+                                  <div className="flex flex-col items-start">
+                                    <span className="font-medium">{product.name}</span>
+                                    <span className="text-xs text-muted-foreground">${product.price.toFixed(2)}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {validationErrors.product && (
+                            <p className="text-xs text-destructive">{validationErrors.product}</p>
+                          )}
+                        </div>
+                        {productData && (
+                          <p className="text-muted-foreground text-sm mt-2">{productData.description}</p>
+                        )}
                       </div>
                     </div>
                     <Badge className={
