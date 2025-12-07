@@ -539,6 +539,54 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_addons: {
+        Row: {
+          created_at: string
+          id: string
+          processed_at: string | null
+          product_id: string
+          quantity: number
+          status: string
+          subscription_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          product_id: string
+          quantity?: number
+          status?: string
+          subscription_id: string
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          product_id?: string
+          quantity?: number
+          status?: string
+          subscription_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_addons_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_addons_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_events: {
         Row: {
           created_at: string
