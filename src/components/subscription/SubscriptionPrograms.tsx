@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, Coffee, Star, Leaf, Palette } from "lucide-react";
+import { ArrowRight, Sparkles, Coffee, Star, Leaf, Palette, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import CoffeeQuiz from "./CoffeeQuiz";
 
 interface Program {
   id: string;
@@ -16,6 +18,16 @@ interface Program {
 
 interface SubscriptionProgramsProps {
   onProgramSelect: (programId: string) => void;
+  onQuizComplete?: (selections: {
+    flavorProfile: string;
+    brewMethod: string;
+    grind: string;
+    bagSize: string;
+    quantity: number;
+    frequency: string;
+  }) => void;
+  showQuiz?: boolean;
+  onShowQuizChange?: (show: boolean) => void;
 }
 
 const programIcons: Record<string, any> = {
@@ -26,13 +38,33 @@ const programIcons: Record<string, any> = {
   "Build Your Own": Palette,
 };
 
-const SubscriptionPrograms = ({ onProgramSelect }: SubscriptionProgramsProps) => {
+const SubscriptionPrograms = ({ 
+  onProgramSelect, 
+  onQuizComplete,
+  showQuiz = false,
+  onShowQuizChange
+}: SubscriptionProgramsProps) => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchPrograms();
   }, []);
+
+  const handleBuildYourOwnClick = (programId: string) => {
+    onShowQuizChange?.(true);
+  };
+
+  const handleQuizComplete = (selections: {
+    flavorProfile: string;
+    brewMethod: string;
+    grind: string;
+    bagSize: string;
+    quantity: number;
+    frequency: string;
+  }) => {
+    onQuizComplete?.(selections);
+  };
 
   const fetchPrograms = async () => {
     try {
@@ -117,7 +149,7 @@ const SubscriptionPrograms = ({ onProgramSelect }: SubscriptionProgramsProps) =>
                   <Button 
                     variant={isBuildYourOwn ? "hero" : "outline"} 
                     className="w-full"
-                    onClick={() => onProgramSelect(program.id)}
+                    onClick={() => isBuildYourOwn ? handleBuildYourOwnClick(program.id) : onProgramSelect(program.id)}
                   >
                     {isBuildYourOwn ? "Start Building" : "Subscribe"}
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -127,6 +159,46 @@ const SubscriptionPrograms = ({ onProgramSelect }: SubscriptionProgramsProps) =>
             );
           })}
         </div>
+
+        {/* Build Your Own Quiz Panel */}
+        <AnimatePresence>
+          {showQuiz && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="mt-12 max-w-4xl mx-auto"
+            >
+              <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5 overflow-hidden">
+                <CardHeader className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-4 right-4"
+                    onClick={() => onShowQuizChange?.(false)}
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Palette className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-2xl">Build Your Perfect Subscription</CardTitle>
+                      <CardDescription className="text-base">
+                        Answer a few quick questions to craft your ideal coffee experience
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CoffeeQuiz onComplete={handleQuizComplete} />
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   );
