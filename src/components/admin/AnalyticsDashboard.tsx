@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, ShoppingCart, Users, TrendingUp, Package, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { DollarSign, ShoppingCart, Users, TrendingUp, Package, ArrowUpRight, ArrowDownRight, RefreshCw, XCircle, PauseCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
@@ -25,6 +25,14 @@ interface DailyRevenue {
   orders: number;
 }
 
+interface SubscriptionStats {
+  active: number;
+  paused: number;
+  cancelled: number;
+  mrr: number;
+  churnRate: number;
+}
+
 const CHART_COLORS = ['hsl(28, 85%, 55%)', 'hsl(35, 90%, 60%)', 'hsl(20, 70%, 45%)', 'hsl(30, 80%, 50%)', 'hsl(25, 60%, 40%)'];
 
 export const AnalyticsDashboard = () => {
@@ -32,6 +40,7 @@ export const AnalyticsDashboard = () => {
   const [topProducts, setTopProducts] = useState<ProductSales[]>([]);
   const [customerCount, setCustomerCount] = useState(0);
   const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([]);
+  const [subscriptionStats, setSubscriptionStats] = useState<SubscriptionStats>({ active: 0, paused: 0, cancelled: 0, mrr: 0, churnRate: 0 });
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('30');
 
@@ -113,6 +122,24 @@ export const AnalyticsDashboard = () => {
 
       if (profilesError) throw profilesError;
       setCustomerCount(count || 0);
+
+      // Fetch subscription statistics
+      const { data: subscriptions, error: subsError } = await supabase
+        .from('subscriptions')
+        .select('status, price, quantity');
+
+      if (!subsError && subscriptions) {
+        const active = subscriptions.filter(s => s.status === 'active').length;
+        const paused = subscriptions.filter(s => s.status === 'paused').length;
+        const cancelled = subscriptions.filter(s => s.status === 'cancelled').length;
+        const mrr = subscriptions
+          .filter(s => s.status === 'active')
+          .reduce((sum, s) => sum + (s.price * s.quantity * 2), 0); // Assuming biweekly avg = ~2x/month
+        const total = active + paused + cancelled;
+        const churnRate = total > 0 ? (cancelled / total) * 100 : 0;
+
+        setSubscriptionStats({ active, paused, cancelled, mrr, churnRate });
+      }
 
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -215,6 +242,57 @@ export const AnalyticsDashboard = () => {
               <span className="text-green-500">+15.3%</span>
               <span className="ml-1">from last period</span>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Subscription Stats Row */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
+            <RefreshCw className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{subscriptionStats.active}</div>
+            <p className="text-xs text-muted-foreground mt-1">Recurring customers</p>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Paused</CardTitle>
+            <PauseCircle className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{subscriptionStats.paused}</div>
+            <p className="text-xs text-muted-foreground mt-1">Temporarily paused</p>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Est. MRR</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${subscriptionStats.mrr.toFixed(0)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Monthly recurring</p>
+          </CardContent>
+        </Card>
+
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
+            <XCircle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{subscriptionStats.churnRate.toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground mt-1">Cancellation rate</p>
           </CardContent>
         </Card>
       </div>

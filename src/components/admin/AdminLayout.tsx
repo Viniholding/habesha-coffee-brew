@@ -7,7 +7,10 @@ import {
   Menu, 
   X,
   LogOut,
-  Home
+  Home,
+  RefreshCw,
+  ShoppingCart,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +19,8 @@ import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Subscriptions', href: '/admin/subscriptions', icon: RefreshCw },
+  { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Inventory', href: '/admin/inventory', icon: Package },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ];
