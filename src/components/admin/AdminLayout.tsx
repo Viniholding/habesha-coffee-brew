@@ -24,8 +24,8 @@ const navigation = [
   { name: 'Subscription Analytics', href: '/admin/subscription-analytics', icon: TrendingUp },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Promotions', href: '/admin/promotions', icon: Tag },
+  { name: 'Promotion Analytics', href: '/admin/promotion-analytics', icon: BarChart3 },
   { name: 'Inventory', href: '/admin/inventory', icon: Package },
-  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ];
 
 export const AdminLayout = () => {
