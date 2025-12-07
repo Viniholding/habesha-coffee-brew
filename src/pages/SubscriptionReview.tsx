@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Coffee, Package, Calendar, DollarSign, Mail, ArrowLeft, 
-  ArrowRight, AlertCircle, Gift, CreditCard, User
+  ArrowRight, AlertCircle, Gift, CreditCard, User, Tag, Check, X, Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,6 +31,18 @@ const SubscriptionReview = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
+
+  // Coupon code state
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState<{ code: string; discount: number } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+
+  // Gift recipient state
+  const [giftRecipientName, setGiftRecipientName] = useState("");
+  const [giftRecipientEmail, setGiftRecipientEmail] = useState("");
+  const [giftMessage, setGiftMessage] = useState("");
+  const [giftErrors, setGiftErrors] = useState<{ name?: string; email?: string }>({});
 
   // Parse subscription data from URL params
   const productId = searchParams.get("product") || "";
@@ -66,7 +81,7 @@ const SubscriptionReview = () => {
 
   // Calculate pricing
   const calculatePrice = () => {
-    if (!productData || !bagSizeData) return { perDelivery: 0, total: 0, discount: 0, deliveries: 1 };
+    if (!productData || !bagSizeData) return { perDelivery: 0, total: 0, discount: 0, deliveries: 1, couponDiscount: 0 };
 
     const basePrice = productData.price * bagSizeData.priceMultiplier * quantity;
     let discountPercent = 10; // Base subscriber discount
@@ -82,19 +97,103 @@ const SubscriptionReview = () => {
       totalDeliveries = Math.floor((giftDuration * 30) / daysPerDelivery);
     }
 
+    // Add coupon discount
+    if (couponApplied) {
+      discountPercent += couponApplied.discount;
+    }
+
     const discountedPrice = basePrice * (1 - discountPercent / 100);
     const total = subscriptionType === "regular" ? discountedPrice : discountedPrice * totalDeliveries;
+    const couponDiscount = couponApplied 
+      ? basePrice * (couponApplied.discount / 100) * (subscriptionType === "regular" ? 1 : totalDeliveries)
+      : 0;
 
     return {
       perDelivery: discountedPrice,
       total,
       discount: discountPercent,
       deliveries: totalDeliveries,
+      couponDiscount,
     };
   };
 
   const pricing = calculatePrice();
   const nextBillingDate = addDays(new Date(), frequencyData?.days || 14);
+
+  // Validate and apply coupon
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponError("");
+
+    try {
+      // Check referral codes first
+      const { data: referral, error: referralError } = await supabase
+        .from("referrals")
+        .select("*")
+        .eq("referral_code", couponCode.toUpperCase())
+        .eq("status", "pending")
+        .maybeSingle();
+
+      if (referral) {
+        setCouponApplied({ 
+          code: couponCode.toUpperCase(), 
+          discount: referral.referee_discount_percent 
+        });
+        toast.success(`Referral code applied! ${referral.referee_discount_percent}% off`);
+        setCouponCode("");
+        return;
+      }
+
+      // Mock coupon validation (in production, validate against a coupons table)
+      const mockCoupons: Record<string, number> = {
+        "WELCOME10": 10,
+        "COFFEE15": 15,
+        "FIRST20": 20,
+        "HABESHA25": 25,
+      };
+
+      const discount = mockCoupons[couponCode.toUpperCase()];
+      if (discount) {
+        setCouponApplied({ code: couponCode.toUpperCase(), discount });
+        toast.success(`Coupon applied! ${discount}% off`);
+        setCouponCode("");
+      } else {
+        setCouponError("Invalid or expired coupon code");
+      }
+    } catch (error) {
+      setCouponError("Failed to validate coupon");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponApplied(null);
+    setCouponError("");
+  };
+
+  // Validate gift recipient
+  const validateGiftRecipient = (): boolean => {
+    const errors: { name?: string; email?: string } = {};
+    
+    if (!giftRecipientName.trim()) {
+      errors.name = "Recipient name is required";
+    }
+    
+    if (!giftRecipientEmail.trim()) {
+      errors.email = "Recipient email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(giftRecipientEmail)) {
+      errors.email = "Please enter a valid email address";
+    }
+    
+    setGiftErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleEditSelection = () => {
     navigate("/subscribe?showQuiz=true");
@@ -105,6 +204,12 @@ const SubscriptionReview = () => {
       // Save current URL params and redirect to auth
       const currentParams = searchParams.toString();
       navigate(`/auth?redirect=/subscription/review?${currentParams}`);
+      return;
+    }
+
+    // Validate gift recipient if gift subscription
+    if (subscriptionType === "gift" && !validateGiftRecipient()) {
+      toast.error("Please fill in the gift recipient details");
       return;
     }
 
@@ -127,6 +232,11 @@ const SubscriptionReview = () => {
           prepaidTotal: subscriptionType === "prepaid" ? pricing.total.toFixed(2) : undefined,
           isGift: subscriptionType === "gift",
           giftDuration: subscriptionType === "gift" ? giftDuration : undefined,
+          giftRecipientName: subscriptionType === "gift" ? giftRecipientName : undefined,
+          giftRecipientEmail: subscriptionType === "gift" ? giftRecipientEmail : undefined,
+          giftMessage: subscriptionType === "gift" ? giftMessage : undefined,
+          discountCode: couponApplied?.code,
+          discountPercent: couponApplied?.discount,
         },
       });
 
@@ -256,19 +366,174 @@ const SubscriptionReview = () => {
 
                   <Separator />
 
+                  {/* Gift Recipient Form */}
+                  <AnimatePresence>
+                    {subscriptionType === "gift" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-4 overflow-hidden"
+                      >
+                        <div className="p-4 bg-pink-50 dark:bg-pink-950/20 border border-pink-200 dark:border-pink-800 rounded-lg space-y-4">
+                          <div className="flex items-center gap-2">
+                            <Gift className="h-5 w-5 text-pink-500" />
+                            <h3 className="font-semibold text-pink-700 dark:text-pink-300">Gift Recipient Details</h3>
+                          </div>
+                          
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="recipientName">Recipient Name *</Label>
+                              <Input
+                                id="recipientName"
+                                placeholder="Enter recipient's name"
+                                value={giftRecipientName}
+                                onChange={(e) => {
+                                  setGiftRecipientName(e.target.value);
+                                  if (giftErrors.name) setGiftErrors(prev => ({ ...prev, name: undefined }));
+                                }}
+                                className={giftErrors.name ? "border-destructive" : ""}
+                              />
+                              {giftErrors.name && (
+                                <p className="text-xs text-destructive">{giftErrors.name}</p>
+                              )}
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor="recipientEmail">Recipient Email *</Label>
+                              <Input
+                                id="recipientEmail"
+                                type="email"
+                                placeholder="Enter recipient's email"
+                                value={giftRecipientEmail}
+                                onChange={(e) => {
+                                  setGiftRecipientEmail(e.target.value);
+                                  if (giftErrors.email) setGiftErrors(prev => ({ ...prev, email: undefined }));
+                                }}
+                                className={giftErrors.email ? "border-destructive" : ""}
+                              />
+                              {giftErrors.email && (
+                                <p className="text-xs text-destructive">{giftErrors.email}</p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="giftMessage">Personal Message (Optional)</Label>
+                            <Textarea
+                              id="giftMessage"
+                              placeholder="Add a personal message to your gift..."
+                              value={giftMessage}
+                              onChange={(e) => setGiftMessage(e.target.value)}
+                              rows={3}
+                              maxLength={500}
+                            />
+                            <p className="text-xs text-muted-foreground text-right">{giftMessage.length}/500</p>
+                          </div>
+                        </div>
+                        <Separator />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Coupon Code */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Have a coupon code?</span>
+                    </div>
+                    
+                    {couponApplied ? (
+                      <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span className="font-medium text-green-700 dark:text-green-300">
+                            {couponApplied.code}
+                          </span>
+                          <Badge variant="secondary" className="bg-green-100 text-green-700">
+                            {couponApplied.discount}% off
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveCoupon}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Enter coupon code"
+                            value={couponCode}
+                            onChange={(e) => {
+                              setCouponCode(e.target.value.toUpperCase());
+                              setCouponError("");
+                            }}
+                            className={couponError ? "border-destructive" : ""}
+                          />
+                          {couponError && (
+                            <p className="text-xs text-destructive mt-1">{couponError}</p>
+                          )}
+                        </div>
+                        <Button
+                          variant="secondary"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading}
+                        >
+                          {couponLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Apply"
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
                   {/* Pricing */}
                   <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Base price per delivery</span>
+                      <span className="font-medium">
+                        ${(productData.price * (bagSizeData?.priceMultiplier || 1) * quantity).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-green-600">
+                      <span>Subscriber discount (10% off)</span>
+                      <span>-${((productData.price * (bagSizeData?.priceMultiplier || 1) * quantity) * 0.1).toFixed(2)}</span>
+                    </div>
+                    {subscriptionType === "prepaid" && (
+                      <div className="flex justify-between items-center text-green-600">
+                        <span>Prepaid discount ({prepaidOptions.find(p => p.value === prepaidMonths)?.discount}% off)</span>
+                        <span>-${((productData.price * (bagSizeData?.priceMultiplier || 1) * quantity) * ((prepaidOptions.find(p => p.value === prepaidMonths)?.discount || 0) / 100)).toFixed(2)}</span>
+                      </div>
+                    )}
+                    {couponApplied && (
+                      <div className="flex justify-between items-center text-green-600">
+                        <span>Coupon ({couponApplied.code})</span>
+                        <span>-${pricing.couponDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <Separator />
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Price per delivery</span>
                       <span className="font-medium">${pricing.perDelivery.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between items-center text-green-600">
-                      <span>Subscriber discount ({pricing.discount}% off)</span>
-                      <span>-${((productData.price * (bagSizeData?.priceMultiplier || 1) * quantity) * (pricing.discount / 100)).toFixed(2)}</span>
-                    </div>
+                    {subscriptionType !== "regular" && (
+                      <div className="flex justify-between items-center text-muted-foreground text-sm">
+                        <span>× {pricing.deliveries} deliveries</span>
+                        <span></span>
+                      </div>
+                    )}
                     <Separator />
                     <div className="flex justify-between items-center text-lg font-bold">
-                      <span>{subscriptionType === "regular" ? "Per Delivery" : "Total"}</span>
+                      <span>{subscriptionType === "regular" ? "Per Delivery" : "Total Due Today"}</span>
                       <span className="text-primary">${pricing.total.toFixed(2)}</span>
                     </div>
                     {subscriptionType !== "regular" && (
@@ -276,6 +541,11 @@ const SubscriptionReview = () => {
                         One-time payment for {pricing.deliveries} deliveries
                       </p>
                     )}
+                    <div className="flex justify-center">
+                      <Badge variant="outline" className="text-green-600 border-green-300">
+                        Total savings: {pricing.discount}% off
+                      </Badge>
+                    </div>
                   </div>
 
                   <Separator />
