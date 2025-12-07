@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.subscription-scheduler]
 verify_jwt = false
+
+[functions.check-promotion-limits]
+verify_jwt = false
