@@ -250,6 +250,12 @@ const Checkout = () => {
     }
   };
 
+  const generateOrderNumber = () => {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `HC-${timestamp}-${random}`;
+  };
+
   const handlePlaceOrder = async () => {
     if (!canProceedToNext()) {
       toast.error("Please complete all required fields");
@@ -258,22 +264,58 @@ const Checkout = () => {
 
     setProcessingCheckout(true);
     try {
-      // Simulate order processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Clear cart after successful order
-      if (user) {
-        await supabase.from("cart_items").delete().eq("user_id", user.id);
-      } else {
+      const orderNumber = generateOrderNumber();
+      
+      // Process guest order
+      if (!user) {
+        // Send guest order confirmation email
+        const shippingAddr = guestAddress || {};
+        
+        try {
+          await supabase.functions.invoke('send-guest-order-confirmation', {
+            body: {
+              email: guestEmail,
+              firstName: guestFirstName,
+              lastName: guestLastName,
+              orderNumber: orderNumber,
+              items: cartItems.map(item => ({
+                name: item.product.name,
+                quantity: item.quantity,
+                price: item.product.price,
+                imageUrl: item.product.image_url,
+              })),
+              subtotal: totalPrice,
+              shipping: 0,
+              total: totalPrice,
+              shippingAddress: {
+                fullName: shippingAddr.full_name || `${guestFirstName} ${guestLastName}`,
+                addressLine1: shippingAddr.address_line1 || '',
+                addressLine2: shippingAddr.address_line2 || '',
+                city: shippingAddr.city || '',
+                state: shippingAddr.state || '',
+                postalCode: shippingAddr.postal_code || '',
+                country: shippingAddr.country || 'US',
+              },
+            },
+          });
+          toast.success("Order confirmation email sent!");
+        } catch (emailError) {
+          console.error("Failed to send confirmation email:", emailError);
+          // Don't block the order if email fails
+        }
+        
         // Clear guest cart
         clearGuestCart();
+      } else {
+        // Clear user cart
+        await supabase.from("cart_items").delete().eq("user_id", user.id);
       }
 
       // Navigate to success page
       const hasSubscription = hasSubscriptionItems;
       const successUrl = hasSubscription 
-        ? "/order-success?subscription=demo-sub-id"
-        : "/order-success?order=demo-order-id";
+        ? `/order-success?subscription=demo-sub-id&order=${orderNumber}`
+        : `/order-success?order=${orderNumber}`;
       
       navigate(successUrl);
     } catch (error) {
