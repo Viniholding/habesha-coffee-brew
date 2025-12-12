@@ -207,6 +207,84 @@ export type Database = {
           },
         ]
       }
+      collection_products: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          product_id: string
+          sort_order: number
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+          sort_order?: number
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_products_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          show_on_homepage: boolean
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          show_on_homepage?: boolean
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          show_on_homepage?: boolean
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_segments: {
         Row: {
           created_at: string
@@ -274,6 +352,50 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_settings: {
+        Row: {
+          featured_collection_id: string | null
+          hero_button_link: string | null
+          hero_button_text: string | null
+          hero_image_url: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          featured_collection_id?: string | null
+          hero_button_link?: string | null
+          hero_button_text?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          featured_collection_id?: string | null
+          hero_button_link?: string | null
+          hero_button_text?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_settings_featured_collection_id_fkey"
+            columns: ["featured_collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
             referencedColumns: ["id"]
           },
         ]
@@ -620,8 +742,11 @@ export type Database = {
           first_name: string | null
           full_name: string | null
           id: string
+          is_vip: boolean
           last_name: string | null
+          lifetime_value: number
           phone: string | null
+          total_orders: number
           updated_at: string | null
         }
         Insert: {
@@ -632,8 +757,11 @@ export type Database = {
           first_name?: string | null
           full_name?: string | null
           id: string
+          is_vip?: boolean
           last_name?: string | null
+          lifetime_value?: number
           phone?: string | null
+          total_orders?: number
           updated_at?: string | null
         }
         Update: {
@@ -644,8 +772,11 @@ export type Database = {
           first_name?: string | null
           full_name?: string | null
           id?: string
+          is_vip?: boolean
           last_name?: string | null
+          lifetime_value?: number
           phone?: string | null
+          total_orders?: number
           updated_at?: string | null
         }
         Relationships: []
@@ -1092,18 +1223,21 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          admin_level: string | null
           created_at: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          admin_level?: string | null
           created_at?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          admin_level?: string | null
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -1124,6 +1258,7 @@ export type Database = {
             Returns: undefined
           }
       delete_user: { Args: never; Returns: undefined }
+      get_admin_level: { Args: { _user_id: string }; Returns: string }
       get_scheduled_deletion: {
         Args: never
         Returns: {

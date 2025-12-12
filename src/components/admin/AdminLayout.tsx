@@ -13,7 +13,9 @@ import {
   TrendingUp,
   Tag,
   Settings,
-  Users
+  Users,
+  Layers,
+  Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +24,8 @@ import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Collections', href: '/admin/collections', icon: Layers },
+  { name: 'Homepage', href: '/admin/homepage', icon: Palette },
   { name: 'Customers', href: '/admin/customers', icon: Users },
   { name: 'Segments', href: '/admin/segments', icon: TrendingUp },
   { name: 'Abandoned Carts', href: '/admin/abandoned-carts', icon: ShoppingCart },

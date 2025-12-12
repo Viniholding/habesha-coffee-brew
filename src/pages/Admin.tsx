@@ -11,19 +11,10 @@ import ProgramProductConfig from '@/components/admin/ProgramProductConfig';
 import CustomerManagement from '@/components/admin/CustomerManagement';
 import CustomerSegments from '@/components/admin/CustomerSegments';
 import AbandonedCarts from '@/components/admin/AbandonedCarts';
+import CollectionsManagement from '@/components/admin/CollectionsManagement';
+import HomepageSettings from '@/components/admin/HomepageSettings';
+import EnhancedDashboard from '@/components/admin/EnhancedDashboard';
 import { Routes, Route } from 'react-router-dom';
-
-const AdminDashboardHome = () => {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard Overview</h1>
-        <p className="text-muted-foreground mt-2">Welcome to your admin dashboard</p>
-      </div>
-      <AnalyticsDashboard />
-    </div>
-  );
-};
 
 const Admin = () => {
   const { isAdmin, isLoading } = useAdminAuth();
@@ -50,7 +41,9 @@ const AdminRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Admin />}>
-        <Route index element={<AdminDashboardHome />} />
+        <Route index element={<EnhancedDashboard />} />
+        <Route path="collections" element={<CollectionsManagement />} />
+        <Route path="homepage" element={<HomepageSettings />} />
         <Route path="subscriptions" element={<AdminSubscriptionManagement />} />
         <Route path="subscription-analytics" element={<SubscriptionAnalytics />} />
         <Route path="program-config" element={<ProgramProductConfig />} />
