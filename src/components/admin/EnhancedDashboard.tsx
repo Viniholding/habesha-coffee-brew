@@ -25,7 +25,8 @@ interface DashboardStats {
   todayOrders: number;
   lowStockProducts: { name: string; stock_quantity: number }[];
   topProducts: { name: string; total_sold: number; revenue: number }[];
-  vipCustomers: number;
+  vipCustomers: { id: string; name: string; email: string; lifetime_value: number }[];
+  vipCustomerCount: number;
   newCustomers: number;
   pendingOrders: number;
 }
@@ -40,7 +41,8 @@ const EnhancedDashboard = () => {
     todayOrders: 0,
     lowStockProducts: [],
     topProducts: [],
-    vipCustomers: 0,
+    vipCustomers: [],
+    vipCustomerCount: 0,
     newCustomers: 0,
     pendingOrders: 0,
   });
@@ -114,8 +116,22 @@ const EnhancedDashboard = () => {
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5);
 
-      // VIP customers
-      const { count: vipCustomers } = await supabase
+      // VIP customers - fetch full details
+      const { data: vipCustomerData } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, lifetime_value')
+        .eq('is_vip', true)
+        .order('lifetime_value', { ascending: false })
+        .limit(5);
+
+      const vipCustomers = (vipCustomerData || []).map(c => ({
+        id: c.id,
+        name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Unknown',
+        email: c.email,
+        lifetime_value: c.lifetime_value || 0,
+      }));
+
+      const { count: vipCustomerCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('is_vip', true);
@@ -140,7 +156,8 @@ const EnhancedDashboard = () => {
         todayOrders: (todayOrders || []).length,
         lowStockProducts,
         topProducts,
-        vipCustomers: vipCustomers || 0,
+        vipCustomers,
+        vipCustomerCount: vipCustomerCount || 0,
         newCustomers: newCustomers || 0,
         pendingOrders: pendingOrders || 0,
       });
@@ -220,10 +237,14 @@ const EnhancedDashboard = () => {
             <Crown className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.vipCustomers}</div>
-            <p className="text-xs text-muted-foreground">
-              LTV ≥ $300 or 5+ orders
-            </p>
+            <div className="text-2xl font-bold">{stats.vipCustomerCount}</div>
+            <Button 
+              variant="link" 
+              className="p-0 h-auto text-xs"
+              onClick={() => navigate('/admin/customers')}
+            >
+              View VIPs <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -310,7 +331,7 @@ const EnhancedDashboard = () => {
         )}
 
         {/* Top Products */}
-        <Card className={stats.lowStockProducts.length === 0 ? 'lg:col-span-2' : ''}>
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
@@ -345,6 +366,54 @@ const EnhancedDashboard = () => {
                 ))
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* VIP Customers */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-yellow-500" />
+              Top VIP Customers
+            </CardTitle>
+            <CardDescription>Highest lifetime value customers</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {stats.vipCustomers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No VIP customers yet
+                </p>
+              ) : (
+                stats.vipCustomers.map((customer, i) => (
+                  <div key={customer.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                        <Crown className="h-4 w-4 text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{customer.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {customer.email}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                      ${customer.lifetime_value.toFixed(2)} LTV
+                    </Badge>
+                  </div>
+                ))
+              )}
+            </div>
+            {stats.vipCustomerCount > 5 && (
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => navigate('/admin/customers')}
+              >
+                View All {stats.vipCustomerCount} VIP Customers
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
