@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Package, DollarSign, Pause, Play, X, SkipForward, Edit, Loader2, ExternalLink, CalendarClock, Pencil } from "lucide-react";
+import { Calendar, Package, DollarSign, Pause, Play, X, SkipForward, Edit, Loader2, ExternalLink, CalendarClock, Pencil, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -11,6 +11,7 @@ import SubscriptionDetailDialog from "./SubscriptionDetailDialog";
 import SubscriptionAddons from "./SubscriptionAddons";
 import PauseScheduleDialog from "./PauseScheduleDialog";
 import EditResumeDialog from "./EditResumeDialog";
+import SubscriptionStatusSync from "./SubscriptionStatusSync";
 interface Subscription {
   id: string;
   status: string;
@@ -132,6 +133,8 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
         return "bg-primary/10 text-primary border-primary/20";
       case "paused":
         return "bg-muted text-muted-foreground border-border";
+      case "past_due":
+        return "bg-destructive/10 text-destructive border-destructive/20";
       case "cancelled":
         return "bg-destructive/10 text-destructive border-destructive/20";
       default:
@@ -168,6 +171,10 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={openCustomerPortal}>
+              <CreditCard className="h-4 w-4 mr-2" />
+              Update Payment Method
+            </Button>
+            <Button variant="outline" size="sm" onClick={openCustomerPortal}>
               <ExternalLink className="h-4 w-4 mr-2" />
               Billing Portal
             </Button>
@@ -197,11 +204,16 @@ const SubscriptionManagement = ({ userId }: SubscriptionManagementProps) => {
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-lg">{subscription.product_name}</h3>
                       <Badge variant="outline" className={getStatusColor(subscription.status)}>
-                        {subscription.status}
+                        {subscription.status === "past_due" ? "Payment Failed" : subscription.status}
                       </Badge>
+                      <SubscriptionStatusSync
+                        subscriptionId={subscription.id}
+                        currentStatus={subscription.status}
+                        onStatusChange={fetchSubscriptions}
+                      />
                       {subscription.status === "paused" && subscription.resume_at && (
                         <button
                           onClick={() => {
