@@ -14,6 +14,9 @@ import AbandonedCarts from '@/components/admin/AbandonedCarts';
 import CollectionsManagement from '@/components/admin/CollectionsManagement';
 import HomepageSettings from '@/components/admin/HomepageSettings';
 import EnhancedDashboard from '@/components/admin/EnhancedDashboard';
+import AdminUsersManagement from '@/components/admin/AdminUsersManagement';
+import AdminAuditLog from '@/components/admin/AdminAuditLog';
+import AdminSettings from '@/components/admin/AdminSettings';
 import { Routes, Route } from 'react-router-dom';
 
 const Admin = () => {
@@ -55,6 +58,9 @@ const AdminRoutes = () => {
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="segments" element={<CustomerSegments />} />
         <Route path="abandoned-carts" element={<AbandonedCarts />} />
+        <Route path="users" element={<AdminUsersManagement />} />
+        <Route path="audit-log" element={<AdminAuditLog />} />
+        <Route path="settings" element={<AdminSettings />} />
       </Route>
     </Routes>
   );
