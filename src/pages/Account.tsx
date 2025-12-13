@@ -19,6 +19,7 @@ import ProfilePictureUpload from "@/components/account/ProfilePictureUpload";
 import AvatarGallery from "@/components/account/AvatarGallery";
 import NotificationPreferences from "@/components/account/NotificationPreferences";
 import ReferralProgram from "@/components/account/ReferralProgram";
+import PaymentFailureBanner from "@/components/account/PaymentFailureBanner";
 import { Package, MapPin, CreditCard, Calendar, Truck, User as UserIcon, Settings, RefreshCw, Images, Bell, Gift } from "lucide-react";
 
 const Account = () => {
@@ -119,6 +120,8 @@ const Account = () => {
       <Navigation />
       <main className="min-h-screen bg-account-bg pt-24 pb-12 relative before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_50%_50%,rgba(184,134,11,0.04)_1px,transparent_1px)] before:bg-[size:32px_32px] after:absolute after:inset-0 after:bg-[linear-gradient(180deg,rgba(25,20,8,0.3)_0%,transparent_20%,transparent_80%,rgba(25,20,8,0.3)_100%)] before:pointer-events-none after:pointer-events-none">
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
+          {/* Payment Failure Banner */}
+          <PaymentFailureBanner userId={user.id} />
           {/* Profile Header Card */}
           <Card className="mb-8 bg-account-card/95 backdrop-blur-sm border-border/50 shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 hover:shadow-[0_12px_48px_rgba(0,0,0,0.5)] ring-1 ring-primary/10 animate-in fade-in-50 slide-in-from-top-4 duration-700">
             <CardHeader className="pb-6">

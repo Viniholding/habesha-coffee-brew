@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Settings, Store, CreditCard, Truck, Receipt, Shield, AlertTriangle, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { logAdminAction } from '@/lib/auditLog';
 
 interface LoginAttempt {
   id: string;
@@ -61,16 +62,12 @@ export default function AdminSettings() {
   };
 
   const handleSaveSettings = async () => {
-    // In production, save to a settings table
     toast.success('Settings saved successfully');
     
-    // Log audit event
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('admin_audit_log').insert({
-      admin_user_id: user?.id,
-      action_type: 'settings_updated',
-      entity_type: 'settings',
-      new_values: settings,
+    await logAdminAction({
+      actionType: 'settings_updated',
+      entityType: 'settings',
+      newValues: settings,
     });
   };
 
