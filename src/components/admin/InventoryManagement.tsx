@@ -8,8 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Package, AlertTriangle, Edit, Eye } from 'lucide-react';
+import { Package, AlertTriangle, Edit, Eye, Plus } from 'lucide-react';
 import { useAdminRole } from '@/hooks/useAdminRole';
+import AddInventoryDialog from './AddInventoryDialog';
 
 interface Product {
   id: string;
@@ -28,6 +29,7 @@ export const InventoryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { canEdit, isReadOnly } = useAdminRole();
 
   useEffect(() => {

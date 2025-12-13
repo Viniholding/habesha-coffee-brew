@@ -15,32 +15,55 @@ import {
   Settings,
   Users,
   Layers,
-  Palette
+  Palette,
+  Shield,
+  FileText,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAdminRole } from '@/hooks/useAdminRole';
+import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 
-const navigation = [
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'Collections', href: '/admin/collections', icon: Layers },
-  { name: 'Homepage', href: '/admin/homepage', icon: Palette },
-  { name: 'Customers', href: '/admin/customers', icon: Users },
-  { name: 'Segments', href: '/admin/segments', icon: TrendingUp },
-  { name: 'Abandoned Carts', href: '/admin/abandoned-carts', icon: ShoppingCart },
-  { name: 'Subscriptions', href: '/admin/subscriptions', icon: RefreshCw },
-  { name: 'Program Config', href: '/admin/program-config', icon: Settings },
-  { name: 'Orders', href: '/admin/orders', icon: Package },
-  { name: 'Promotions', href: '/admin/promotions', icon: Tag },
-  { name: 'Promotion Analytics', href: '/admin/promotion-analytics', icon: BarChart3 },
-  { name: 'Inventory', href: '/admin/inventory', icon: Package },
-];
+const getNavigation = (isOwner: boolean, isManager: boolean) => {
+  const nav = [
+    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    { name: 'Collections', href: '/admin/collections', icon: Layers },
+    { name: 'Homepage', href: '/admin/homepage', icon: Palette },
+    { name: 'Customers', href: '/admin/customers', icon: Users },
+    { name: 'Segments', href: '/admin/segments', icon: TrendingUp },
+    { name: 'Abandoned Carts', href: '/admin/abandoned-carts', icon: ShoppingCart },
+    { name: 'Subscriptions', href: '/admin/subscriptions', icon: RefreshCw },
+    { name: 'Program Config', href: '/admin/program-config', icon: Settings },
+    { name: 'Orders', href: '/admin/orders', icon: Package },
+    { name: 'Promotions', href: '/admin/promotions', icon: Tag },
+    { name: 'Promotion Analytics', href: '/admin/promotion-analytics', icon: BarChart3 },
+    { name: 'Inventory', href: '/admin/inventory', icon: Package },
+  ];
+  
+  if (isOwner || isManager) {
+    nav.push({ name: 'Audit Log', href: '/admin/audit-log', icon: FileText });
+  }
+  if (isOwner) {
+    nav.push({ name: 'Admin Users', href: '/admin/users', icon: Shield });
+    nav.push({ name: 'Settings', href: '/admin/settings', icon: Settings });
+  }
+  
+  return nav;
+};
 
 export const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { isOwner, isManager } = useAdminRole();
+  
+  // Enable session timeout for admin
+  useSessionTimeout(true);
+  
+  const navigation = getNavigation(isOwner, isManager);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

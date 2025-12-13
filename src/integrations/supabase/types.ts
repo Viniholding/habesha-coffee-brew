@@ -187,6 +187,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_login_attempts: {
+        Row: {
+          attempted_at: string
+          email: string
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           created_at: string
@@ -1278,6 +1305,8 @@ export type Database = {
           admin_level: string | null
           created_at: string | null
           id: string
+          is_active: boolean | null
+          last_login_at: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -1285,6 +1314,8 @@ export type Database = {
           admin_level?: string | null
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
+          last_login_at?: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -1292,6 +1323,8 @@ export type Database = {
           admin_level?: string | null
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
+          last_login_at?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
@@ -1303,6 +1336,14 @@ export type Database = {
     }
     Functions: {
       cancel_account_deletion: { Args: never; Returns: undefined }
+      check_admin_login_rate_limit: {
+        Args: { _email: string }
+        Returns: {
+          attempts_count: number
+          block_until: string
+          is_blocked: boolean
+        }[]
+      }
       confirm_account_deletion:
         | { Args: { _token: string }; Returns: undefined }
         | {
@@ -1324,6 +1365,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_admin_login_attempt: {
+        Args: {
+          _email: string
+          _ip_address?: string
+          _success: boolean
+          _user_agent?: string
+        }
+        Returns: undefined
       }
       request_account_deletion: { Args: never; Returns: string }
       validate_referral_code: {
