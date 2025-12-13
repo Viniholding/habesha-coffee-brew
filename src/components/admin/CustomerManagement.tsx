@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, User, Mail, Phone, Calendar, DollarSign, Package, RefreshCw } from 'lucide-react';
+import { Search, User, Mail, Phone, Calendar, DollarSign, Package, RefreshCw, Crown } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Customer {
@@ -20,6 +20,7 @@ interface Customer {
   total_orders: number;
   total_spent: number;
   active_subscriptions: number;
+  is_vip: boolean;
 }
 
 interface CustomerDetail {
@@ -76,6 +77,7 @@ const CustomerManagement = () => {
           total_orders: userOrders.length,
           total_spent: totalSpent,
           active_subscriptions: userSubs.length,
+          is_vip: profile.is_vip || false,
         };
       });
 
@@ -217,6 +219,12 @@ const CustomerManagement = () => {
                           ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
                           : 'Unknown'}
                       </span>
+                      {customer.is_vip && (
+                        <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 gap-1">
+                          <Crown className="h-3 w-3" />
+                          VIP
+                        </Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>{customer.email}</TableCell>
