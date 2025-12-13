@@ -27,7 +27,17 @@ import { cn } from '@/lib/utils';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 
-const getNavigation = (isOwner: boolean, isManager: boolean) => {
+const getNavigation = (adminLevel: 'owner' | 'manager' | 'support' | null) => {
+  // Support role: minimal read-only access
+  if (adminLevel === 'support') {
+    return [
+      { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+      { name: 'Customers', href: '/admin/customers', icon: Users },
+      { name: 'Orders', href: '/admin/orders', icon: Package },
+    ];
+  }
+  
+  // Manager and Owner get full operational access
   const nav = [
     { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { name: 'Collections', href: '/admin/collections', icon: Layers },
@@ -40,13 +50,12 @@ const getNavigation = (isOwner: boolean, isManager: boolean) => {
     { name: 'Orders', href: '/admin/orders', icon: Package },
     { name: 'Promotions', href: '/admin/promotions', icon: Tag },
     { name: 'Promotion Analytics', href: '/admin/promotion-analytics', icon: BarChart3 },
-    { name: 'Inventory', href: '/admin/inventory', icon: Package },
+    { name: 'Inventory', href: '/admin/inventory', icon: Plus },
+    { name: 'Audit Log', href: '/admin/audit-log', icon: FileText },
   ];
   
-  if (isOwner || isManager) {
-    nav.push({ name: 'Audit Log', href: '/admin/audit-log', icon: FileText });
-  }
-  if (isOwner) {
+  // Owner-only pages
+  if (adminLevel === 'owner') {
     nav.push({ name: 'Admin Users', href: '/admin/users', icon: Shield });
     nav.push({ name: 'Settings', href: '/admin/settings', icon: Settings });
   }
@@ -58,12 +67,46 @@ export const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isOwner, isManager } = useAdminRole();
+  const { adminLevel, isOwner } = useAdminRole();
   
   // Enable session timeout for admin
   useSessionTimeout(true);
   
-  const navigation = getNavigation(isOwner, isManager);
+  const navigation = getNavigation(adminLevel);
+  
+  // Route protection - block unauthorized access
+  const ownerOnlyRoutes = ['/admin/users', '/admin/settings'];
+  const managerRoutes = ['/admin/collections', '/admin/homepage', '/admin/segments', '/admin/abandoned-carts', '/admin/subscriptions', '/admin/program-config', '/admin/promotions', '/admin/promotion-analytics', '/admin/inventory', '/admin/audit-log'];
+  
+  const currentPath = location.pathname;
+  
+  // Block support from manager routes
+  if (adminLevel === 'support' && managerRoutes.some(route => currentPath.startsWith(route))) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground mb-4">You don't have permission to access this page.</p>
+          <Button onClick={() => navigate('/admin')}>Return to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Block non-owners from owner-only routes
+  if (!isOwner && ownerOnlyRoutes.some(route => currentPath.startsWith(route))) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Owner Access Required</h2>
+          <p className="text-muted-foreground mb-4">Only owners can access this section.</p>
+          <Button onClick={() => navigate('/admin')}>Return to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

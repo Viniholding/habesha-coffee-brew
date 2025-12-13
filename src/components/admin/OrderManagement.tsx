@@ -13,6 +13,7 @@ import { Search, Eye, Package, Truck, CheckCircle, Clock, XCircle, RefreshCw, Ex
 import { format } from 'date-fns';
 import { ShippingTrackingForm } from './ShippingTrackingForm';
 import { shippingStatusOptions, getCarrierName } from '@/lib/carriers';
+import { logAdminAction } from '@/lib/auditLog';
 
 interface Order {
   id: string;
@@ -119,7 +120,7 @@ export const OrderManagement = () => {
     }
   };
 
-  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+  const handleUpdateStatus = async (orderId: string, newStatus: string, oldStatus?: string) => {
     try {
       const updateData: Partial<Order> = { status: newStatus };
       
@@ -134,6 +135,14 @@ export const OrderManagement = () => {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      await logAdminAction({
+        actionType: 'order_updated',
+        entityType: 'order',
+        entityId: orderId,
+        oldValues: oldStatus ? { status: oldStatus } : undefined,
+        newValues: { status: newStatus },
+      });
 
       toast.success('Order status updated');
       fetchOrders();
@@ -155,6 +164,13 @@ export const OrderManagement = () => {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      await logAdminAction({
+        actionType: 'order_tracking_updated',
+        entityType: 'order',
+        entityId: orderId,
+        newValues: data,
+      });
 
       toast.success('Tracking information saved');
       fetchOrders();

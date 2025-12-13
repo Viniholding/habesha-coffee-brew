@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Shield, UserPlus, Edit, Key, Users, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { logAdminAction } from '@/lib/auditLog';
 
 interface AdminUser {
   id: string;
@@ -125,14 +126,11 @@ export default function AdminUsersManagement() {
 
       if (roleError) throw roleError;
 
-      // Log audit event
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('admin_audit_log').insert({
-        admin_user_id: user?.id,
-        action_type: 'admin_user_created',
-        entity_type: 'user_roles',
-        entity_id: authData.user.id,
-        new_values: { email: newEmail, admin_level: newRole },
+      await logAdminAction({
+        actionType: 'admin_user_created',
+        entityType: 'user_roles',
+        entityId: authData.user.id,
+        newValues: { email: newEmail, admin_level: newRole },
       });
 
       toast.success('Admin user created successfully');
@@ -155,14 +153,11 @@ export default function AdminUsersManagement() {
 
       if (error) throw error;
 
-      // Log audit event
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('admin_audit_log').insert({
-        admin_user_id: user?.id,
-        action_type: 'admin_role_updated',
-        entity_type: 'user_roles',
-        entity_id: userId,
-        new_values: { admin_level: newLevel },
+      await logAdminAction({
+        actionType: 'admin_role_updated',
+        entityType: 'user_roles',
+        entityId: userId,
+        newValues: { admin_level: newLevel },
       });
 
       toast.success('Role updated successfully');
@@ -192,13 +187,10 @@ export default function AdminUsersManagement() {
 
       if (error) throw error;
 
-      // Log audit event
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('admin_audit_log').insert({
-        admin_user_id: user?.id,
-        action_type: isActive ? 'admin_activated' : 'admin_deactivated',
-        entity_type: 'user_roles',
-        entity_id: userId,
+      await logAdminAction({
+        actionType: isActive ? 'admin_activated' : 'admin_deactivated',
+        entityType: 'user_roles',
+        entityId: userId,
       });
 
       toast.success(`Admin ${isActive ? 'activated' : 'deactivated'} successfully`);

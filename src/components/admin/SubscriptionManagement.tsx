@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, Package, Search, Filter, Loader2, Edit, Eye, Pause, Play, X, RefreshCw, DollarSign, TrendingUp, Users } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { logAdminAction } from "@/lib/auditLog";
 
 interface Subscription {
   id: string;
@@ -155,6 +156,14 @@ const AdminSubscriptionManagement = () => {
         event_type: action === "pause" ? "paused" : action === "resume" ? "resumed" : "cancelled",
       });
 
+      await logAdminAction({
+        actionType: 'subscription_updated',
+        entityType: 'subscription',
+        entityId: subscription.id,
+        oldValues: { status: subscription.status },
+        newValues: updateData,
+      });
+
       toast.success(`Subscription ${action}ed successfully`);
       fetchSubscriptions();
     } catch (error: any) {
@@ -173,6 +182,14 @@ const AdminSubscriptionManagement = () => {
         .eq("id", subscriptionId);
 
       if (error) throw error;
+
+      await logAdminAction({
+        actionType: 'subscription_updated',
+        entityType: 'subscription',
+        entityId: subscriptionId,
+        newValues: { discount_percent: discountPercent },
+      });
+
       toast.success("Discount updated");
       fetchSubscriptions();
     } catch (error: any) {

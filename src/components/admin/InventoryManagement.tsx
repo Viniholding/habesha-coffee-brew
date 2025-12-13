@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Package, AlertTriangle, Edit, Eye, Plus } from 'lucide-react';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import AddInventoryDialog from './AddInventoryDialog';
+import { logAdminAction } from '@/lib/auditLog';
 
 interface Product {
   id: string;
@@ -52,7 +53,7 @@ export const InventoryManagement = () => {
     }
   };
 
-  const handleUpdateStock = async (productId: string, newQuantity: number) => {
+  const handleUpdateStock = async (productId: string, newQuantity: number, oldQuantity: number) => {
     try {
       const { error } = await supabase
         .from('products')
@@ -60,6 +61,14 @@ export const InventoryManagement = () => {
         .eq('id', productId);
 
       if (error) throw error;
+      
+      await logAdminAction({
+        actionType: 'inventory_updated',
+        entityType: 'product',
+        entityId: productId,
+        oldValues: { stock_quantity: oldQuantity },
+        newValues: { stock_quantity: newQuantity },
+      });
       
       toast.success('Stock updated successfully');
       fetchProducts();
@@ -88,6 +97,13 @@ export const InventoryManagement = () => {
         .eq('id', editingProduct?.id);
 
       if (error) throw error;
+
+      await logAdminAction({
+        actionType: 'product_updated',
+        entityType: 'product',
+        entityId: editingProduct?.id,
+        newValues: productData,
+      });
 
       toast.success('Product updated successfully');
       setIsDialogOpen(false);
@@ -141,10 +157,21 @@ export const InventoryManagement = () => {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Inventory</CardTitle>
+          {canEdit && (
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Inventory
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
+          <AddInventoryDialog 
+            open={isAddDialogOpen} 
+            onOpenChange={setIsAddDialogOpen} 
+            onProductAdded={fetchProducts}
+          />
           <Table>
             <TableHeader>
               <TableRow>
@@ -173,7 +200,7 @@ export const InventoryManagement = () => {
                           onBlur={(e) => {
                             const newValue = parseInt(e.target.value);
                             if (newValue !== product.stock_quantity) {
-                              handleUpdateStock(product.id, newValue);
+                              handleUpdateStock(product.id, newValue, product.stock_quantity);
                             }
                           }}
                         />
