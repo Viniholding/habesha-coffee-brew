@@ -219,14 +219,14 @@ const HomepageSettingsComponent = () => {
             <div className="space-y-2">
               <Label>Featured Collection</Label>
               <Select
-                value={formData.featured_collection_id}
-                onValueChange={(value) => setFormData({ ...formData, featured_collection_id: value })}
+                value={formData.featured_collection_id || "none"}
+                onValueChange={(value) => setFormData({ ...formData, featured_collection_id: value === "none" ? "" : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a collection" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {collections.map((collection) => (
                     <SelectItem key={collection.id} value={collection.id}>
                       {collection.name}

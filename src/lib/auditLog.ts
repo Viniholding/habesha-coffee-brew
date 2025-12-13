@@ -5,6 +5,7 @@ export type AuditActionType =
   | 'admin_role_updated'
   | 'admin_activated'
   | 'admin_deactivated'
+  | 'admin_password_reset'
   | 'product_created'
   | 'product_updated'
   | 'inventory_updated'

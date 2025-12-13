@@ -29,9 +29,13 @@ export const useAdminRole = () => {
         .maybeSingle();
 
       if (data) {
-        setAdminLevel((data.admin_level as AdminLevel) || 'manager');
+        // Default to 'manager' if admin_level is null but user has admin role
+        const level = data.admin_level as AdminLevel;
+        setAdminLevel(level || 'manager');
+        console.log('[useAdminRole] Admin level found:', level || 'manager (default)');
       } else {
         setAdminLevel(null);
+        console.log('[useAdminRole] No admin role found for user');
       }
     } catch (error) {
       console.error('Error checking admin level:', error);
