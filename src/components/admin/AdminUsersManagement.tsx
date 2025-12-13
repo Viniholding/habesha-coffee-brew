@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Shield, UserPlus, Edit, Key, Users, AlertTriangle } from 'lucide-react';
+import { Shield, UserPlus, Key, Users, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { logAdminAction } from '@/lib/auditLog';
@@ -35,8 +35,9 @@ export default function AdminUsersManagement() {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [resettingPassword, setResettingPassword] = useState(false);
   
   // New admin form
   const [newEmail, setNewEmail] = useState('');
@@ -98,7 +99,6 @@ export default function AdminUsersManagement() {
     }
 
     try {
-      // Create user via edge function or directly
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newEmail,
         password: newPassword,
@@ -114,7 +114,6 @@ export default function AdminUsersManagement() {
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
 
-      // Create admin role
       const { error: roleError } = await supabase
         .from('user_roles')
         .insert({
@@ -140,6 +139,41 @@ export default function AdminUsersManagement() {
     } catch (error: any) {
       console.error('Error creating admin:', error);
       toast.error(error.message || 'Failed to create admin user');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser?.profile?.email) {
+      toast.error('No email address found for this user');
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        selectedUser.profile.email,
+        {
+          redirectTo: `${window.location.origin}/reset-password`,
+        }
+      );
+
+      if (error) throw error;
+
+      await logAdminAction({
+        actionType: 'admin_password_reset',
+        entityType: 'user_roles',
+        entityId: selectedUser.user_id,
+        metadata: { email: selectedUser.profile.email },
+      });
+
+      toast.success(`Password reset email sent to ${selectedUser.profile.email}`);
+      setResetPasswordDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast.error(error.message || 'Failed to send password reset email');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -169,7 +203,6 @@ export default function AdminUsersManagement() {
   };
 
   const handleToggleActive = async (userId: string, isActive: boolean) => {
-    // Prevent deactivating the last owner
     const activeOwners = adminUsers.filter(u => u.admin_level === 'owner' && u.is_active);
     const targetUser = adminUsers.find(u => u.user_id === userId);
     
@@ -304,7 +337,7 @@ export default function AdminUsersManagement() {
               </div>
               <div className="space-y-2">
                 <Label>Role *</Label>
-                <Select value={newRole || ''} onValueChange={(v) => setNewRole(v as AdminLevel)}>
+                <Select value={newRole || 'support'} onValueChange={(v) => setNewRole(v as AdminLevel)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -323,6 +356,35 @@ export default function AdminUsersManagement() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Send a password reset email to this admin user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              A password reset link will be sent to:
+            </p>
+            <p className="font-medium mt-2">{selectedUser?.profile?.email}</p>
+            <p className="text-sm text-muted-foreground mt-4">
+              {selectedUser?.profile?.first_name} {selectedUser?.profile?.last_name} will receive an email with instructions to reset their password.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetPasswordDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleResetPassword} disabled={resettingPassword}>
+              {resettingPassword ? 'Sending...' : 'Send Reset Email'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Role Legend */}
       <Card>
@@ -398,7 +460,7 @@ export default function AdminUsersManagement() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Switch
-                        checked={admin.is_active}
+                        checked={admin.is_active ?? true}
                         onCheckedChange={(checked) => handleToggleActive(admin.user_id, checked)}
                       />
                       <span className={admin.is_active ? 'text-green-600' : 'text-muted-foreground'}>
@@ -416,7 +478,15 @@ export default function AdminUsersManagement() {
                     {format(new Date(admin.created_at), 'MMM d, yyyy')}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedUser(admin);
+                        setResetPasswordDialogOpen(true);
+                      }}
+                      title="Reset password"
+                    >
                       <Key className="h-4 w-4" />
                     </Button>
                   </TableCell>

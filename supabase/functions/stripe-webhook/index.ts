@@ -333,11 +333,24 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   if (!subscription) return;
 
+  // Update subscription status to past_due
+  await supabaseClient
+    .from("subscriptions")
+    .update({ 
+      status: "past_due",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_subscription_id", subscriptionId);
+
   // Log event
   await supabaseClient.from("subscription_events").insert({
     subscription_id: subscription.id,
     event_type: "payment_failed",
-    event_data: { invoice_id: invoice.id, attempt_count: invoice.attempt_count },
+    event_data: { 
+      invoice_id: invoice.id, 
+      attempt_count: invoice.attempt_count,
+      amount_due: invoice.amount_due,
+    },
   });
 
   // Send payment failed email
@@ -349,9 +362,9 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       `
         <h1>Payment Failed</h1>
         <p>Hi ${profile.first_name || "there"},</p>
-        <p>We were unable to process your payment for your ${subscription.product_name} subscription.</p>
-        <p>Please update your payment method to continue receiving your coffee deliveries.</p>
-        <p><a href="${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".lovable.app")}/account?tab=subscriptions">Update Payment Method</a></p>
+        <p>We were unable to process your payment for your <strong>${subscription.product_name}</strong> subscription.</p>
+        <p>This was attempt ${invoice.attempt_count || 1}. Please update your payment method to continue receiving your coffee deliveries.</p>
+        <p><a href="${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".lovable.app")}/account?tab=subscriptions" style="display: inline-block; background-color: #8B4513; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Update Payment Method</a></p>
         <p>If you have any questions, please contact our support team.</p>
       `
     );
@@ -361,11 +374,33 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   logStep("Processing customer.subscription.updated", { subscriptionId: subscription.id });
 
-  const status = subscription.status === "active" ? "active" : 
-                 subscription.status === "past_due" ? "past_due" :
-                 subscription.status === "canceled" ? "cancelled" :
-                 subscription.status === "paused" ? "paused" : "active";
+  // Map Stripe status to our database status
+  const statusMap: Record<string, string> = {
+    active: "active",
+    past_due: "past_due",
+    canceled: "cancelled",
+    paused: "paused",
+    unpaid: "past_due",
+    incomplete: "pending",
+    incomplete_expired: "cancelled",
+    trialing: "active",
+  };
+  
+  const status = statusMap[subscription.status] || "active";
 
+  // Get the subscription from our database
+  const { data: existingSub } = await supabaseClient
+    .from("subscriptions")
+    .select("id, user_id, product_name, status")
+    .eq("stripe_subscription_id", subscription.id)
+    .single();
+
+  if (!existingSub) {
+    logStep("Subscription not found in database", { stripeId: subscription.id });
+    return;
+  }
+
+  // Update the subscription status
   await supabaseClient
     .from("subscriptions")
     .update({ 
@@ -374,7 +409,43 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     })
     .eq("stripe_subscription_id", subscription.id);
 
-  logStep("Subscription status updated", { stripeId: subscription.id, status });
+  // Log the status change event
+  await supabaseClient.from("subscription_events").insert({
+    subscription_id: existingSub.id,
+    event_type: "status_changed",
+    event_data: { 
+      old_status: existingSub.status,
+      new_status: status,
+      stripe_status: subscription.status,
+      source: "stripe_webhook" 
+    },
+  });
+
+  // If status changed to past_due, send notification email
+  if (status === "past_due" && existingSub.status !== "past_due") {
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("email, first_name")
+      .eq("id", existingSub.user_id)
+      .single();
+
+    if (profile?.email) {
+      await sendEmail(
+        profile.email,
+        "Action Required: Payment Failed for Your Subscription",
+        `
+          <h1>Payment Failed</h1>
+          <p>Hi ${profile.first_name || "there"},</p>
+          <p>We were unable to process the payment for your <strong>${existingSub.product_name}</strong> subscription.</p>
+          <p>To continue receiving your coffee deliveries, please update your payment method.</p>
+          <p><a href="${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".lovable.app")}/account?tab=subscriptions" style="display: inline-block; background-color: #8B4513; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Update Payment Method</a></p>
+          <p>If you have any questions, please contact our support team.</p>
+        `
+      );
+    }
+  }
+
+  logStep("Subscription status updated", { stripeId: subscription.id, oldStatus: existingSub.status, newStatus: status });
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
