@@ -121,14 +121,14 @@ export const AdminLayout = () => {
         sidebarOpen ? "block" : "hidden"
       )}>
         <div className="fixed inset-0 bg-background/80" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 w-64 bg-card border-r">
-          <div className="flex h-16 items-center justify-between px-6 border-b">
+        <div className="fixed inset-y-0 left-0 w-64 bg-card border-r flex flex-col">
+          <div className="flex h-16 items-center justify-between px-6 border-b shrink-0">
             <h1 className="text-xl font-bold">Admin Panel</h1>
             <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <nav className="flex flex-col gap-1 p-4">
+          <nav className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
@@ -138,7 +138,7 @@ export const AdminLayout = () => {
                   to={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors shrink-0",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted"
@@ -149,32 +149,35 @@ export const AdminLayout = () => {
                 </Link>
               );
             })}
+          </nav>
+          <div className="border-t p-4 shrink-0">
             <Link
               to="/"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted transition-colors mt-4"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
             >
               <Home className="h-5 w-5" />
               <span className="font-medium">Back to Store</span>
             </Link>
             <Button
               variant="ghost"
-              className="justify-start gap-3 px-4 py-3 mt-2"
+              className="w-full justify-start gap-3 px-4 py-3 mt-2"
               onClick={handleLogout}
             >
               <LogOut className="h-5 w-5" />
               <span>Logout</span>
             </Button>
-          </nav>
+          </div>
         </div>
       </div>
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-1 border-r bg-card">
-          <div className="flex h-16 items-center px-6 border-b">
+          <div className="flex h-16 items-center px-6 border-b shrink-0">
             <h1 className="text-xl font-bold">Admin Panel</h1>
           </div>
-          <nav className="flex-1 flex flex-col gap-1 p-4">
+          <nav className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
@@ -183,7 +186,7 @@ export const AdminLayout = () => {
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors shrink-0",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted"
@@ -194,22 +197,24 @@ export const AdminLayout = () => {
                 </Link>
               );
             })}
+          </nav>
+          <div className="border-t p-4 shrink-0">
             <Link
               to="/"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted transition-colors mt-auto"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
             >
               <Home className="h-5 w-5" />
               <span className="font-medium">Back to Store</span>
             </Link>
             <Button
               variant="ghost"
-              className="justify-start gap-3 px-4 py-3 mt-2"
+              className="w-full justify-start gap-3 px-4 py-3 mt-2"
               onClick={handleLogout}
             >
               <LogOut className="h-5 w-5" />
               <span>Logout</span>
             </Button>
-          </nav>
+          </div>
         </div>
       </div>
 
