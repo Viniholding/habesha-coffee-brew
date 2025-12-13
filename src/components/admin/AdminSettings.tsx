@@ -9,10 +9,11 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Store, CreditCard, Truck, Receipt, Shield, AlertTriangle, Check, X } from 'lucide-react';
+import { Settings, Store, CreditCard, Truck, Receipt, Shield, AlertTriangle, Check, X, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { logAdminAction } from '@/lib/auditLog';
+import EmailTemplatesSettings from './EmailTemplatesSettings';
 
 interface LoginAttempt {
   id: string;
@@ -104,10 +105,14 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="store" className="space-y-6">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="store" className="gap-2">
             <Store className="h-4 w-4" />
             Store
+          </TabsTrigger>
+          <TabsTrigger value="email" className="gap-2">
+            <Mail className="h-4 w-4" />
+            Email
           </TabsTrigger>
           <TabsTrigger value="payment" className="gap-2">
             <CreditCard className="h-4 w-4" />
@@ -160,6 +165,10 @@ export default function AdminSettings() {
               <Button onClick={handleSaveSettings}>Save Changes</Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="email">
+          <EmailTemplatesSettings isOwner={isOwner} />
         </TabsContent>
 
         <TabsContent value="payment">
