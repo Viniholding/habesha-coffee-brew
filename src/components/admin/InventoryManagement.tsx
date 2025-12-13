@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Package, AlertTriangle, Edit, Plus } from 'lucide-react';
+import { Package, AlertTriangle, Edit, Eye } from 'lucide-react';
+import { useAdminRole } from '@/hooks/useAdminRole';
 
 interface Product {
   id: string;
@@ -27,6 +28,7 @@ export const InventoryManagement = () => {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { canEdit, isReadOnly } = useAdminRole();
 
   useEffect(() => {
     fetchProducts();
@@ -159,17 +161,21 @@ export const InventoryManagement = () => {
                   <TableCell>{product.sku || '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        defaultValue={product.stock_quantity}
-                        className="w-20"
-                        onBlur={(e) => {
-                          const newValue = parseInt(e.target.value);
-                          if (newValue !== product.stock_quantity) {
-                            handleUpdateStock(product.id, newValue);
-                          }
-                        }}
-                      />
+                      {isReadOnly ? (
+                        <span className="font-mono">{product.stock_quantity}</span>
+                      ) : (
+                        <Input
+                          type="number"
+                          defaultValue={product.stock_quantity}
+                          className="w-20"
+                          onBlur={(e) => {
+                            const newValue = parseInt(e.target.value);
+                            if (newValue !== product.stock_quantity) {
+                              handleUpdateStock(product.id, newValue);
+                            }
+                          }}
+                        />
+                      )}
                       {product.stock_quantity <= product.low_stock_threshold && (
                         <Badge variant="destructive">Low</Badge>
                       )}
@@ -184,13 +190,14 @@ export const InventoryManagement = () => {
                           variant="ghost" 
                           size="sm"
                           onClick={() => setEditingProduct(product)}
+                          title={isReadOnly ? 'View Details' : 'Edit'}
                         >
-                          <Edit className="h-4 w-4" />
+                          {isReadOnly ? <Eye className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Edit Product Details</DialogTitle>
+                      <DialogHeader>
+                          <DialogTitle>{isReadOnly ? 'Product Details' : 'Edit Product Details'}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSaveProduct} className="space-y-4">
                           <div>
@@ -201,6 +208,7 @@ export const InventoryManagement = () => {
                               type="number"
                               defaultValue={editingProduct?.stock_quantity}
                               required
+                              disabled={isReadOnly}
                             />
                           </div>
                           <div>
@@ -211,6 +219,7 @@ export const InventoryManagement = () => {
                               type="number"
                               defaultValue={editingProduct?.low_stock_threshold}
                               required
+                              disabled={isReadOnly}
                             />
                           </div>
                           <div>
@@ -221,6 +230,7 @@ export const InventoryManagement = () => {
                               type="number"
                               step="0.01"
                               defaultValue={editingProduct?.cost_price || ''}
+                              disabled={isReadOnly}
                             />
                           </div>
                           <div>
@@ -229,6 +239,7 @@ export const InventoryManagement = () => {
                               id="sku"
                               name="sku"
                               defaultValue={editingProduct?.sku || ''}
+                              disabled={isReadOnly}
                             />
                           </div>
                           <div>
@@ -237,6 +248,7 @@ export const InventoryManagement = () => {
                               id="supplier_name"
                               name="supplier_name"
                               defaultValue={editingProduct?.supplier_name || ''}
+                              disabled={isReadOnly}
                             />
                           </div>
                           <div>
@@ -246,9 +258,12 @@ export const InventoryManagement = () => {
                               name="supplier_email"
                               type="email"
                               defaultValue={editingProduct?.supplier_email || ''}
+                              disabled={isReadOnly}
                             />
                           </div>
-                          <Button type="submit" className="w-full">Save Changes</Button>
+                          {canEdit && (
+                            <Button type="submit" className="w-full">Save Changes</Button>
+                          )}
                         </form>
                       </DialogContent>
                     </Dialog>

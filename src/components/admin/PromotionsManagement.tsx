@@ -10,9 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit2, Tag, Percent, DollarSign, Calendar } from "lucide-react";
+import { Plus, Trash2, Edit2, Tag, Percent, DollarSign, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 interface Promotion {
   id: string;
@@ -32,6 +32,7 @@ interface Promotion {
 }
 
 const PromotionsManagement = () => {
+  const { canEdit, isReadOnly } = useAdminRole();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
@@ -216,17 +217,18 @@ const PromotionsManagement = () => {
           <Tag className="h-5 w-5" />
           Promotions & Coupons
         </CardTitle>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Promotion
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        {canEdit && (
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Promotion
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingPromotion ? "Edit Promotion" : "Create New Promotion"}
@@ -366,6 +368,7 @@ const PromotionsManagement = () => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </CardHeader>
 
       <CardContent>
@@ -414,30 +417,38 @@ const PromotionsManagement = () => {
                   <TableCell>{getStatusBadge(promo)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Switch
-                        checked={promo.is_active}
-                        onCheckedChange={(checked) => 
-                          toggleActiveMutation.mutate({ id: promo.id, is_active: checked })
-                        }
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(promo)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          if (confirm("Delete this promotion?")) {
-                            deleteMutation.mutate(promo.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {canEdit ? (
+                        <>
+                          <Switch
+                            checked={promo.is_active}
+                            onCheckedChange={(checked) => 
+                              toggleActiveMutation.mutate({ id: promo.id, is_active: checked })
+                            }
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(promo)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              if (confirm("Delete this promotion?")) {
+                                deleteMutation.mutate(promo.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </>
+                      ) : (
+                        <Button variant="ghost" size="icon" title="View Only">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
