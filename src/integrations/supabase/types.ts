@@ -538,6 +538,7 @@ export type Database = {
           id: string
           order_id: string
           product_description: string | null
+          product_id: string | null
           product_name: string
           quantity: number
           total_price: number
@@ -548,6 +549,7 @@ export type Database = {
           id?: string
           order_id: string
           product_description?: string | null
+          product_id?: string | null
           product_name: string
           quantity: number
           total_price: number
@@ -558,6 +560,7 @@ export type Database = {
           id?: string
           order_id?: string
           product_description?: string | null
+          product_id?: string | null
           product_name?: string
           quantity?: number
           total_price?: number
@@ -569,6 +572,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -1316,6 +1326,13 @@ export type Database = {
         Returns: boolean
       }
       request_account_deletion: { Args: never; Returns: string }
+      validate_referral_code: {
+        Args: { _code: string }
+        Returns: {
+          is_valid: boolean
+          referee_discount_percent: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
