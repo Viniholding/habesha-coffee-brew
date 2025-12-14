@@ -43,9 +43,13 @@ const Hero = () => {
       </div>
       
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce"style={{bottom:'2rem'}}>
+      <button 
+        onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce cursor-pointer hover:scale-110 transition-transform"
+        aria-label="Scroll down"
+      >
         <ChevronDown className="w-8 h-8 text-primary/70" />
-      </div>
+      </button>
     </section>
   );
 };
