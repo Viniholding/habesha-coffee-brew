@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit2, Tag, Percent, DollarSign, Eye } from "lucide-react";
+import { Plus, Trash2, Edit2, Tag, Percent, DollarSign, Eye, RefreshCw } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useAdminRole } from "@/hooks/useAdminRole";
 
@@ -28,6 +29,7 @@ interface Promotion {
   expires_at: string | null;
   is_active: boolean;
   applies_to: string;
+  is_subscription_eligible: boolean | null;
   created_at: string;
 }
 
@@ -49,6 +51,7 @@ const PromotionsManagement = () => {
     expires_at: "",
     is_active: true,
     applies_to: "all",
+    is_subscription_eligible: false,
   });
 
   const { data: promotions, isLoading } = useQuery({
@@ -78,6 +81,7 @@ const PromotionsManagement = () => {
         expires_at: data.expires_at || null,
         is_active: data.is_active,
         applies_to: data.applies_to,
+        is_subscription_eligible: data.is_subscription_eligible,
       });
       if (error) throw error;
     },
@@ -108,6 +112,7 @@ const PromotionsManagement = () => {
           expires_at: data.expires_at || null,
           is_active: data.is_active,
           applies_to: data.applies_to,
+          is_subscription_eligible: data.is_subscription_eligible,
         })
         .eq("id", id);
       if (error) throw error;
@@ -163,6 +168,7 @@ const PromotionsManagement = () => {
       expires_at: "",
       is_active: true,
       applies_to: "all",
+      is_subscription_eligible: false,
     });
     setEditingPromotion(null);
   };
@@ -181,6 +187,7 @@ const PromotionsManagement = () => {
       expires_at: promotion.expires_at ? promotion.expires_at.split("T")[0] : "",
       is_active: promotion.is_active,
       applies_to: promotion.applies_to,
+      is_subscription_eligible: promotion.is_subscription_eligible || false,
     });
     setIsDialogOpen(true);
   };
@@ -362,6 +369,22 @@ const PromotionsManagement = () => {
                 />
               </div>
 
+              <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <div>
+                  <Label htmlFor="is_subscription_eligible" className="text-sm font-medium">
+                    Subscription Eligible
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Allow this coupon to be used on subscription purchases
+                  </p>
+                </div>
+                <Switch
+                  id="is_subscription_eligible"
+                  checked={formData.is_subscription_eligible}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_subscription_eligible: checked })}
+                />
+              </div>
+
               <Button type="submit" className="w-full" disabled={createMutation.isPending || updateMutation.isPending}>
                 {editingPromotion ? "Update Promotion" : "Create Promotion"}
               </Button>
@@ -386,6 +409,7 @@ const PromotionsManagement = () => {
                 <TableHead>Discount</TableHead>
                 <TableHead>Usage</TableHead>
                 <TableHead>Applies To</TableHead>
+                <TableHead>Subs Eligible</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -414,6 +438,27 @@ const PromotionsManagement = () => {
                     {promo.current_uses}{promo.max_uses ? ` / ${promo.max_uses}` : ""}
                   </TableCell>
                   <TableCell className="capitalize">{promo.applies_to.replace("_", " ")}</TableCell>
+                  <TableCell>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          {promo.is_subscription_eligible ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              Yes
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">No</Badge>
+                          )}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {promo.is_subscription_eligible 
+                            ? "This coupon can be used on subscription purchases" 
+                            : "This coupon cannot be used on subscriptions"}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
                   <TableCell>{getStatusBadge(promo)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

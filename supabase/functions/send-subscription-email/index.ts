@@ -23,7 +23,8 @@ type EmailType =
   | "renewal_reminder"
   | "low_stock_notification"
   | "payment_receipt"
-  | "gift_subscription_sent";
+  | "gift_subscription_sent"
+  | "discount_reversal";
 
 interface EmailRequest {
   type: EmailType;
@@ -262,6 +263,78 @@ const emailTemplates: Record<EmailType, { subject: string; getHtml: (data: any) 
           <div class="footer">
             <p>Habesha Coffee Co. | Premium Ethiopian Coffee</p>
             <p>Ethically sourced, freshly roasted, delivered with care.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  },
+  discount_reversal: {
+    subject: "Subscription Discount Adjustment Notice",
+    getHtml: (data) => `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; }
+          .header { background: linear-gradient(135deg, #2d1810 0%, #4a2c1d 100%); color: white; padding: 40px 30px; text-align: center; }
+          .content { padding: 30px; }
+          .notice-box { background: #fef3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 20px; margin: 20px 0; }
+          .details-box { background: #faf8f5; border: 1px solid #e8e4df; border-radius: 8px; padding: 20px; margin: 20px 0; }
+          .line-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e8e4df; }
+          .line-item:last-child { border-bottom: none; }
+          .footer { background: #faf8f5; padding: 20px 30px; text-align: center; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0;">Subscription Adjustment</h1>
+          </div>
+          <div class="content">
+            <p>Hi ${data.firstName || "there"},</p>
+            
+            <div class="notice-box">
+              <p style="margin: 0;"><strong>Important:</strong> Your subscription was ${data.action === 'cancelled' ? 'cancelled' : 'paused'} before the second scheduled delivery. As outlined in our <a href="${data.termsUrl}">subscription terms</a>, the introductory discount applied to your first order has been charged back.</p>
+            </div>
+            
+            <div class="details-box">
+              <h3 style="margin-top: 0;">Adjustment Details</h3>
+              <div class="line-item">
+                <span>Subscription</span>
+                <span>${data.productName}</span>
+              </div>
+              <div class="line-item">
+                <span>Original Price</span>
+                <span>$${data.originalPrice}</span>
+              </div>
+              <div class="line-item">
+                <span>Subscription Price</span>
+                <span>$${data.discountedPrice}</span>
+              </div>
+              <div class="line-item">
+                <span><strong>Discount Reversed</strong></span>
+                <span><strong>$${data.discountAmount}</strong></span>
+              </div>
+            </div>
+            
+            <p>This charge appears on your statement as "Habesha Coffee - Discount Adjustment".</p>
+            
+            <p style="font-size: 14px; color: #666;">
+              We appreciate you trying our coffee subscription! If you have any questions about this adjustment, please don't hesitate to contact us.
+            </p>
+            
+            <p>
+              <a href="${data.contactUrl}" style="display: inline-block; background: #4a2c1d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                Contact Support
+              </a>
+            </p>
+          </div>
+          <div class="footer">
+            <p>Habesha Coffee Co. | Premium Ethiopian Coffee</p>
+            <p>Questions? Reply to this email or visit our website.</p>
           </div>
         </div>
       </body>
