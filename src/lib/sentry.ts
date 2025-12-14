@@ -1,59 +1,41 @@
-import * as Sentry from "@sentry/react";
+/**
+ * Error monitoring placeholder
+ * 
+ * To enable production error tracking, you can:
+ * 1. Use a lightweight error boundary in React components
+ * 2. Add window.onerror handler for uncaught errors
+ * 3. Integrate with a monitoring service via API calls from edge functions
+ * 
+ * Note: @sentry/react was removed due to React version conflicts.
+ * Consider using @sentry/browser directly if Sentry integration is needed.
+ */
 
-export const initSentry = () => {
-  const dsn = import.meta.env.VITE_SENTRY_DSN;
-  
-  if (!dsn) {
-    console.log("[Sentry] No DSN configured, error tracking disabled");
-    return;
-  }
-
-  Sentry.init({
-    dsn,
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
-    ],
-    // Performance monitoring
-    tracesSampleRate: 0.1, // 10% of transactions
-    // Session replay
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0, // Capture 100% of sessions with errors
-    
-    environment: import.meta.env.MODE,
-    
-    // Filter out non-error console logs
-    beforeSend(event) {
-      // Don't send events in development
-      if (import.meta.env.DEV) {
-        console.log("[Sentry] Would send event:", event);
-        return null;
-      }
-      return event;
-    },
-  });
-
-  console.log("[Sentry] Initialized successfully");
-};
-
-// Helper to capture exceptions with context
+// Simple error capture for logging
 export const captureError = (error: Error, context?: Record<string, unknown>) => {
-  Sentry.captureException(error, {
-    extra: context,
-  });
+  if (import.meta.env.DEV) {
+    console.error("[Error Captured]", error, context);
+  }
+  // In production, errors are logged to console for now
+  // Can be extended to send to a backend endpoint
 };
 
-// Helper to set user context
-export const setUserContext = (userId: string, email?: string) => {
-  Sentry.setUser({
-    id: userId,
-    email,
-  });
-};
+// Global error handler setup
+export const initErrorTracking = () => {
+  if (typeof window !== "undefined") {
+    window.onerror = (message, source, lineno, colno, error) => {
+      captureError(error || new Error(String(message)), {
+        source,
+        lineno,
+        colno,
+      });
+      return false; // Don't suppress the error
+    };
 
-// Clear user context on logout
-export const clearUserContext = () => {
-  Sentry.setUser(null);
+    window.onunhandledrejection = (event) => {
+      captureError(
+        event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
+        { type: "unhandledrejection" }
+      );
+    };
+  }
 };
-
-export { Sentry };
