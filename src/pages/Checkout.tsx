@@ -622,11 +622,31 @@ const Checkout = () => {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
+                  className="space-y-6"
                 >
                   <CheckoutPaymentForm
                     paymentData={paymentData}
                     onPaymentDataChange={setPaymentData}
                   />
+                  
+                  {/* Checkout Consent Message */}
+                  <div className="p-4 bg-muted/50 rounded-lg border border-border">
+                    <p className="text-sm text-muted-foreground">
+                      By placing this order, you agree to our{" "}
+                      <a href="/terms-of-use" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        Terms of Use
+                      </a>
+                      ,{" "}
+                      <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        Privacy Policy
+                      </a>
+                      , and{" "}
+                      <a href="/shipping-returns" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                        Shipping & Return Policy
+                      </a>
+                      .
+                    </p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
