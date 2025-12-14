@@ -52,6 +52,99 @@ serve(async (req) => {
 
     switch (action) {
       case "pause":
+        // Get subscription details first to check deliveries completed for pause safeguard
+        const { data: subToPause } = await supabaseClient
+          .from("subscriptions")
+          .select("id, deliveries_completed, discount_amount, original_price, price, stripe_customer_id, user_id, product_name")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+
+        if (!subToPause) {
+          throw new Error("Subscription not found");
+        }
+
+        // Check if early pause (before 2nd delivery) and discount was applied
+        const isEarlyPause = (subToPause.deliveries_completed || 0) < 2;
+        const pauseDiscountToRecover = subToPause.discount_amount || 0;
+
+        if (isEarlyPause && pauseDiscountToRecover > 0 && subToPause.stripe_customer_id) {
+          logStep("Early pause detected - charging back discount", { 
+            discountAmount: pauseDiscountToRecover 
+          });
+
+          try {
+            // Create a one-time charge for the discount amount
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount: Math.round(pauseDiscountToRecover * 100),
+              currency: "usd",
+              customer: subToPause.stripe_customer_id,
+              description: "Subscription discount reversal - early pause",
+              metadata: {
+                subscription_id: subToPause.id,
+                reason: "early_pause_discount_reversal",
+              },
+              confirm: true,
+              automatic_payment_methods: {
+                enabled: true,
+                allow_redirects: "never",
+              },
+            });
+
+            logStep("Discount reversal charge created for pause", { 
+              paymentIntentId: paymentIntent.id,
+              amount: pauseDiscountToRecover,
+              status: paymentIntent.status
+            });
+
+            // Log the reversal event
+            await supabaseClient.from("subscription_events").insert({
+              subscription_id: subToPause.id,
+              event_type: "discount_reversal",
+              event_data: { 
+                amount: pauseDiscountToRecover,
+                payment_intent_id: paymentIntent.id,
+                reason: "early_pause",
+                deliveries_completed: subToPause.deliveries_completed,
+              },
+              created_by: user.id,
+            });
+
+            // Send discount reversal email
+            await supabaseClient.functions.invoke("send-subscription-email", {
+              body: { 
+                type: "discount_reversal", 
+                subscriptionId: subToPause.id,
+                additionalData: {
+                  action: "paused",
+                  originalPrice: subToPause.original_price,
+                  discountedPrice: subToPause.price,
+                  discountAmount: pauseDiscountToRecover,
+                  productName: subToPause.product_name,
+                }
+              },
+            });
+
+            // Clear the discount amount after reversal to prevent double charging
+            await supabaseClient
+              .from("subscriptions")
+              .update({ discount_amount: 0 })
+              .eq("id", subToPause.id);
+
+          } catch (chargeError: any) {
+            logStep("Discount reversal charge failed for pause", { error: chargeError.message });
+            await supabaseClient.from("subscription_events").insert({
+              subscription_id: subToPause.id,
+              event_type: "discount_reversal_failed",
+              event_data: { 
+                amount: pauseDiscountToRecover,
+                error: chargeError.message,
+                reason: "early_pause",
+              },
+              created_by: user.id,
+            });
+          }
+        }
+
         await stripe.subscriptions.update(subscriptionId, {
           pause_collection: { behavior: "void" },
         });
@@ -67,25 +160,27 @@ serve(async (req) => {
           .from("subscriptions")
           .update(pauseUpdate)
           .eq("stripe_subscription_id", subscriptionId);
-        // Log event
-        const { data: pausedSub } = await supabaseClient
-          .from("subscriptions")
-          .select("id")
-          .eq("stripe_subscription_id", subscriptionId)
-          .single();
-        if (pausedSub) {
-          await supabaseClient.from("subscription_events").insert({
-            subscription_id: pausedSub.id,
-            event_type: "paused",
-            event_data: resumeAt ? { scheduled_resume: resumeAt } : null,
-            created_by: user.id,
-          });
-          // Send email
-          await supabaseClient.functions.invoke("send-subscription-email", {
-            body: { type: "subscription_paused", subscriptionId: pausedSub.id },
-          });
-        }
-        result = { message: resumeAt ? `Subscription paused until ${resumeAt}` : "Subscription paused" };
+        
+        await supabaseClient.from("subscription_events").insert({
+          subscription_id: subToPause.id,
+          event_type: "paused",
+          event_data: { 
+            scheduled_resume: resumeAt || null,
+            was_early_pause: isEarlyPause,
+            discount_recovered: isEarlyPause ? pauseDiscountToRecover : 0,
+          },
+          created_by: user.id,
+        });
+        
+        // Send pause email
+        await supabaseClient.functions.invoke("send-subscription-email", {
+          body: { type: "subscription_paused", subscriptionId: subToPause.id },
+        });
+        
+        result = { 
+          message: resumeAt ? `Subscription paused until ${resumeAt}` : "Subscription paused",
+          discountCharged: isEarlyPause && pauseDiscountToRecover > 0 ? pauseDiscountToRecover : 0,
+        };
         break;
 
       case "resume":
@@ -119,7 +214,7 @@ serve(async (req) => {
         // Get subscription details first to check deliveries completed
         const { data: subToCancel } = await supabaseClient
           .from("subscriptions")
-          .select("id, deliveries_completed, discount_amount, original_price, price, stripe_customer_id, user_id")
+          .select("id, deliveries_completed, discount_amount, original_price, price, stripe_customer_id, user_id, product_name")
           .eq("stripe_subscription_id", subscriptionId)
           .single();
 
@@ -177,6 +272,22 @@ serve(async (req) => {
               },
               created_by: user.id,
             });
+
+            // Send discount reversal email
+            await supabaseClient.functions.invoke("send-subscription-email", {
+              body: { 
+                type: "discount_reversal", 
+                subscriptionId: subToCancel.id,
+                additionalData: {
+                  action: "cancelled",
+                  originalPrice: subToCancel.original_price,
+                  discountedPrice: subToCancel.price,
+                  discountAmount: discountToRecover,
+                  productName: subToCancel.product_name,
+                }
+              },
+            });
+
           } catch (chargeError: any) {
             logStep("Discount reversal charge failed", { error: chargeError.message });
             // Log the failed reversal attempt but still proceed with cancellation
@@ -208,6 +319,11 @@ serve(async (req) => {
             discount_recovered: isEarlyCancellation ? discountToRecover : 0,
           },
           created_by: user.id,
+        });
+
+        // Send cancellation email
+        await supabaseClient.functions.invoke("send-subscription-email", {
+          body: { type: "subscription_cancelled", subscriptionId: subToCancel.id },
         });
 
         result = { 
