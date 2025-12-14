@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
+import { addToCart } from '@/lib/cart';
 
 interface Product {
   id: string;
@@ -24,6 +26,7 @@ const FeaturedCollection = () => {
   const [collection, setCollection] = useState<Collection | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFeaturedCollection();
@@ -89,6 +92,19 @@ const FeaturedCollection = () => {
     }
   };
 
+  const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setAddingToCart(product.id);
+    await addToCart(product.id, 1, {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image_url: product.image_url,
+    });
+    setAddingToCart(null);
+  };
+
   if (loading) {
     return (
       <section className="py-16 bg-muted/30">
@@ -146,9 +162,20 @@ const FeaturedCollection = () => {
                     {product.description}
                   </p>
                 )}
-                <p className="text-lg font-bold text-primary">
-                  ${product.price.toFixed(2)}
-                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-lg font-bold text-primary">
+                    ${product.price.toFixed(2)}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 hover:bg-primary hover:text-primary-foreground"
+                    disabled={addingToCart === product.id}
+                    onClick={(e) => handleAddToCart(product, e)}
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

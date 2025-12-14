@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, RefreshCw } from 'lucide-react';
 import productBag from '@/assets/product-bag.jpg';
+import { addToCart } from '@/lib/cart';
 
 interface Product {
   id: string;
@@ -26,6 +27,7 @@ const RelatedProducts = ({ currentProductId, category }: RelatedProductsProps) =
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRelatedProducts();
@@ -70,6 +72,19 @@ const RelatedProducts = ({ currentProductId, category }: RelatedProductsProps) =
     }
   };
 
+  const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setAddingToCart(product.id);
+    await addToCart(product.id, 1, {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image_url: product.image_url,
+    });
+    setAddingToCart(null);
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -96,7 +111,7 @@ const RelatedProducts = ({ currentProductId, category }: RelatedProductsProps) =
           <Card 
             key={product.id} 
             className="group cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
-            onClick={() => navigate(`/product/${product.id}`)}
+            onClick={() => navigate(`/products/${product.id}`)}
           >
             <div className="aspect-square overflow-hidden relative">
               <img
@@ -126,11 +141,9 @@ const RelatedProducts = ({ currentProductId, category }: RelatedProductsProps) =
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/product/${product.id}`);
-                    }}
+                    className="h-8 w-8 p-0 hover:bg-primary hover:text-primary-foreground"
+                    disabled={addingToCart === product.id}
+                    onClick={(e) => handleAddToCart(product, e)}
                   >
                     <ShoppingCart className="h-4 w-4" />
                   </Button>
@@ -140,7 +153,7 @@ const RelatedProducts = ({ currentProductId, category }: RelatedProductsProps) =
                     className="h-8 w-8 p-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/product/${product.id}?subscribe=true`);
+                      navigate(`/products/${product.id}?subscribe=true`);
                     }}
                   >
                     <RefreshCw className="h-4 w-4" />
