@@ -53,6 +53,30 @@ const Footer = () => {
             </div>
           </div>
         </div>
+
+        {/* Legal Links */}
+        <div className="border-t border-border pt-6 mb-6">
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+            <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/shipping-returns" className="text-muted-foreground hover:text-primary transition-colors">
+              Shipping & Returns
+            </Link>
+            <Link to="/terms-of-use" className="text-muted-foreground hover:text-primary transition-colors">
+              Terms of Use
+            </Link>
+            <Link to="/cookie-policy" className="text-muted-foreground hover:text-primary transition-colors">
+              Cookie Policy
+            </Link>
+            <Link to="/accessibility" className="text-muted-foreground hover:text-primary transition-colors">
+              Accessibility
+            </Link>
+            <Link to="/disclaimer" className="text-muted-foreground hover:text-primary transition-colors">
+              Disclaimer
+            </Link>
+          </nav>
+        </div>
         
         <div className="border-t border-border pt-8 text-center text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} Coffee Habesha. All rights reserved.</p>
