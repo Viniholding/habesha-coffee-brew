@@ -18,7 +18,8 @@ import {
   Palette,
   Shield,
   FileText,
-  Plus
+  Plus,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,6 +53,7 @@ const getNavigation = (adminLevel: 'owner' | 'manager' | 'support' | null) => {
     { name: 'Promotion Analytics', href: '/admin/promotion-analytics', icon: BarChart3 },
     { name: 'Inventory', href: '/admin/inventory', icon: Plus },
     { name: 'Audit Log', href: '/admin/audit-log', icon: FileText },
+    { name: 'Abuse Detection', href: '/admin/abuse-detection', icon: AlertTriangle },
   ];
   
   // Owner-only pages
@@ -76,7 +78,7 @@ export const AdminLayout = () => {
   
   // Route protection - block unauthorized access
   const ownerOnlyRoutes = ['/admin/users', '/admin/settings'];
-  const managerRoutes = ['/admin/collections', '/admin/homepage', '/admin/segments', '/admin/abandoned-carts', '/admin/subscriptions', '/admin/program-config', '/admin/promotions', '/admin/promotion-analytics', '/admin/inventory', '/admin/audit-log'];
+  const managerRoutes = ['/admin/collections', '/admin/homepage', '/admin/segments', '/admin/abandoned-carts', '/admin/subscriptions', '/admin/program-config', '/admin/promotions', '/admin/promotion-analytics', '/admin/inventory', '/admin/audit-log', '/admin/abuse-detection'];
   
   const currentPath = location.pathname;
   

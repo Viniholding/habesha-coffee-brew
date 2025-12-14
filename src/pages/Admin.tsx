@@ -17,6 +17,7 @@ import EnhancedDashboard from '@/components/admin/EnhancedDashboard';
 import AdminUsersManagement from '@/components/admin/AdminUsersManagement';
 import AdminAuditLog from '@/components/admin/AdminAuditLog';
 import AdminSettings from '@/components/admin/AdminSettings';
+import AbuseDetection from '@/components/admin/AbuseDetection';
 import { Routes, Route } from 'react-router-dom';
 
 const Admin = () => {
@@ -60,6 +61,7 @@ const AdminRoutes = () => {
         <Route path="abandoned-carts" element={<AbandonedCarts />} />
         <Route path="users" element={<AdminUsersManagement />} />
         <Route path="audit-log" element={<AdminAuditLog />} />
+        <Route path="abuse-detection" element={<AbuseDetection />} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
     </Routes>

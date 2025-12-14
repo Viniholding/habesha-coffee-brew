@@ -13,6 +13,83 @@ const logStep = (step: string, details?: any) => {
   console.log(`[MANAGE-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+// Helper function to update abuse tracking
+async function updateAbuseTracking(
+  supabaseClient: any,
+  userId: string,
+  ...eventTypes: ('early_cancellation' | 'discount_reversal' | 'pause_cycle')[]
+) {
+  try {
+    const { data: existing } = await supabaseClient
+      .from('account_restrictions')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const currentValues = existing || {
+      abuse_score: 0,
+      early_cancellations: 0,
+      discount_reversals: 0,
+      coupon_rejections: 0,
+      pause_cycles: 0,
+    };
+
+    const scoreIncrements: Record<string, number> = {
+      early_cancellation: 25,
+      discount_reversal: 30,
+      pause_cycle: 10,
+    };
+
+    let newScore = currentValues.abuse_score;
+    const updates: Record<string, any> = {
+      last_abuse_check_at: new Date().toISOString(),
+    };
+
+    for (const eventType of eventTypes) {
+      newScore += scoreIncrements[eventType] || 0;
+      
+      switch (eventType) {
+        case 'early_cancellation':
+          updates.early_cancellations = (currentValues.early_cancellations || 0) + 1;
+          break;
+        case 'discount_reversal':
+          updates.discount_reversals = (currentValues.discount_reversals || 0) + 1;
+          break;
+        case 'pause_cycle':
+          updates.pause_cycles = (currentValues.pause_cycles || 0) + 1;
+          break;
+      }
+    }
+
+    updates.abuse_score = newScore;
+
+    // Auto-restrict if score exceeds threshold
+    if (newScore >= 100 && !existing?.is_promotional_restricted) {
+      updates.is_promotional_restricted = true;
+      updates.restriction_reason = 'Automatic restriction due to abuse score threshold';
+      updates.restricted_at = new Date().toISOString();
+    }
+
+    if (existing) {
+      await supabaseClient
+        .from('account_restrictions')
+        .update(updates)
+        .eq('user_id', userId);
+    } else {
+      await supabaseClient
+        .from('account_restrictions')
+        .insert({
+          user_id: userId,
+          ...updates,
+        });
+    }
+
+    logStep('Abuse tracking updated', { userId, updates });
+  } catch (error) {
+    logStep('Failed to update abuse tracking', { error });
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -108,6 +185,9 @@ serve(async (req) => {
               },
               created_by: user.id,
             });
+
+            // Update abuse tracking for discount reversal
+            await updateAbuseTracking(supabaseClient, user.id, 'discount_reversal', 'pause_cycle');
 
             // Send discount reversal email
             await supabaseClient.functions.invoke("send-subscription-email", {
@@ -272,6 +352,9 @@ serve(async (req) => {
               },
               created_by: user.id,
             });
+
+            // Update abuse tracking for early cancellation and discount reversal
+            await updateAbuseTracking(supabaseClient, user.id, 'early_cancellation', 'discount_reversal');
 
             // Send discount reversal email
             await supabaseClient.functions.invoke("send-subscription-email", {

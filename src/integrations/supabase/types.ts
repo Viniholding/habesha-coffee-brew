@@ -86,6 +86,60 @@ export type Database = {
         }
         Relationships: []
       }
+      account_restrictions: {
+        Row: {
+          abuse_score: number
+          coupon_rejections: number
+          created_at: string
+          discount_reversals: number
+          early_cancellations: number
+          id: string
+          is_promotional_restricted: boolean
+          last_abuse_check_at: string | null
+          notes: string | null
+          pause_cycles: number
+          restricted_at: string | null
+          restricted_by: string | null
+          restriction_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          abuse_score?: number
+          coupon_rejections?: number
+          created_at?: string
+          discount_reversals?: number
+          early_cancellations?: number
+          id?: string
+          is_promotional_restricted?: boolean
+          last_abuse_check_at?: string | null
+          notes?: string | null
+          pause_cycles?: number
+          restricted_at?: string | null
+          restricted_by?: string | null
+          restriction_reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          abuse_score?: number
+          coupon_rejections?: number
+          created_at?: string
+          discount_reversals?: number
+          early_cancellations?: number
+          id?: string
+          is_promotional_restricted?: boolean
+          last_abuse_check_at?: string | null
+          notes?: string | null
+          pause_cycles?: number
+          restricted_at?: string | null
+          restricted_by?: string | null
+          restriction_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       addresses: {
         Row: {
           address_line1: string
@@ -353,6 +407,70 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      coupon_audit_log: {
+        Row: {
+          action: string
+          coupon_code: string
+          created_at: string
+          discount_amount: number | null
+          id: string
+          metadata: Json | null
+          order_id: string | null
+          promotion_id: string | null
+          reason_code: string | null
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          coupon_code: string
+          created_at?: string
+          discount_amount?: number | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          promotion_id?: string | null
+          reason_code?: string | null
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          coupon_code?: string
+          created_at?: string
+          discount_amount?: number | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          promotion_id?: string | null
+          reason_code?: string | null
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_audit_log_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_audit_log_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_audit_log_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_segments: {
         Row: {
