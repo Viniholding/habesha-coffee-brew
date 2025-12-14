@@ -9,12 +9,13 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Settings, Store, CreditCard, Truck, Receipt, Shield, AlertTriangle, Check, X, Mail, Ban } from 'lucide-react';
+import { Settings, Store, CreditCard, Truck, Receipt, Shield, AlertTriangle, Check, X, Mail, Ban, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { logAdminAction } from '@/lib/auditLog';
 import EmailTemplatesSettings from './EmailTemplatesSettings';
 import AbuseSettingsTab from './AbuseSettingsTab';
+import LearnPageSettings from './LearnPageSettings';
 
 interface LoginAttempt {
   id: string;
@@ -115,6 +116,10 @@ export default function AdminSettings() {
             <Mail className="h-4 w-4" />
             Email
           </TabsTrigger>
+          <TabsTrigger value="learn" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            Learn Page
+          </TabsTrigger>
           <TabsTrigger value="payment" className="gap-2">
             <CreditCard className="h-4 w-4" />
             Payment
@@ -174,6 +179,10 @@ export default function AdminSettings() {
 
         <TabsContent value="email">
           <EmailTemplatesSettings isOwner={isOwner} />
+        </TabsContent>
+
+        <TabsContent value="learn">
+          <LearnPageSettings />
         </TabsContent>
 
         <TabsContent value="payment">
