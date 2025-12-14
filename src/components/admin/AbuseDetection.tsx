@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertTriangle, Shield, Ban, Search, RefreshCw, Eye, 
-  XCircle, CheckCircle, TrendingUp, Users, DollarSign, Link2, ShieldOff, ShieldCheck, Mail 
+  XCircle, CheckCircle, TrendingUp, Users, DollarSign, Link2, ShieldOff, ShieldCheck, Mail,
+  Download, Bell, Zap, Network
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -39,6 +40,7 @@ interface AccountRestriction {
     last_name: string | null;
   };
   crossAccountFlags?: CrossAccountFlag[];
+  clusterRiskScore?: number;
 }
 
 interface CrossAccountFlag {
@@ -70,11 +72,31 @@ interface AbuseStats {
   crossAccountFlags: number;
 }
 
+interface FraudCluster {
+  primaryUserId: string;
+  primaryEmail: string;
+  linkedUserIds: string[];
+  linkedEmails: string[];
+  totalRiskScore: number;
+  clusterRiskScore: number;
+  anyRestricted: boolean;
+}
+
 const ABUSE_THRESHOLDS = {
   LOW: 25,
   MEDIUM: 50,
   HIGH: 75,
   AUTO_RESTRICT: 100,
+  CLUSTER_ALERT: 150,
+};
+
+// Weighted scoring for fraud risk
+const RISK_WEIGHTS = {
+  baseScore: 1,
+  sharedPaymentMethod: 25,
+  sharedAddress: 15,
+  linkedToRestricted: 35,
+  multipleLinks: 10,
 };
 
 const AbuseDetection = () => {
@@ -88,9 +110,131 @@ const AbuseDetection = () => {
   const [restrictDialogOpen, setRestrictDialogOpen] = useState(false);
   const [restrictionNotes, setRestrictionNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [fraudClusters, setFraudClusters] = useState<FraudCluster[]>([]);
+  const [bulkRestrictLoading, setBulkRestrictLoading] = useState<string | null>(null);
 
+  // Calculate cluster risk score with weighted algorithm
+  const calculateClusterRiskScore = useCallback((
+    restriction: AccountRestriction,
+    allRestrictions: AccountRestriction[]
+  ): number => {
+    let score = restriction.abuse_score * RISK_WEIGHTS.baseScore;
+    
+    if (restriction.crossAccountFlags) {
+      restriction.crossAccountFlags.forEach(flag => {
+        if (flag.type === 'shared_payment') {
+          score += RISK_WEIGHTS.sharedPaymentMethod;
+        } else if (flag.type === 'shared_address') {
+          score += RISK_WEIGHTS.sharedAddress;
+        }
+        
+        if (flag.isRestricted) {
+          score += RISK_WEIGHTS.linkedToRestricted;
+        }
+      });
+      
+      if (restriction.crossAccountFlags.length > 1) {
+        score += RISK_WEIGHTS.multipleLinks * (restriction.crossAccountFlags.length - 1);
+      }
+    }
+    
+    return score;
+  }, []);
+
+  // Build fraud clusters
+  const buildFraudClusters = useCallback((
+    restrictionsData: AccountRestriction[],
+    profilesMap: Record<string, any>
+  ): FraudCluster[] => {
+    const clusters: FraudCluster[] = [];
+    const processedUsers = new Set<string>();
+
+    restrictionsData.forEach(restriction => {
+      if (processedUsers.has(restriction.user_id)) return;
+      if (!restriction.crossAccountFlags || restriction.crossAccountFlags.length === 0) return;
+
+      const linkedUserIds = restriction.crossAccountFlags.map(f => f.linkedUserId);
+      const linkedEmails = linkedUserIds.map(id => profilesMap[id]?.email || 'Unknown');
+      
+      // Calculate cluster risk
+      const clusterMembers = [restriction, ...restrictionsData.filter(r => linkedUserIds.includes(r.user_id))];
+      const totalRiskScore = clusterMembers.reduce((sum, r) => sum + r.abuse_score, 0);
+      const clusterRiskScore = clusterMembers.reduce((sum, r) => 
+        sum + calculateClusterRiskScore(r, restrictionsData), 0
+      );
+      
+      const anyRestricted = clusterMembers.some(r => r.is_promotional_restricted);
+
+      clusters.push({
+        primaryUserId: restriction.user_id,
+        primaryEmail: profilesMap[restriction.user_id]?.email || 'Unknown',
+        linkedUserIds,
+        linkedEmails,
+        totalRiskScore,
+        clusterRiskScore,
+        anyRestricted,
+      });
+
+      linkedUserIds.forEach(id => processedUsers.add(id));
+      processedUsers.add(restriction.user_id);
+    });
+
+    return clusters.sort((a, b) => b.clusterRiskScore - a.clusterRiskScore);
+  }, [calculateClusterRiskScore]);
+
+  // Real-time subscription for abuse score changes
   useEffect(() => {
     fetchData();
+
+    // Subscribe to real-time changes on account_restrictions
+    const channel = supabase
+      .channel('abuse-alerts')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'account_restrictions',
+        },
+        async (payload) => {
+          const newData = payload.new as any;
+          const oldData = payload.old as any;
+          
+          // Check if score crossed high-risk threshold
+          if (newData.abuse_score >= ABUSE_THRESHOLDS.HIGH && oldData.abuse_score < ABUSE_THRESHOLDS.HIGH) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('id', newData.user_id)
+              .single();
+            
+            toast.warning(`🚨 High-Risk Alert: ${profile?.email || 'Unknown'} crossed threshold (Score: ${newData.abuse_score})`, {
+              duration: 10000,
+              action: {
+                label: 'View',
+                onClick: () => setSearchTerm(profile?.email || ''),
+              },
+            });
+
+            // Trigger email notification
+            await supabase.functions.invoke('send-abuse-notification', {
+              body: {
+                type: 'account_restricted',
+                userId: newData.user_id,
+                abuseScore: newData.abuse_score,
+                reason: 'Abuse score crossed high-risk threshold',
+              },
+            });
+          }
+
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Cross-account detection function
@@ -106,7 +250,6 @@ const AbuseDetection = () => {
     );
 
     try {
-      // Find shared payment methods (same card_last_four + card_brand)
       const { data: paymentMethods } = await supabase
         .from('payment_methods')
         .select('user_id, card_last_four, card_brand')
@@ -122,7 +265,6 @@ const AbuseDetection = () => {
           }
         });
 
-        // Find cards used by multiple users
         Object.entries(cardMap).forEach(([_, users]) => {
           if (users.length > 1) {
             users.forEach(userId => {
@@ -140,7 +282,6 @@ const AbuseDetection = () => {
         });
       }
 
-      // Find shared addresses (same address_line1 + postal_code)
       const { data: addresses } = await supabase
         .from('addresses')
         .select('user_id, address_line1, postal_code')
@@ -158,14 +299,12 @@ const AbuseDetection = () => {
           }
         });
 
-        // Find addresses used by multiple users
         Object.entries(addressMap).forEach(([_, users]) => {
           if (users.length > 1) {
             users.forEach(userId => {
               const linkedUsers = users.filter(u => u !== userId);
               linkedUsers.forEach(linkedUserId => {
                 if (!flags[userId]) flags[userId] = [];
-                // Avoid duplicate flags
                 const exists = flags[userId].some(
                   f => f.type === 'shared_address' && f.linkedUserId === linkedUserId
                 );
@@ -191,7 +330,6 @@ const AbuseDetection = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch account restrictions with profile info
       const { data: restrictionsData, error: restrictionsError } = await supabase
         .from('account_restrictions')
         .select('*')
@@ -199,7 +337,6 @@ const AbuseDetection = () => {
 
       if (restrictionsError) throw restrictionsError;
 
-      // Fetch profile emails for each restriction
       const userIds = restrictionsData?.map(r => r.user_id) || [];
       let profilesMap: Record<string, any> = {};
       
@@ -214,18 +351,34 @@ const AbuseDetection = () => {
         });
       }
 
-      // Cross-account detection: find shared payment methods and addresses
       const crossAccountFlags = await detectCrossAccountAbuse(userIds, restrictionsData || []);
 
-      const enrichedRestrictions = restrictionsData?.map(r => ({
-        ...r,
-        profile: profilesMap[r.user_id],
-        crossAccountFlags: crossAccountFlags[r.user_id] || [],
-      })) || [];
+      const enrichedRestrictions = restrictionsData?.map(r => {
+        const enriched = {
+          ...r,
+          profile: profilesMap[r.user_id],
+          crossAccountFlags: crossAccountFlags[r.user_id] || [],
+        };
+        return {
+          ...enriched,
+          clusterRiskScore: calculateClusterRiskScore(enriched as AccountRestriction, restrictionsData as any[]),
+        };
+      }) || [];
 
       setRestrictions(enrichedRestrictions);
 
-      // Calculate stats
+      // Build fraud clusters
+      const clusters = buildFraudClusters(enrichedRestrictions as AccountRestriction[], profilesMap);
+      setFraudClusters(clusters);
+
+      // Check for high-risk clusters and alert
+      const highRiskClusters = clusters.filter(c => c.clusterRiskScore >= ABUSE_THRESHOLDS.CLUSTER_ALERT);
+      if (highRiskClusters.length > 0) {
+        toast.warning(`⚠️ ${highRiskClusters.length} high-risk fraud cluster(s) detected`, {
+          duration: 8000,
+        });
+      }
+
       const restricted = enrichedRestrictions.filter(r => r.is_promotional_restricted).length;
       const highRisk = enrichedRestrictions.filter(r => r.abuse_score >= ABUSE_THRESHOLDS.HIGH).length;
       const totalReversals = enrichedRestrictions.reduce((sum, r) => sum + r.discount_reversals, 0);
@@ -240,7 +393,6 @@ const AbuseDetection = () => {
         crossAccountFlags: totalCrossFlags,
       });
 
-      // Fetch recent coupon audit logs
       const { data: logsData, error: logsError } = await supabase
         .from('coupon_audit_log')
         .select('*')
@@ -249,7 +401,6 @@ const AbuseDetection = () => {
 
       if (logsError) throw logsError;
 
-      // Enrich logs with profile emails
       const logUserIds = [...new Set(logsData?.map(l => l.user_id) || [])];
       let logProfilesMap: Record<string, any> = {};
       
@@ -278,6 +429,110 @@ const AbuseDetection = () => {
     }
   };
 
+  // Export restrictions to CSV
+  const exportRestrictionsCSV = () => {
+    const headers = ['Email', 'Name', 'Abuse Score', 'Cluster Risk', 'Early Cancellations', 'Discount Reversals', 'Coupon Rejections', 'Pause Cycles', 'Status', 'Cross-Account Links', 'Restricted At', 'Reason'];
+    const rows = filteredRestrictions.map(r => [
+      r.profile?.email || '',
+      r.profile?.full_name || `${r.profile?.first_name || ''} ${r.profile?.last_name || ''}`.trim(),
+      r.abuse_score,
+      r.clusterRiskScore || 0,
+      r.early_cancellations,
+      r.discount_reversals,
+      r.coupon_rejections,
+      r.pause_cycles,
+      r.is_promotional_restricted ? 'Restricted' : 'Active',
+      r.crossAccountFlags?.length || 0,
+      r.restricted_at ? format(new Date(r.restricted_at), 'yyyy-MM-dd HH:mm') : '',
+      r.restriction_reason || '',
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+    downloadCSV(csv, 'account-restrictions.csv');
+  };
+
+  // Export coupon logs to CSV
+  const exportCouponLogsCSV = () => {
+    const headers = ['Date', 'Email', 'Coupon Code', 'Action', 'Reason', 'Discount Amount'];
+    const rows = filteredLogs.map(l => [
+      format(new Date(l.created_at), 'yyyy-MM-dd HH:mm'),
+      l.profile?.email || '',
+      l.coupon_code,
+      l.action,
+      l.reason_code || '',
+      l.discount_amount || '',
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+    downloadCSV(csv, 'coupon-audit-log.csv');
+  };
+
+  const downloadCSV = (csv: string, filename: string) => {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filename}`);
+  };
+
+  // Bulk restrict entire fraud cluster
+  const bulkRestrictCluster = async (cluster: FraudCluster) => {
+    setBulkRestrictLoading(cluster.primaryUserId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const allUserIds = [cluster.primaryUserId, ...cluster.linkedUserIds];
+
+      const { error } = await supabase
+        .from('account_restrictions')
+        .update({
+          is_promotional_restricted: true,
+          restriction_reason: 'Bulk restriction - Fraud cluster detected',
+          restricted_at: new Date().toISOString(),
+          restricted_by: user?.id,
+        })
+        .in('user_id', allUserIds);
+
+      if (error) throw error;
+
+      await logAdminAction({
+        actionType: 'account_restricted',
+        entityType: 'fraud_cluster',
+        entityId: cluster.primaryUserId,
+        newValues: { 
+          affectedAccounts: allUserIds.length, 
+          clusterRiskScore: cluster.clusterRiskScore,
+          reason: 'Bulk cluster restriction' 
+        },
+      });
+
+      // Send alert email
+      await supabase.functions.invoke('send-abuse-notification', {
+        body: {
+          type: 'cross_account_detected',
+          userId: cluster.primaryUserId,
+          abuseScore: cluster.totalRiskScore,
+          crossAccountLinks: cluster.linkedUserIds.map((id, i) => ({
+            userId: id,
+            email: cluster.linkedEmails[i],
+            type: 'shared_payment',
+            isRestricted: true,
+          })),
+        },
+      });
+
+      toast.success(`Restricted ${allUserIds.length} accounts in fraud cluster`);
+      fetchData();
+    } catch (error) {
+      console.error('Error bulk restricting cluster:', error);
+      toast.error('Failed to restrict cluster');
+    } finally {
+      setBulkRestrictLoading(null);
+    }
+  };
+
   const getAbuseScoreBadge = (score: number) => {
     if (score >= ABUSE_THRESHOLDS.HIGH) {
       return <Badge variant="destructive">High Risk ({score})</Badge>;
@@ -287,6 +542,17 @@ const AbuseDetection = () => {
       return <Badge variant="secondary">Low Risk ({score})</Badge>;
     }
     return <Badge variant="outline">Clean ({score})</Badge>;
+  };
+
+  const getClusterRiskBadge = (score: number) => {
+    if (score >= ABUSE_THRESHOLDS.CLUSTER_ALERT) {
+      return <Badge variant="destructive"><Zap className="h-3 w-3 mr-1" />Critical ({score})</Badge>;
+    } else if (score >= ABUSE_THRESHOLDS.AUTO_RESTRICT) {
+      return <Badge className="bg-orange-500 hover:bg-orange-600"><AlertTriangle className="h-3 w-3 mr-1" />High ({score})</Badge>;
+    } else if (score >= ABUSE_THRESHOLDS.MEDIUM) {
+      return <Badge variant="secondary">Medium ({score})</Badge>;
+    }
+    return <Badge variant="outline">Low ({score})</Badge>;
   };
 
   const getActionBadge = (action: string) => {
@@ -354,7 +620,6 @@ const AbuseDetection = () => {
     }
   };
 
-  // Quick action to toggle restriction from table
   const handleQuickToggleRestriction = async (restriction: AccountRestriction, restrict: boolean) => {
     setActionLoading(true);
     try {
@@ -392,7 +657,6 @@ const AbuseDetection = () => {
     }
   };
 
-  // Send cross-account fraud alert
   const sendCrossAccountAlert = async (restriction: AccountRestriction) => {
     if (!restriction.crossAccountFlags || restriction.crossAccountFlags.length === 0) {
       toast.error('No cross-account links to report');
@@ -401,7 +665,6 @@ const AbuseDetection = () => {
 
     setActionLoading(true);
     try {
-      // Fetch emails for linked accounts
       const linkedUserIds = restriction.crossAccountFlags.map(f => f.linkedUserId);
       const { data: linkedProfiles } = await supabase
         .from('profiles')
@@ -465,14 +728,26 @@ const AbuseDetection = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Shield className="h-6 w-6" />
-          Abuse Detection & Prevention
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Monitor suspicious account activity and manage promotional restrictions
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Shield className="h-6 w-6" />
+            Abuse Detection & Prevention
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Monitor suspicious account activity and manage promotional restrictions
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportRestrictionsCSV}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Restrictions
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportCouponLogsCSV}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Logs
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -509,11 +784,11 @@ const AbuseDetection = () => {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-full bg-purple-500/10">
-                <Link2 className="h-6 w-6 text-purple-500" />
+                <Network className="h-6 w-6 text-purple-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Cross-Account Flags</p>
-                <p className="text-2xl font-bold">{stats.crossAccountFlags}</p>
+                <p className="text-sm text-muted-foreground">Fraud Clusters</p>
+                <p className="text-2xl font-bold">{fraudClusters.length}</p>
               </div>
             </div>
           </CardContent>
@@ -551,12 +826,12 @@ const AbuseDetection = () => {
       <Tabs defaultValue="accounts" className="w-full">
         <TabsList>
           <TabsTrigger value="accounts">Account Risk Tracking</TabsTrigger>
+          <TabsTrigger value="clusters">Fraud Clusters ({fraudClusters.length})</TabsTrigger>
           <TabsTrigger value="graph">Relationship Graph</TabsTrigger>
           <TabsTrigger value="coupon-logs">Coupon Audit Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="accounts" className="space-y-4">
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -586,7 +861,6 @@ const AbuseDetection = () => {
             </Button>
           </div>
 
-          {/* Accounts Table */}
           <Card>
             <CardContent className="p-0">
               <Table>
@@ -594,9 +868,9 @@ const AbuseDetection = () => {
                   <TableRow>
                     <TableHead>Account</TableHead>
                     <TableHead>Risk Score</TableHead>
+                    <TableHead>Cluster Risk</TableHead>
                     <TableHead>Flags</TableHead>
                     <TableHead>Early Cancel</TableHead>
-                    <TableHead>Reversals</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -622,6 +896,7 @@ const AbuseDetection = () => {
                           </div>
                         </TableCell>
                         <TableCell>{getAbuseScoreBadge(restriction.abuse_score)}</TableCell>
+                        <TableCell>{getClusterRiskBadge(restriction.clusterRiskScore || 0)}</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {restriction.crossAccountFlags?.map((flag, i) => (
@@ -640,7 +915,6 @@ const AbuseDetection = () => {
                           </div>
                         </TableCell>
                         <TableCell>{restriction.early_cancellations}</TableCell>
-                        <TableCell>{restriction.discount_reversals}</TableCell>
                         <TableCell>
                           {restriction.is_promotional_restricted ? (
                             <Badge variant="destructive">Restricted</Badge>
@@ -704,6 +978,64 @@ const AbuseDetection = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="clusters" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Network className="h-5 w-5" />
+                Detected Fraud Clusters
+              </CardTitle>
+              <CardDescription>
+                Groups of accounts linked by shared payment methods or addresses. Higher cluster risk scores indicate more suspicious patterns.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {fraudClusters.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No fraud clusters detected</p>
+              ) : (
+                <div className="space-y-4">
+                  {fraudClusters.map((cluster, idx) => (
+                    <div key={cluster.primaryUserId} className={`p-4 rounded-lg border ${cluster.clusterRiskScore >= ABUSE_THRESHOLDS.CLUSTER_ALERT ? 'border-destructive bg-destructive/5' : 'border-border'}`}>
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium">{cluster.primaryEmail}</h4>
+                            {getClusterRiskBadge(cluster.clusterRiskScore)}
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {cluster.linkedUserIds.length} linked account(s) • Total risk: {cluster.totalRiskScore}
+                          </p>
+                        </div>
+                        <Button
+                          variant={cluster.anyRestricted ? "outline" : "destructive"}
+                          size="sm"
+                          onClick={() => bulkRestrictCluster(cluster)}
+                          disabled={bulkRestrictLoading === cluster.primaryUserId || cluster.anyRestricted}
+                        >
+                          {bulkRestrictLoading === cluster.primaryUserId ? (
+                            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <Zap className="h-4 w-4 mr-2" />
+                          )}
+                          {cluster.anyRestricted ? 'Partially Restricted' : 'Restrict Cluster'}
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {cluster.linkedEmails.map((email, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">
+                            <Link2 className="h-3 w-3 mr-1" />
+                            {email}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="graph" className="space-y-4">
           <AccountRelationshipGraph 
             accounts={restrictions.map(r => ({
@@ -718,7 +1050,6 @@ const AbuseDetection = () => {
         </TabsContent>
 
         <TabsContent value="coupon-logs" className="space-y-4">
-          {/* Coupon Logs Table */}
           <Card>
             <CardHeader>
               <CardTitle>Recent Coupon Activity</CardTitle>
@@ -772,7 +1103,6 @@ const AbuseDetection = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Manage Restriction Dialog */}
       <Dialog open={restrictDialogOpen} onOpenChange={setRestrictDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -790,6 +1120,10 @@ const AbuseDetection = () => {
                   <p className="font-bold text-lg">{selectedAccount.abuse_score}</p>
                 </div>
                 <div>
+                  <p className="text-sm text-muted-foreground">Cluster Risk</p>
+                  <p className="font-bold text-lg">{selectedAccount.clusterRiskScore || 0}</p>
+                </div>
+                <div>
                   <p className="text-sm text-muted-foreground">Status</p>
                   {selectedAccount.is_promotional_restricted ? (
                     <Badge variant="destructive">Restricted</Badge>
@@ -798,20 +1132,16 @@ const AbuseDetection = () => {
                   )}
                 </div>
                 <div>
+                  <p className="text-sm text-muted-foreground">Cross-Account Links</p>
+                  <p className="font-medium">{selectedAccount.crossAccountFlags?.length || 0}</p>
+                </div>
+                <div>
                   <p className="text-sm text-muted-foreground">Early Cancellations</p>
                   <p className="font-medium">{selectedAccount.early_cancellations}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Discount Reversals</p>
                   <p className="font-medium">{selectedAccount.discount_reversals}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Coupon Rejections</p>
-                  <p className="font-medium">{selectedAccount.coupon_rejections}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Pause Cycles</p>
-                  <p className="font-medium">{selectedAccount.pause_cycles}</p>
                 </div>
               </div>
 
