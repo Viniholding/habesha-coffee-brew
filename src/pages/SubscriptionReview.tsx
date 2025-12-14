@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { subscriptionProducts, bagSizeOptions, frequencyOptions, grindOptions } from "@/lib/subscriptionProducts";
 import { addDays, format, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { logCouponAction, isAccountRestricted } from "@/lib/couponAudit";
 
 const prepaidOptions = [
   { value: 3, discount: 5 },
@@ -175,6 +176,22 @@ const SubscriptionReview = () => {
     setCouponError("");
 
     try {
+      // Check if account is restricted from promotional pricing
+      if (user) {
+        const restricted = await isAccountRestricted(user.id);
+        if (restricted) {
+          setCouponError("Your account is not eligible for promotional pricing");
+          await logCouponAction({
+            userId: user.id,
+            couponCode: couponCode.toUpperCase(),
+            action: 'rejected',
+            reasonCode: 'account_restricted',
+          });
+          setCouponLoading(false);
+          return;
+        }
+      }
+
       // Check referral codes first
       const { data: referral } = await supabase
         .from("referrals")
@@ -188,6 +205,16 @@ const SubscriptionReview = () => {
           code: couponCode.toUpperCase(), 
           discount: referral.referee_discount_percent 
         });
+        if (user) {
+          await logCouponAction({
+            userId: user.id,
+            couponCode: couponCode.toUpperCase(),
+            action: 'applied',
+            reasonCode: 'success',
+            discountAmount: referral.referee_discount_percent,
+            metadata: { type: 'referral' },
+          });
+        }
         toast.success(`Referral code applied! ${referral.referee_discount_percent}% off`);
         setCouponCode("");
         return;
@@ -207,30 +234,79 @@ const SubscriptionReview = () => {
 
       if (!promotion) {
         setCouponError("Invalid coupon code");
+        if (user) {
+          await logCouponAction({
+            userId: user.id,
+            couponCode: couponCode.toUpperCase(),
+            action: 'rejected',
+            reasonCode: 'invalid_code',
+          });
+        }
+        setCouponLoading(false);
         return;
       }
 
       // Check expiration
       if (promotion.expires_at && new Date(promotion.expires_at) < new Date()) {
         setCouponError("This coupon has expired");
+        if (user) {
+          await logCouponAction({
+            userId: user.id,
+            couponCode: couponCode.toUpperCase(),
+            action: 'rejected',
+            reasonCode: 'expired',
+            promotionId: promotion.id,
+          });
+        }
+        setCouponLoading(false);
         return;
       }
 
       // Check if not started yet
       if (promotion.starts_at && new Date(promotion.starts_at) > new Date()) {
         setCouponError("This coupon is not yet active");
+        if (user) {
+          await logCouponAction({
+            userId: user.id,
+            couponCode: couponCode.toUpperCase(),
+            action: 'rejected',
+            reasonCode: 'not_started',
+            promotionId: promotion.id,
+          });
+        }
+        setCouponLoading(false);
         return;
       }
 
       // Check usage limit
       if (promotion.max_uses && promotion.current_uses >= promotion.max_uses) {
         setCouponError("This coupon has reached its usage limit");
+        if (user) {
+          await logCouponAction({
+            userId: user.id,
+            couponCode: couponCode.toUpperCase(),
+            action: 'rejected',
+            reasonCode: 'max_uses_exceeded',
+            promotionId: promotion.id,
+          });
+        }
+        setCouponLoading(false);
         return;
       }
 
       // Check if applies to subscription - must be explicitly eligible
       if (!promotion.is_subscription_eligible) {
         setCouponError("This coupon cannot be applied to subscription orders");
+        if (user) {
+          await logCouponAction({
+            userId: user.id,
+            couponCode: couponCode.toUpperCase(),
+            action: 'rejected',
+            reasonCode: 'not_subscription_eligible',
+            promotionId: promotion.id,
+          });
+        }
+        setCouponLoading(false);
         return;
       }
 
@@ -244,6 +320,14 @@ const SubscriptionReview = () => {
 
         if (existingUses && existingUses.length >= promotion.max_uses_per_user) {
           setCouponError("This coupon has already been used");
+          await logCouponAction({
+            userId: user.id,
+            couponCode: couponCode.toUpperCase(),
+            action: 'rejected',
+            reasonCode: 'already_used',
+            promotionId: promotion.id,
+          });
+          setCouponLoading(false);
           return;
         }
       }
@@ -257,6 +341,18 @@ const SubscriptionReview = () => {
         code: couponCode.toUpperCase(), 
         discount: discountValue,
       });
+      
+      if (user) {
+        await logCouponAction({
+          userId: user.id,
+          couponCode: couponCode.toUpperCase(),
+          action: 'applied',
+          reasonCode: 'success',
+          promotionId: promotion.id,
+          discountAmount: discountValue,
+        });
+      }
+      
       toast.success(`Coupon applied! ${promotion.discount_type === "percentage" ? `${discountValue}%` : `$${discountValue}`} off`);
       setCouponCode("");
     } catch (error) {
