@@ -1,5 +1,6 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import LegalBreadcrumb from "@/components/legal/LegalBreadcrumb";
 import { Helmet } from "react-helmet-async";
 
 const Accessibility = () => {
@@ -12,6 +13,8 @@ const Accessibility = () => {
       <div className="min-h-screen bg-background">
         <Navigation />
         <main className="container mx-auto px-4 pt-24 pb-16 max-w-3xl">
+          <LegalBreadcrumb currentPage="Accessibility" />
+          
           <h1 className="text-3xl md:text-4xl font-bold mb-8">Accessibility Statement</h1>
           
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
