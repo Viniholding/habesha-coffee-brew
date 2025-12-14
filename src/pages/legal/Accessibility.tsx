@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import LegalBreadcrumb from "@/components/legal/LegalBreadcrumb";
+import LegalPageWrapper from "@/components/legal/LegalPageWrapper";
 import { Helmet } from "react-helmet-async";
 
 const Accessibility = () => {
@@ -15,27 +16,30 @@ const Accessibility = () => {
         <main className="container mx-auto px-4 pt-24 pb-16 max-w-3xl">
           <LegalBreadcrumb currentPage="Accessibility" />
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-8">Accessibility Statement</h1>
-          
-          <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-            <section>
-              <h2 className="text-xl font-semibold mb-3">Our Commitment</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                We are committed to ensuring our website is accessible to all users.
-              </p>
-            </section>
+          <LegalPageWrapper>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Accessibility Statement</h1>
+            <p className="text-sm text-muted-foreground mb-8">Last Updated: December 14, 2025</p>
+            
+            <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
+              <section>
+                <h2 className="text-xl font-semibold mb-3">Our Commitment</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  We are committed to ensuring our website is accessible to all users.
+                </p>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">Need Assistance?</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                If you experience difficulty accessing content or placing an order, please contact us at{" "}
-                <a href="mailto:sales@coffeehabesha.com" className="text-primary hover:underline">
-                  sales@coffeehabesha.com
-                </a>{" "}
-                and we will make reasonable efforts to assist you.
-              </p>
-            </section>
-          </div>
+              <section>
+                <h2 className="text-xl font-semibold mb-3">Need Assistance?</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  If you experience difficulty accessing content or placing an order, please contact us at{" "}
+                  <a href="mailto:sales@coffeehabesha.com" className="text-primary hover:underline">
+                    sales@coffeehabesha.com
+                  </a>{" "}
+                  and we will make reasonable efforts to assist you.
+                </p>
+              </section>
+            </div>
+          </LegalPageWrapper>
         </main>
         <Footer />
       </div>
