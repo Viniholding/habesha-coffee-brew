@@ -16,7 +16,9 @@ export type AuditActionType =
   | 'promotion_updated'
   | 'settings_updated'
   | 'collection_updated'
-  | 'homepage_updated';
+  | 'homepage_updated'
+  | 'account_restricted'
+  | 'account_unrestricted';
 
 interface AuditLogParams {
   actionType: AuditActionType;

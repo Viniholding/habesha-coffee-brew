@@ -11,10 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertTriangle, Shield, Ban, Search, RefreshCw, Eye, 
-  XCircle, CheckCircle, TrendingUp, Users, DollarSign 
+  XCircle, CheckCircle, TrendingUp, Users, DollarSign, Link2, ShieldOff, ShieldCheck 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { logAdminAction } from '@/lib/auditLog';
 
 interface AccountRestriction {
   id: string;
@@ -36,6 +37,14 @@ interface AccountRestriction {
     first_name: string | null;
     last_name: string | null;
   };
+  crossAccountFlags?: CrossAccountFlag[];
+}
+
+interface CrossAccountFlag {
+  type: 'shared_payment' | 'shared_address';
+  linkedUserId: string;
+  linkedUserEmail?: string;
+  isRestricted: boolean;
 }
 
 interface CouponAuditLog {
@@ -57,6 +66,7 @@ interface AbuseStats {
   highRiskAccounts: number;
   totalReversals: number;
   totalRejections: number;
+  crossAccountFlags: number;
 }
 
 const ABUSE_THRESHOLDS = {
@@ -70,7 +80,7 @@ const AbuseDetection = () => {
   const [restrictions, setRestrictions] = useState<AccountRestriction[]>([]);
   const [couponLogs, setCouponLogs] = useState<CouponAuditLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<AbuseStats>({ totalRestricted: 0, highRiskAccounts: 0, totalReversals: 0, totalRejections: 0 });
+  const [stats, setStats] = useState<AbuseStats>({ totalRestricted: 0, highRiskAccounts: 0, totalReversals: 0, totalRejections: 0, crossAccountFlags: 0 });
   const [searchTerm, setSearchTerm] = useState('');
   const [riskFilter, setRiskFilter] = useState<string>('all');
   const [selectedAccount, setSelectedAccount] = useState<AccountRestriction | null>(null);
@@ -81,6 +91,101 @@ const AbuseDetection = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Cross-account detection function
+  const detectCrossAccountAbuse = async (
+    userIds: string[], 
+    restrictionsData: any[]
+  ): Promise<Record<string, CrossAccountFlag[]>> => {
+    if (userIds.length === 0) return {};
+
+    const flags: Record<string, CrossAccountFlag[]> = {};
+    const restrictedUserIds = new Set(
+      restrictionsData.filter(r => r.is_promotional_restricted).map(r => r.user_id)
+    );
+
+    try {
+      // Find shared payment methods (same card_last_four + card_brand)
+      const { data: paymentMethods } = await supabase
+        .from('payment_methods')
+        .select('user_id, card_last_four, card_brand')
+        .in('user_id', userIds);
+
+      if (paymentMethods) {
+        const cardMap: Record<string, string[]> = {};
+        paymentMethods.forEach(pm => {
+          if (pm.card_last_four && pm.card_brand) {
+            const key = `${pm.card_brand}-${pm.card_last_four}`;
+            if (!cardMap[key]) cardMap[key] = [];
+            cardMap[key].push(pm.user_id);
+          }
+        });
+
+        // Find cards used by multiple users
+        Object.entries(cardMap).forEach(([_, users]) => {
+          if (users.length > 1) {
+            users.forEach(userId => {
+              const linkedUsers = users.filter(u => u !== userId);
+              linkedUsers.forEach(linkedUserId => {
+                if (!flags[userId]) flags[userId] = [];
+                flags[userId].push({
+                  type: 'shared_payment',
+                  linkedUserId,
+                  isRestricted: restrictedUserIds.has(linkedUserId),
+                });
+              });
+            });
+          }
+        });
+      }
+
+      // Find shared addresses (same address_line1 + postal_code)
+      const { data: addresses } = await supabase
+        .from('addresses')
+        .select('user_id, address_line1, postal_code')
+        .in('user_id', userIds);
+
+      if (addresses) {
+        const addressMap: Record<string, string[]> = {};
+        addresses.forEach(addr => {
+          if (addr.address_line1 && addr.postal_code) {
+            const key = `${addr.address_line1.toLowerCase().trim()}-${addr.postal_code}`;
+            if (!addressMap[key]) addressMap[key] = [];
+            if (!addressMap[key].includes(addr.user_id)) {
+              addressMap[key].push(addr.user_id);
+            }
+          }
+        });
+
+        // Find addresses used by multiple users
+        Object.entries(addressMap).forEach(([_, users]) => {
+          if (users.length > 1) {
+            users.forEach(userId => {
+              const linkedUsers = users.filter(u => u !== userId);
+              linkedUsers.forEach(linkedUserId => {
+                if (!flags[userId]) flags[userId] = [];
+                // Avoid duplicate flags
+                const exists = flags[userId].some(
+                  f => f.type === 'shared_address' && f.linkedUserId === linkedUserId
+                );
+                if (!exists) {
+                  flags[userId].push({
+                    type: 'shared_address',
+                    linkedUserId,
+                    isRestricted: restrictedUserIds.has(linkedUserId),
+                  });
+                }
+              });
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error detecting cross-account abuse:', error);
+    }
+
+    return flags;
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -108,9 +213,13 @@ const AbuseDetection = () => {
         });
       }
 
+      // Cross-account detection: find shared payment methods and addresses
+      const crossAccountFlags = await detectCrossAccountAbuse(userIds, restrictionsData || []);
+
       const enrichedRestrictions = restrictionsData?.map(r => ({
         ...r,
         profile: profilesMap[r.user_id],
+        crossAccountFlags: crossAccountFlags[r.user_id] || [],
       })) || [];
 
       setRestrictions(enrichedRestrictions);
@@ -120,12 +229,14 @@ const AbuseDetection = () => {
       const highRisk = enrichedRestrictions.filter(r => r.abuse_score >= ABUSE_THRESHOLDS.HIGH).length;
       const totalReversals = enrichedRestrictions.reduce((sum, r) => sum + r.discount_reversals, 0);
       const totalRejections = enrichedRestrictions.reduce((sum, r) => sum + r.coupon_rejections, 0);
+      const totalCrossFlags = enrichedRestrictions.filter(r => (r.crossAccountFlags?.length || 0) > 0).length;
 
       setStats({
         totalRestricted: restricted,
         highRiskAccounts: highRisk,
         totalReversals,
         totalRejections,
+        crossAccountFlags: totalCrossFlags,
       });
 
       // Fetch recent coupon audit logs
@@ -221,6 +332,14 @@ const AbuseDetection = () => {
 
       if (error) throw error;
 
+      await logAdminAction({
+        actionType: restrict ? 'account_restricted' : 'account_unrestricted',
+        entityType: 'account_restrictions',
+        entityId: selectedAccount.user_id,
+        oldValues: { is_promotional_restricted: selectedAccount.is_promotional_restricted },
+        newValues: { is_promotional_restricted: restrict, reason: updateData.restriction_reason },
+      });
+
       toast.success(restrict ? 'Account promotional access restricted' : 'Account restrictions removed');
       setRestrictDialogOpen(false);
       setRestrictionNotes('');
@@ -229,6 +348,44 @@ const AbuseDetection = () => {
     } catch (error) {
       console.error('Error updating restriction:', error);
       toast.error('Failed to update account restriction');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Quick action to toggle restriction from table
+  const handleQuickToggleRestriction = async (restriction: AccountRestriction, restrict: boolean) => {
+    setActionLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const updateData: any = {
+        is_promotional_restricted: restrict,
+        restriction_reason: restrict ? 'Quick restriction by admin' : null,
+        restricted_at: restrict ? new Date().toISOString() : null,
+        restricted_by: restrict ? user?.id : null,
+      };
+
+      const { error } = await supabase
+        .from('account_restrictions')
+        .update(updateData)
+        .eq('id', restriction.id);
+
+      if (error) throw error;
+
+      await logAdminAction({
+        actionType: restrict ? 'account_restricted' : 'account_unrestricted',
+        entityType: 'account_restrictions',
+        entityId: restriction.user_id,
+        oldValues: { is_promotional_restricted: restriction.is_promotional_restricted },
+        newValues: { is_promotional_restricted: restrict },
+      });
+
+      toast.success(restrict ? 'Account restricted' : 'Restriction lifted');
+      fetchData();
+    } catch (error) {
+      console.error('Error toggling restriction:', error);
+      toast.error('Failed to update restriction');
     } finally {
       setActionLoading(false);
     }
@@ -265,7 +422,8 @@ const AbuseDetection = () => {
       (riskFilter === 'high' && r.abuse_score >= ABUSE_THRESHOLDS.HIGH) ||
       (riskFilter === 'medium' && r.abuse_score >= ABUSE_THRESHOLDS.MEDIUM && r.abuse_score < ABUSE_THRESHOLDS.HIGH) ||
       (riskFilter === 'low' && r.abuse_score >= ABUSE_THRESHOLDS.LOW && r.abuse_score < ABUSE_THRESHOLDS.MEDIUM) ||
-      (riskFilter === 'restricted' && r.is_promotional_restricted);
+      (riskFilter === 'restricted' && r.is_promotional_restricted) ||
+      (riskFilter === 'cross-account' && (r.crossAccountFlags?.length || 0) > 0);
     
     return matchesSearch && matchesRisk;
   });
@@ -297,7 +455,7 @@ const AbuseDetection = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -321,6 +479,20 @@ const AbuseDetection = () => {
               <div>
                 <p className="text-sm text-muted-foreground">High Risk Accounts</p>
                 <p className="text-2xl font-bold">{stats.highRiskAccounts}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-purple-500/10">
+                <Link2 className="h-6 w-6 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Cross-Account Flags</p>
+                <p className="text-2xl font-bold">{stats.crossAccountFlags}</p>
               </div>
             </div>
           </CardContent>
@@ -383,6 +555,7 @@ const AbuseDetection = () => {
                 <SelectItem value="medium">Medium Risk</SelectItem>
                 <SelectItem value="low">Low Risk</SelectItem>
                 <SelectItem value="restricted">Restricted</SelectItem>
+                <SelectItem value="cross-account">Cross-Account Flags</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={fetchData}>
@@ -399,9 +572,9 @@ const AbuseDetection = () => {
                   <TableRow>
                     <TableHead>Account</TableHead>
                     <TableHead>Risk Score</TableHead>
-                    <TableHead>Early Cancellations</TableHead>
+                    <TableHead>Flags</TableHead>
+                    <TableHead>Early Cancel</TableHead>
                     <TableHead>Reversals</TableHead>
-                    <TableHead>Rejections</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -427,9 +600,25 @@ const AbuseDetection = () => {
                           </div>
                         </TableCell>
                         <TableCell>{getAbuseScoreBadge(restriction.abuse_score)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {restriction.crossAccountFlags?.map((flag, i) => (
+                              <Badge 
+                                key={i} 
+                                variant={flag.isRestricted ? 'destructive' : 'secondary'}
+                                className="text-xs"
+                              >
+                                <Link2 className="h-3 w-3 mr-1" />
+                                {flag.type === 'shared_payment' ? 'Payment' : 'Address'}
+                              </Badge>
+                            ))}
+                            {(!restriction.crossAccountFlags || restriction.crossAccountFlags.length === 0) && (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{restriction.early_cancellations}</TableCell>
                         <TableCell>{restriction.discount_reversals}</TableCell>
-                        <TableCell>{restriction.coupon_rejections}</TableCell>
                         <TableCell>
                           {restriction.is_promotional_restricted ? (
                             <Badge variant="destructive">Restricted</Badge>
@@ -438,18 +627,40 @@ const AbuseDetection = () => {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedAccount(restriction);
-                              setRestrictionNotes(restriction.notes || '');
-                              setRestrictDialogOpen(true);
-                            }}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Manage
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            {restriction.is_promotional_restricted ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleQuickToggleRestriction(restriction, false)}
+                                disabled={actionLoading}
+                                title="Lift Restriction"
+                              >
+                                <ShieldCheck className="h-4 w-4 text-green-600" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleQuickToggleRestriction(restriction, true)}
+                                disabled={actionLoading}
+                                title="Restrict Account"
+                              >
+                                <ShieldOff className="h-4 w-4 text-destructive" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAccount(restriction);
+                                setRestrictionNotes(restriction.notes || '');
+                                setRestrictDialogOpen(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
