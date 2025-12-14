@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.auto-pause-subscription]
 verify_jwt = false
+
+[functions.log-error]
+verify_jwt = false

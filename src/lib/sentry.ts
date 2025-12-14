@@ -1,22 +1,38 @@
+import { supabase } from "@/integrations/supabase/client";
+
 /**
- * Error monitoring placeholder
- * 
- * To enable production error tracking, you can:
- * 1. Use a lightweight error boundary in React components
- * 2. Add window.onerror handler for uncaught errors
- * 3. Integrate with a monitoring service via API calls from edge functions
- * 
- * Note: @sentry/react was removed due to React version conflicts.
- * Consider using @sentry/browser directly if Sentry integration is needed.
+ * Error monitoring with backend logging
  */
 
-// Simple error capture for logging
+// Send error to backend endpoint
+const sendErrorToBackend = async (error: Error, context?: Record<string, unknown>) => {
+  try {
+    await supabase.functions.invoke("log-error", {
+      body: {
+        message: error.message,
+        stack: error.stack,
+        context,
+        url: typeof window !== "undefined" ? window.location.href : undefined,
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (e) {
+    // Silently fail - don't cause more errors trying to log errors
+    if (import.meta.env.DEV) {
+      console.warn("[Error Logger] Failed to send error to backend:", e);
+    }
+  }
+};
+
+// Capture and log errors
 export const captureError = (error: Error, context?: Record<string, unknown>) => {
   if (import.meta.env.DEV) {
     console.error("[Error Captured]", error, context);
   }
-  // In production, errors are logged to console for now
-  // Can be extended to send to a backend endpoint
+  
+  // Send to backend in both dev and prod
+  sendErrorToBackend(error, context);
 };
 
 // Global error handler setup
@@ -27,8 +43,9 @@ export const initErrorTracking = () => {
         source,
         lineno,
         colno,
+        type: "window.onerror",
       });
-      return false; // Don't suppress the error
+      return false;
     };
 
     window.onunhandledrejection = (event) => {
