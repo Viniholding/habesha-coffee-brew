@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import LegalBreadcrumb from "@/components/legal/LegalBreadcrumb";
+import LegalPageWrapper from "@/components/legal/LegalPageWrapper";
 import { Helmet } from "react-helmet-async";
 
 const Disclaimer = () => {
@@ -15,30 +16,33 @@ const Disclaimer = () => {
         <main className="container mx-auto px-4 pt-24 pb-16 max-w-3xl">
           <LegalBreadcrumb currentPage="Disclaimer" />
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-8">Disclaimer</h1>
-          
-          <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-            <section>
-              <h2 className="text-xl font-semibold mb-3">Informational Purposes</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                All content on this website is provided for informational purposes only.
-              </p>
-            </section>
+          <LegalPageWrapper>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Disclaimer</h1>
+            <p className="text-sm text-muted-foreground mb-8">Last Updated: December 14, 2025</p>
+            
+            <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
+              <section>
+                <h2 className="text-xl font-semibold mb-3">Informational Purposes</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  All content on this website is provided for informational purposes only.
+                </p>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">No Medical Advice</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                We do not provide medical, health, or nutritional advice. Please consult a qualified professional if you have concerns related to caffeine consumption.
-              </p>
-            </section>
+              <section>
+                <h2 className="text-xl font-semibold mb-3">No Medical Advice</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  We do not provide medical, health, or nutritional advice. Please consult a qualified professional if you have concerns related to caffeine consumption.
+                </p>
+              </section>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">Third-Party Content</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                We are not responsible for third-party content or external links.
-              </p>
-            </section>
-          </div>
+              <section>
+                <h2 className="text-xl font-semibold mb-3">Third-Party Content</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  We are not responsible for third-party content or external links.
+                </p>
+              </section>
+            </div>
+          </LegalPageWrapper>
         </main>
         <Footer />
       </div>

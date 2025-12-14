@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import LegalBreadcrumb from "@/components/legal/LegalBreadcrumb";
+import LegalPageWrapper from "@/components/legal/LegalPageWrapper";
 import { Helmet } from "react-helmet-async";
 import { Mail } from "lucide-react";
 
@@ -16,8 +17,9 @@ const TermsOfUse = () => {
         <main className="container mx-auto px-4 pt-24 pb-16 max-w-3xl">
           <LegalBreadcrumb currentPage="Terms of Use" />
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Terms of Use</h1>
-          <p className="text-sm text-muted-foreground mb-8">Last Updated: December 14, 2025</p>
+          <LegalPageWrapper>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Terms of Use</h1>
+            <p className="text-sm text-muted-foreground mb-8">Last Updated: December 14, 2025</p>
           
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
             <p className="text-muted-foreground leading-relaxed">
@@ -122,6 +124,7 @@ const TermsOfUse = () => {
               </p>
             </section>
           </div>
+          </LegalPageWrapper>
         </main>
         <Footer />
       </div>

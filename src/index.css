@@ -106,3 +106,76 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* Print styles for legal pages */
+@media print {
+  /* Hide navigation, footer, and UI elements */
+  nav,
+  footer,
+  .print\\:hidden,
+  button,
+  [role="navigation"] {
+    display: none !important;
+  }
+
+  /* Reset background and colors for printing */
+  body,
+  .min-h-screen {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Legal content styling */
+  .legal-content {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .legal-content h1 {
+    font-size: 24pt !important;
+    color: black !important;
+    margin-bottom: 8pt !important;
+  }
+
+  .legal-content h2 {
+    font-size: 14pt !important;
+    color: black !important;
+    margin-top: 16pt !important;
+    margin-bottom: 8pt !important;
+  }
+
+  .legal-content h3 {
+    font-size: 12pt !important;
+    color: black !important;
+  }
+
+  .legal-content p,
+  .legal-content li {
+    font-size: 11pt !important;
+    color: black !important;
+    line-height: 1.5 !important;
+  }
+
+  .legal-content a {
+    color: black !important;
+    text-decoration: underline !important;
+  }
+
+  .legal-content section {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure proper page margins */
+  @page {
+    margin: 1in;
+  }
+
+  /* Show URL after links */
+  .legal-content a[href^="http"]::after,
+  .legal-content a[href^="mailto"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #666;
+  }
+}
