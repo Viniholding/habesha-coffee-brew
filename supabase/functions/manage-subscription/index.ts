@@ -116,24 +116,104 @@ serve(async (req) => {
         break;
 
       case "cancel":
+        // Get subscription details first to check deliveries completed
+        const { data: subToCancel } = await supabaseClient
+          .from("subscriptions")
+          .select("id, deliveries_completed, discount_amount, original_price, price, stripe_customer_id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+
+        if (!subToCancel) {
+          throw new Error("Subscription not found");
+        }
+
+        logStep("Checking early cancellation", { 
+          deliveriesCompleted: subToCancel.deliveries_completed,
+          discountAmount: subToCancel.discount_amount 
+        });
+
+        // Check if early cancellation (before 2nd delivery) and discount was applied
+        const isEarlyCancellation = (subToCancel.deliveries_completed || 0) < 2;
+        const discountToRecover = subToCancel.discount_amount || 0;
+
+        if (isEarlyCancellation && discountToRecover > 0 && subToCancel.stripe_customer_id) {
+          logStep("Early cancellation detected - charging back discount", { 
+            discountAmount: discountToRecover 
+          });
+
+          try {
+            // Create a one-time charge for the discount amount
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount: Math.round(discountToRecover * 100), // Convert to cents
+              currency: "usd",
+              customer: subToCancel.stripe_customer_id,
+              description: "Subscription discount reversal - early cancellation",
+              metadata: {
+                subscription_id: subToCancel.id,
+                reason: "early_cancellation_discount_reversal",
+              },
+              confirm: true,
+              automatic_payment_methods: {
+                enabled: true,
+                allow_redirects: "never",
+              },
+            });
+
+            logStep("Discount reversal charge created", { 
+              paymentIntentId: paymentIntent.id,
+              amount: discountToRecover,
+              status: paymentIntent.status
+            });
+
+            // Log the reversal event
+            await supabaseClient.from("subscription_events").insert({
+              subscription_id: subToCancel.id,
+              event_type: "discount_reversal",
+              event_data: { 
+                amount: discountToRecover,
+                payment_intent_id: paymentIntent.id,
+                reason: "early_cancellation",
+                deliveries_completed: subToCancel.deliveries_completed,
+              },
+              created_by: user.id,
+            });
+          } catch (chargeError: any) {
+            logStep("Discount reversal charge failed", { error: chargeError.message });
+            // Log the failed reversal attempt but still proceed with cancellation
+            await supabaseClient.from("subscription_events").insert({
+              subscription_id: subToCancel.id,
+              event_type: "discount_reversal_failed",
+              event_data: { 
+                amount: discountToRecover,
+                error: chargeError.message,
+                reason: "early_cancellation",
+              },
+              created_by: user.id,
+            });
+          }
+        }
+
+        // Proceed with cancellation
         await stripe.subscriptions.cancel(subscriptionId);
         await supabaseClient
           .from("subscriptions")
           .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
           .eq("stripe_subscription_id", subscriptionId);
-        const { data: cancelledSub } = await supabaseClient
-          .from("subscriptions")
-          .select("id")
-          .eq("stripe_subscription_id", subscriptionId)
-          .single();
-        if (cancelledSub) {
-          await supabaseClient.from("subscription_events").insert({
-            subscription_id: cancelledSub.id,
-            event_type: "cancelled",
-            created_by: user.id,
-          });
-        }
-        result = { message: "Subscription cancelled" };
+
+        await supabaseClient.from("subscription_events").insert({
+          subscription_id: subToCancel.id,
+          event_type: "cancelled",
+          event_data: {
+            was_early_cancellation: isEarlyCancellation,
+            discount_recovered: isEarlyCancellation ? discountToRecover : 0,
+          },
+          created_by: user.id,
+        });
+
+        result = { 
+          message: "Subscription cancelled",
+          discountCharged: isEarlyCancellation && discountToRecover > 0 ? discountToRecover : 0,
+        };
         break;
 
       case "skip":
