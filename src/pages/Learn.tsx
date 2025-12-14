@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Coffee, Play, Printer, MapPin } from 'lucide-react';
+import { Coffee, Play, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import AnimatedTutorial from '@/components/learn/AnimatedTutorial';
-import CoffeeOriginMap from '@/components/learn/CoffeeOriginMap';
 import VideoCarousel, { Video } from '@/components/learn/VideoCarousel';
 import coffeeCeremonyImage from '@/assets/coffee-ceremony.png';
 import { supabase } from '@/integrations/supabase/client';
@@ -119,26 +118,6 @@ export default function Learn() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Coffee Origin Map Section */}
-      <section className="w-full bg-gradient-to-b from-muted/30 to-background py-20 md:py-32 print:hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary mb-6">
-              <MapPin className="w-4 h-4" />
-              <span className="text-sm font-medium">Explore Origins</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Ethiopian Coffee Regions
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Discover the unique terroir and flavor profiles of Ethiopia's legendary coffee-growing regions.
-            </p>
-          </div>
-
-          <CoffeeOriginMap />
         </div>
       </section>
 
