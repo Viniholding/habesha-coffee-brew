@@ -1,31 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Coffee, Play, Printer } from 'lucide-react';
+import { Coffee, Play, Printer, BookOpen, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import AnimatedTutorial from '@/components/learn/AnimatedTutorial';
 import CoffeeFlavorWheel from '@/components/learn/CoffeeFlavorWheel';
+import CoffeeGlossary from '@/components/learn/CoffeeGlossary';
+import CoffeeOriginMap from '@/components/learn/CoffeeOriginMap';
 import VideoCarousel, { Video } from '@/components/learn/VideoCarousel';
 import coffeeCeremonyImage from '@/assets/coffee-ceremony.png';
 import { supabase } from '@/integrations/supabase/client';
-
-const sacredRounds = [
-  {
-    name: "Abol",
-    subtitle: "Bold & Beautiful",
-    description: "The first round — strong, rich, and full of life. This is where the conversation begins and the magic unfolds."
-  },
-  {
-    name: "Tona",
-    subtitle: "Smooth & Social",
-    description: "The second round — mellower and more refined. Perfect for deep conversations and strengthening bonds."
-  },
-  {
-    name: "Baraka",
-    subtitle: "Light & Blessed",
-    description: "The third round — gentle and blessed. A moment of gratitude, reflection, and heartfelt connection."
-  }
-];
 
 export default function Learn() {
   const [videos, setVideos] = useState<Video[]>([
@@ -84,7 +68,7 @@ export default function Learn() {
         </div>
       </section>
 
-      {/* Animated Tutorial Section */}
+      {/* Animated Tutorial Section (includes Three Sacred Rounds as Step 4) */}
       <section className="w-full bg-card py-20 md:py-32 print:py-8">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="text-center mb-16 print:mb-8">
@@ -92,7 +76,7 @@ export default function Learn() {
               Make Coffee the <span className="italic text-primary">Habesha</span> Way
             </h2>
             <p className="text-xl md:text-2xl text-card-foreground/70 font-accent italic print:text-lg">
-              The traditional art of Ethiopian coffee
+              The traditional art of Ethiopian coffee — from roasting to the three sacred rounds
             </p>
             
             {/* Print Button */}
@@ -126,7 +110,7 @@ export default function Learn() {
               { number: 1, title: "Set the Mood — Coffee Time Is Sacred", description: "Find your coziest spot — Light your etan (frankincense), grab your Jebena, and gather your people." },
               { number: 2, title: "Roast with Rhythm", description: "Traditionally, you'd roast green beans until your kitchen smells like paradise." },
               { number: 3, title: "Grind It the Traditional Way", description: "Add your ground coffee to the Jebena, fill with water, and simmer slowly." },
-              { number: 4, title: "The Jebena Magic", description: "Serve with fendisha (popcorn) or kolo, and enjoy three rounds." }
+              { number: 4, title: "The Jebena Magic — Three Sacred Rounds", description: "Serve with fendisha (popcorn) or kolo. Abol: Bold & Beautiful (first pour). Tona: Smooth & Social (second pour). Baraka: Light & Blessed (final pour)." }
             ].map((step) => (
               <div key={step.number} className="flex gap-4 print:page-break-inside-avoid">
                 <span className="text-2xl font-bold text-primary">{step.number}.</span>
@@ -140,8 +124,28 @@ export default function Learn() {
         </div>
       </section>
 
-      {/* Coffee Flavor Wheel Section */}
+      {/* Coffee Origin Map Section */}
       <section className="w-full bg-gradient-to-b from-muted/30 to-background py-20 md:py-32 print:hidden">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary mb-6">
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm font-medium">Explore Origins</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Ethiopian Coffee Regions
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Discover the unique terroir and flavor profiles of Ethiopia's legendary coffee-growing regions.
+            </p>
+          </div>
+
+          <CoffeeOriginMap />
+        </div>
+      </section>
+
+      {/* Coffee Flavor Wheel Section */}
+      <section className="w-full bg-card py-20 md:py-32 print:hidden">
         <div className="max-w-6xl mx-auto px-6 md:px-12">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
@@ -153,6 +157,26 @@ export default function Learn() {
           </div>
 
           <CoffeeFlavorWheel />
+        </div>
+      </section>
+
+      {/* Coffee Glossary Section */}
+      <section className="w-full bg-gradient-to-b from-background to-muted/30 py-20 md:py-32 print:hidden">
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary mb-6">
+              <BookOpen className="w-4 h-4" />
+              <span className="text-sm font-medium">Learn the Language</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Ethiopian Coffee Glossary
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Master the vocabulary of Ethiopian coffee culture — from ceremony terms to regional names.
+            </p>
+          </div>
+
+          <CoffeeGlossary />
         </div>
       </section>
 
@@ -175,54 +199,6 @@ export default function Learn() {
           <VideoCarousel videos={videos} />
         </div>
       </section>
-
-      {/* Three Sacred Rounds Section */}
-      <section className="w-full bg-gradient-to-b from-background to-muted/30 py-20 md:py-32 print:hidden">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <div className="text-center space-y-6 mb-16">
-            <h2 className="text-5xl md:text-6xl font-bold text-foreground animate-fade-in">
-              The Three Sacred Rounds
-            </h2>
-            <p className="text-xl text-muted-foreground animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              Each round tells a story, each cup brings us closer
-            </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto rounded-full" />
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {sacredRounds.map((round, idx) => (
-              <div 
-                key={round.name}
-                className="text-center space-y-4 p-8 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 group"
-                style={{ animationDelay: `${idx * 0.1}s` }}
-              >
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-500">
-                  <Coffee className="w-8 h-8 text-primary group-hover:rotate-12 transition-transform duration-500" />
-                </div>
-                <h3 className="text-3xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">{round.name}</h3>
-                <p className="text-primary font-semibold text-lg">{round.subtitle}</p>
-                <p className="text-muted-foreground leading-relaxed">
-                  {round.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Printable Sacred Rounds */}
-      <div className="hidden print:block print:mt-12 print:border-t print:border-border print:pt-8">
-        <h2 className="text-xl font-bold mb-6 text-center">The Three Sacred Rounds</h2>
-        <div className="grid grid-cols-3 gap-4">
-          {sacredRounds.map((round) => (
-            <div key={round.name} className="text-center p-4 border border-border rounded-lg">
-              <h3 className="font-bold text-lg">{round.name}</h3>
-              <p className="text-sm font-medium text-primary">{round.subtitle}</p>
-              <p className="text-xs mt-2">{round.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* CTA Section - Bottom */}
       <section className="w-full bg-muted/20 py-20 md:py-24 print:hidden">
