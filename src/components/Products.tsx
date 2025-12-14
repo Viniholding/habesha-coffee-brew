@@ -45,10 +45,16 @@ const Products = () => {
     }
   };
 
-  const handleAddToCart = async (productId: string, e: React.MouseEvent) => {
+  const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
-    setAddingToCart(productId);
-    await addToCart(productId, 1);
+    e.preventDefault();
+    setAddingToCart(product.id);
+    await addToCart(product.id, 1, {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image_url: product.image_url,
+    });
     setAddingToCart(null);
   };
 
@@ -154,7 +160,7 @@ const Products = () => {
                       className="flex-1" 
                       size="lg"
                       disabled={addingToCart === product.id}
-                      onClick={(e) => handleAddToCart(product.id, e)}
+                      onClick={(e) => handleAddToCart(product, e)}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
                       {addingToCart === product.id ? "Adding..." : "Add to Cart"}
