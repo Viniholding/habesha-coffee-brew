@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import AnimatedTutorial from '@/components/learn/AnimatedTutorial';
+import CoffeeFlavorWheel from '@/components/learn/CoffeeFlavorWheel';
+import VideoCarousel, { Video } from '@/components/learn/VideoCarousel';
 import coffeeCeremonyImage from '@/assets/coffee-ceremony.png';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -26,30 +28,34 @@ const sacredRounds = [
 ];
 
 export default function Learn() {
-  const [videoUrl, setVideoUrl] = useState('https://www.youtube.com/embed/GfEh2CqdXt8?rel=0');
+  const [videos, setVideos] = useState<Video[]>([
+    { id: '1', title: 'Traditional Coffee Ceremony', url: 'https://www.youtube.com/embed/GfEh2CqdXt8?rel=0', description: 'Witness the full Ethiopian coffee ceremony ritual' }
+  ]);
 
   useEffect(() => {
-    fetchVideoUrl();
+    fetchVideos();
   }, []);
 
-  const fetchVideoUrl = async () => {
+  const fetchVideos = async () => {
     try {
       const { data, error } = await supabase
         .from('site_settings')
         .select('setting_value')
-        .eq('setting_key', 'learn_page_video_url')
+        .eq('setting_key', 'learn_page_videos')
         .maybeSingle();
 
       if (error) throw error;
 
       if (data?.setting_value) {
-        const url = typeof data.setting_value === 'string' 
-          ? data.setting_value.replace(/"/g, '')
-          : String(data.setting_value).replace(/"/g, '');
-        if (url) setVideoUrl(url);
+        const parsed = typeof data.setting_value === 'string' 
+          ? JSON.parse(data.setting_value) 
+          : data.setting_value;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setVideos(parsed);
+        }
       }
     } catch (error) {
-      console.error('Error fetching video URL:', error);
+      console.error('Error fetching videos:', error);
     }
   };
 
@@ -134,8 +140,24 @@ export default function Learn() {
         </div>
       </section>
 
+      {/* Coffee Flavor Wheel Section */}
+      <section className="w-full bg-gradient-to-b from-muted/30 to-background py-20 md:py-32 print:hidden">
+        <div className="max-w-6xl mx-auto px-6 md:px-12">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              The Coffee Flavor Wheel
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Ethiopian coffee is renowned for its complex flavor profiles. Explore the diverse tastes that make each cup unique.
+            </p>
+          </div>
+
+          <CoffeeFlavorWheel />
+        </div>
+      </section>
+
       {/* Video Section */}
-      <section className="w-full bg-muted/20 py-16 md:py-24 print:hidden">
+      <section className="w-full bg-card py-16 md:py-24 print:hidden">
         <div className="max-w-5xl mx-auto px-6 md:px-12">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary mb-6">
@@ -150,24 +172,12 @@ export default function Learn() {
             </p>
           </div>
 
-          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black/5">
-            <iframe
-              className="absolute inset-0 w-full h-full"
-              src={videoUrl}
-              title="Ethiopian Coffee Ceremony"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-          
-          <p className="text-center text-muted-foreground mt-6 text-sm">
-            Video: Traditional Ethiopian Coffee Ceremony
-          </p>
+          <VideoCarousel videos={videos} />
         </div>
       </section>
 
       {/* Three Sacred Rounds Section */}
-      <section className="w-full bg-gradient-to-b from-card to-muted/30 py-20 md:py-32 print:hidden">
+      <section className="w-full bg-gradient-to-b from-background to-muted/30 py-20 md:py-32 print:hidden">
         <div className="max-w-6xl mx-auto px-6 md:px-12">
           <div className="text-center space-y-6 mb-16">
             <h2 className="text-5xl md:text-6xl font-bold text-foreground animate-fade-in">
@@ -183,7 +193,7 @@ export default function Learn() {
             {sacredRounds.map((round, idx) => (
               <div 
                 key={round.name}
-                className="text-center space-y-4 p-8 rounded-2xl bg-background border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 group"
+                className="text-center space-y-4 p-8 rounded-2xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 group"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-500">
@@ -215,7 +225,7 @@ export default function Learn() {
       </div>
 
       {/* CTA Section - Bottom */}
-      <section className="w-full bg-background py-20 md:py-24 print:hidden">
+      <section className="w-full bg-muted/20 py-20 md:py-24 print:hidden">
         <div className="max-w-4xl mx-auto px-6 md:px-12 text-center">
           <p className="text-2xl md:text-3xl text-foreground mb-8 font-medium">
             Experience the authentic taste of tradition with Coffee Habesha
