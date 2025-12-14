@@ -92,6 +92,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     logStep("Using calculated delivery date", { days, frequency: metadata.frequency });
   }
 
+  // Calculate original price (non-subscription price) and discount amount
+  const basePrice = (session.amount_total || 0) / 100;
+  const discountPercent = parseFloat(metadata.discount_percent) || 10; // Default 10% subscriber discount
+  const originalPrice = basePrice / (1 - discountPercent / 100);
+  const discountAmount = originalPrice - basePrice;
+
   // Create subscription in database
   const subscriptionData: any = {
     user_id: userId,
@@ -101,11 +107,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     bag_size: metadata.bag_size || "12oz",
     frequency: metadata.frequency || "biweekly",
     quantity: parseInt(metadata.quantity) || 1,
-    price: (session.amount_total || 0) / 100,
+    price: basePrice,
+    original_price: originalPrice,
+    discount_amount: discountAmount,
+    deliveries_completed: 0,
     status: "active",
     next_delivery_date: nextDeliveryDate.toISOString().split("T")[0],
     discount_code: metadata.discount_code || null,
-    discount_percent: parseFloat(metadata.discount_percent) || 0,
+    discount_percent: discountPercent,
   };
 
   if (session.subscription) {
@@ -271,7 +280,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       .eq("status", "pending");
   }
 
-  // Update subscription with last order
+  // Update subscription with last order and increment deliveries_completed
   const nextDeliveryDate = new Date();
   const frequencyDays: Record<string, number> = {
     weekly: 7,
@@ -281,6 +290,24 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     monthly: 30,
   };
   nextDeliveryDate.setDate(nextDeliveryDate.getDate() + (frequencyDays[subscription.frequency] || 14));
+
+  // Get current deliveries_completed count
+  const currentDeliveries = subscription.deliveries_completed || 0;
+
+  await supabaseClient
+    .from("subscriptions")
+    .update({
+      last_order_id: order.id,
+      next_delivery_date: nextDeliveryDate.toISOString().split("T")[0],
+      deliveries_completed: currentDeliveries + 1,
+    })
+    .eq("id", subscription.id);
+
+  // Also link order to subscription
+  await supabaseClient
+    .from("orders")
+    .update({ subscription_id: subscription.id })
+    .eq("id", order.id);
 
   await supabaseClient
     .from("subscriptions")

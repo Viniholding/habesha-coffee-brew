@@ -659,6 +659,7 @@ export type Database = {
           shipping: number
           shipping_address_id: string | null
           status: string
+          subscription_id: string | null
           subtotal: number
           tax: number
           total: number
@@ -682,6 +683,7 @@ export type Database = {
           shipping?: number
           shipping_address_id?: string | null
           status: string
+          subscription_id?: string | null
           subtotal: number
           tax?: number
           total: number
@@ -705,6 +707,7 @@ export type Database = {
           shipping?: number
           shipping_address_id?: string | null
           status?: string
+          subscription_id?: string | null
           subtotal?: number
           tax?: number
           total?: number
@@ -733,6 +736,13 @@ export type Database = {
             columns: ["shipping_address_id"]
             isOneToOne: false
             referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
             referencedColumns: ["id"]
           },
           {
@@ -958,6 +968,7 @@ export type Database = {
           expires_at: string | null
           id: string
           is_active: boolean
+          is_subscription_eligible: boolean | null
           max_uses: number | null
           max_uses_per_user: number | null
           min_order_amount: number | null
@@ -976,6 +987,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          is_subscription_eligible?: boolean | null
           max_uses?: number | null
           max_uses_per_user?: number | null
           min_order_amount?: number | null
@@ -994,6 +1006,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_active?: boolean
+          is_subscription_eligible?: boolean | null
           max_uses?: number | null
           max_uses_per_user?: number | null
           min_order_amount?: number | null
@@ -1238,6 +1251,8 @@ export type Database = {
           bag_size: string | null
           cancelled_at: string | null
           created_at: string
+          deliveries_completed: number | null
+          discount_amount: number | null
           discount_code: string | null
           discount_percent: number | null
           frequency: string
@@ -1251,6 +1266,7 @@ export type Database = {
           is_prepaid: boolean | null
           last_order_id: string | null
           next_delivery_date: string | null
+          original_price: number | null
           paused_at: string | null
           payment_method_id: string | null
           prepaid_end_date: string | null
@@ -1272,6 +1288,8 @@ export type Database = {
           bag_size?: string | null
           cancelled_at?: string | null
           created_at?: string
+          deliveries_completed?: number | null
+          discount_amount?: number | null
           discount_code?: string | null
           discount_percent?: number | null
           frequency?: string
@@ -1285,6 +1303,7 @@ export type Database = {
           is_prepaid?: boolean | null
           last_order_id?: string | null
           next_delivery_date?: string | null
+          original_price?: number | null
           paused_at?: string | null
           payment_method_id?: string | null
           prepaid_end_date?: string | null
@@ -1306,6 +1325,8 @@ export type Database = {
           bag_size?: string | null
           cancelled_at?: string | null
           created_at?: string
+          deliveries_completed?: number | null
+          discount_amount?: number | null
           discount_code?: string | null
           discount_percent?: number | null
           frequency?: string
@@ -1319,6 +1340,7 @@ export type Database = {
           is_prepaid?: boolean | null
           last_order_id?: string | null
           next_delivery_date?: string | null
+          original_price?: number | null
           paused_at?: string | null
           payment_method_id?: string | null
           prepaid_end_date?: string | null

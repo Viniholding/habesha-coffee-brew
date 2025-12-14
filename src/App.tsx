@@ -33,6 +33,7 @@ import TermsOfUse from "./pages/legal/TermsOfUse";
 import CookiePolicy from "./pages/legal/CookiePolicy";
 import Accessibility from "./pages/legal/Accessibility";
 import Disclaimer from "./pages/legal/Disclaimer";
+import LegalHub from "./pages/legal/LegalHub";
 import { initErrorTracking } from "@/lib/sentry";
 
 // Initialize global error tracking
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/admin/*" element={<Admin />} />
               {/* Legal Pages */}
+              <Route path="/legal" element={<LegalHub />} />
               <Route path="/shipping-returns" element={<ShippingReturns />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-use" element={<TermsOfUse />} />

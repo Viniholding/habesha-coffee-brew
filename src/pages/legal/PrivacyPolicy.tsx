@@ -2,8 +2,24 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import LegalBreadcrumb from "@/components/legal/LegalBreadcrumb";
 import LegalPageWrapper from "@/components/legal/LegalPageWrapper";
+import TableOfContents from "@/components/legal/TableOfContents";
 import { Helmet } from "react-helmet-async";
 import { Mail } from "lucide-react";
+
+const tocItems = [
+  { id: "information-collect", title: "1. Information We Collect", level: 2 },
+  { id: "how-we-use", title: "2. How We Use Your Information", level: 2 },
+  { id: "legal-basis", title: "3. Legal Basis for Processing (GDPR)", level: 2 },
+  { id: "sharing", title: "4. Sharing Your Information", level: 2 },
+  { id: "privacy-rights", title: "5. Your Privacy Rights", level: 2 },
+  { id: "cookies", title: "6. Cookies and Tracking Technologies", level: 2 },
+  { id: "data-retention", title: "7. Data Retention", level: 2 },
+  { id: "data-security", title: "8. Data Security", level: 2 },
+  { id: "international-transfers", title: "9. International Data Transfers", level: 2 },
+  { id: "childrens-privacy", title: "10. Children's Privacy", level: 2 },
+  { id: "changes", title: "11. Changes to This Policy", level: 2 },
+  { id: "contact", title: "12. Contact Us", level: 2 },
+];
 
 const PrivacyPolicy = () => {
   return (
@@ -21,12 +37,14 @@ const PrivacyPolicy = () => {
             <h1 className="text-3xl md:text-4xl font-bold mb-2">Privacy Policy</h1>
             <p className="text-sm text-muted-foreground mb-8">Last Updated: December 14, 2025</p>
           
+            <TableOfContents items={tocItems} />
+          
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
             <p className="text-muted-foreground leading-relaxed">
               Coffee Habesha LLC ("we," "us," or "our") respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or make a purchase.
             </p>
 
-            <section>
+            <section id="information-collect">
               <h2 className="text-xl font-semibold mb-3">1. Information We Collect</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 We collect information you provide directly to us and information collected automatically when you use our website.
@@ -52,7 +70,7 @@ const PrivacyPolicy = () => {
               </ul>
             </section>
 
-            <section>
+            <section id="how-we-use">
               <h2 className="text-xl font-semibold mb-3">2. How We Use Your Information</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 We use the information we collect for the following purposes:
@@ -68,7 +86,7 @@ const PrivacyPolicy = () => {
               </ul>
             </section>
 
-            <section>
+            <section id="legal-basis">
               <h2 className="text-xl font-semibold mb-3">3. Legal Basis for Processing (GDPR)</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 If you are in the European Economic Area (EEA), we process your personal data based on the following legal grounds:
@@ -81,7 +99,7 @@ const PrivacyPolicy = () => {
               </ul>
             </section>
 
-            <section>
+            <section id="sharing">
               <h2 className="text-xl font-semibold mb-3">4. Sharing Your Information</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 We do not sell or rent your personal information. We may share your data with:
@@ -96,7 +114,7 @@ const PrivacyPolicy = () => {
               </p>
             </section>
 
-            <section>
+            <section id="privacy-rights">
               <h2 className="text-xl font-semibold mb-3">5. Your Privacy Rights</h2>
               
               <h3 className="text-lg font-medium mb-2 mt-4">For All Users</h3>
@@ -131,7 +149,7 @@ const PrivacyPolicy = () => {
               </p>
             </section>
 
-            <section>
+            <section id="cookies">
               <h2 className="text-xl font-semibold mb-3">6. Cookies and Tracking Technologies</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 We use cookies and similar technologies to enhance your experience. Types of cookies we use:
@@ -147,42 +165,42 @@ const PrivacyPolicy = () => {
               </p>
             </section>
 
-            <section>
+            <section id="data-retention">
               <h2 className="text-xl font-semibold mb-3">7. Data Retention</h2>
               <p className="text-muted-foreground leading-relaxed">
                 We retain your personal data only as long as necessary to fulfill the purposes outlined in this policy, comply with legal obligations, resolve disputes, and enforce our agreements. Order records are typically retained for 7 years for tax and legal compliance. You may request deletion of your account at any time.
               </p>
             </section>
 
-            <section>
+            <section id="data-security">
               <h2 className="text-xl font-semibold mb-3">8. Data Security</h2>
               <p className="text-muted-foreground leading-relaxed">
                 We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction. This includes encryption, secure servers, and access controls. However, no method of transmission over the internet is 100% secure.
               </p>
             </section>
 
-            <section>
+            <section id="international-transfers">
               <h2 className="text-xl font-semibold mb-3">9. International Data Transfers</h2>
               <p className="text-muted-foreground leading-relaxed">
                 If you are located outside the United States, your data may be transferred to and processed in the United States. We ensure appropriate safeguards are in place to protect your data in accordance with applicable data protection laws.
               </p>
             </section>
 
-            <section>
+            <section id="childrens-privacy">
               <h2 className="text-xl font-semibold mb-3">10. Children's Privacy</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Our website is not intended for children under 16 years of age. We do not knowingly collect personal information from children. If you believe we have collected data from a child, please contact us immediately.
               </p>
             </section>
 
-            <section>
+            <section id="changes">
               <h2 className="text-xl font-semibold mb-3">11. Changes to This Policy</h2>
               <p className="text-muted-foreground leading-relaxed">
                 We may update this Privacy Policy periodically. We will notify you of material changes by posting the updated policy on our website with a new "Last Updated" date. Your continued use of the website after changes are posted constitutes acceptance of the revised policy.
               </p>
             </section>
 
-            <section>
+            <section id="contact">
               <h2 className="text-xl font-semibold mb-3">12. Contact Us</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 If you have questions about this Privacy Policy or wish to exercise your privacy rights, please contact us:

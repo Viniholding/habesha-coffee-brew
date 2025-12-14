@@ -228,10 +228,24 @@ const SubscriptionReview = () => {
         return;
       }
 
-      // Check if applies to subscription
-      if (promotion.applies_to !== "all" && promotion.applies_to !== "subscription") {
-        setCouponError("This coupon cannot be used for subscriptions");
+      // Check if applies to subscription - must be explicitly eligible
+      if (!promotion.is_subscription_eligible) {
+        setCouponError("This coupon cannot be applied to subscription orders");
         return;
+      }
+
+      // Check if user already used this coupon (max_uses_per_user check)
+      if (user && promotion.max_uses_per_user) {
+        const { data: existingUses } = await supabase
+          .from("promotion_uses")
+          .select("id")
+          .eq("promotion_id", promotion.id)
+          .eq("user_id", user.id);
+
+        if (existingUses && existingUses.length >= promotion.max_uses_per_user) {
+          setCouponError("This coupon has already been used");
+          return;
+        }
       }
 
       // Apply discount
@@ -772,63 +786,72 @@ const SubscriptionReview = () => {
                     )}
                   </AnimatePresence>
 
-                  {/* Coupon Code */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Tag className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Have a coupon code?</span>
+                  {/* Coupon Code - Hidden for regular subscriptions by default */}
+                  {subscriptionType !== "regular" ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Have a coupon code?</span>
+                      </div>
+                      
+                      {couponApplied ? (
+                        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Check className="h-4 w-4 text-green-600" />
+                            <span className="font-medium text-green-700 dark:text-green-300">
+                              {couponApplied.code}
+                            </span>
+                            <Badge variant="secondary" className="bg-green-100 text-green-700">
+                              {couponApplied.discount}% off
+                            </Badge>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveCoupon}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Input
+                              placeholder="Enter coupon code"
+                              value={couponCode}
+                              onChange={(e) => {
+                                setCouponCode(e.target.value.toUpperCase());
+                                setCouponError("");
+                              }}
+                              className={couponError ? "border-destructive" : ""}
+                            />
+                            {couponError && (
+                              <p className="text-xs text-destructive mt-1">{couponError}</p>
+                            )}
+                          </div>
+                          <Button
+                            variant="secondary"
+                            onClick={handleApplyCoupon}
+                            disabled={couponLoading}
+                          >
+                            {couponLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Apply"
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    
-                    {couponApplied ? (
-                      <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span className="font-medium text-green-700 dark:text-green-300">
-                            {couponApplied.code}
-                          </span>
-                          <Badge variant="secondary" className="bg-green-100 text-green-700">
-                            {couponApplied.discount}% off
-                          </Badge>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleRemoveCoupon}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                  ) : (
+                    <div className="p-3 bg-muted/50 border border-border rounded-lg">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Tag className="h-4 w-4" />
+                        <span>Subscription pricing already includes a 10% discount. Coupons cannot be combined with subscription discounts.</span>
                       </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <Input
-                            placeholder="Enter coupon code"
-                            value={couponCode}
-                            onChange={(e) => {
-                              setCouponCode(e.target.value.toUpperCase());
-                              setCouponError("");
-                            }}
-                            className={couponError ? "border-destructive" : ""}
-                          />
-                          {couponError && (
-                            <p className="text-xs text-destructive mt-1">{couponError}</p>
-                          )}
-                        </div>
-                        <Button
-                          variant="secondary"
-                          onClick={handleApplyCoupon}
-                          disabled={couponLoading}
-                        >
-                          {couponLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Apply"
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   <Separator />
 
@@ -924,6 +947,25 @@ const SubscriptionReview = () => {
                         <Button className="flex-1" onClick={handleCreateAccount}>
                           Create Account
                         </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Subscription Discount Disclosure */}
+                  {subscriptionType === "regular" && (
+                    <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-medium text-amber-800 dark:text-amber-200 mb-1">
+                            Subscription Discount Terms
+                          </p>
+                          <p className="text-amber-700 dark:text-amber-300">
+                            You're receiving a discounted subscription price. If the subscription is canceled 
+                            before the second delivery, the discount applied to the first order may be charged back. 
+                            See our <a href="/terms-of-use#subscription-terms" className="underline hover:no-underline">Terms of Use</a> for details.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
