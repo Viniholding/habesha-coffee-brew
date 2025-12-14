@@ -2,7 +2,13 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import LegalBreadcrumb from "@/components/legal/LegalBreadcrumb";
 import { Helmet } from "react-helmet-async";
-import { Mail, Package, Globe, AlertTriangle, Clock } from "lucide-react";
+import { Mail, Package, Globe, AlertTriangle, Clock, HelpCircle } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const ShippingReturns = () => {
   return (
@@ -213,6 +219,86 @@ const ShippingReturns = () => {
                 <li>Once a subscription order has been processed and shipped, it cannot be canceled or refunded</li>
                 <li>Manage your subscription through your account dashboard</li>
               </ul>
+            </section>
+
+            {/* FAQ Section */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <HelpCircle className="h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-semibold m-0">Frequently Asked Questions</h2>
+              </div>
+              
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="item-1">
+                  <AccordionTrigger className="text-left">How long does shipping take?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    Domestic orders typically arrive within 5–7 business days with standard shipping. Expedited (3–5 days) and express (1–2 days) options are available at checkout. International orders can take 7–30 business days depending on the destination.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-2">
+                  <AccordionTrigger className="text-left">Do you offer free shipping?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    Yes! We offer free standard shipping on all domestic orders over $50. International orders and expedited shipping options have additional fees calculated at checkout.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-3">
+                  <AccordionTrigger className="text-left">How can I track my order?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    Once your order ships, you'll receive an email with tracking information. You can also log into your account and view your order history to track shipments. If you checked out as a guest, use the tracking link in your confirmation email.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-4">
+                  <AccordionTrigger className="text-left">What if my package is lost or stolen?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    If tracking shows your package as delivered but you haven't received it, first check with neighbors and your local post office. If the package cannot be located, contact us within 48 hours of the delivery date. We'll work with the carrier to investigate and may offer a replacement or refund at our discretion.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-5">
+                  <AccordionTrigger className="text-left">Can I change my shipping address after placing an order?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    Address changes can only be made if the order has not yet been processed. Please contact us immediately at sales@coffeehabesha.com. Once an order has shipped, we cannot modify the delivery address.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-6">
+                  <AccordionTrigger className="text-left">Do you ship to P.O. boxes or APO/FPO addresses?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    Yes, we ship to P.O. boxes and military APO/FPO addresses within the United States. Please note that delivery times may be longer for these addresses, and expedited shipping options may not be available.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-7">
+                  <AccordionTrigger className="text-left">Why can't I return my coffee?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    Coffee is a perishable food product, and we roast fresh to order. For food safety and quality reasons, we cannot accept returns of opened or used products. However, if your order arrived damaged or defective, please contact us within 48 hours and we'll make it right.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-8">
+                  <AccordionTrigger className="text-left">My coffee arrived damaged. What should I do?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    We're sorry to hear that! Please contact us at sales@coffeehabesha.com within 48 hours of delivery. Include your order number and photos of the damaged product and packaging. We'll review your request and arrange for a replacement or refund.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-9">
+                  <AccordionTrigger className="text-left">How long do refunds take to process?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    Approved refunds are processed within 5–7 business days. Depending on your payment provider and bank, it may take an additional 5–10 business days for the funds to appear in your account.
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="item-10">
+                  <AccordionTrigger className="text-left">Can I cancel my subscription shipment?</AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground">
+                    You can pause, skip, or cancel your subscription at any time before the next billing date through your account dashboard. Once a subscription order has been processed and shipped, it cannot be canceled or refunded. We recommend managing your subscription at least 3 days before your next scheduled shipment.
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </section>
 
             <section>
