@@ -11,11 +11,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertTriangle, Shield, Ban, Search, RefreshCw, Eye, 
-  XCircle, CheckCircle, TrendingUp, Users, DollarSign, Link2, ShieldOff, ShieldCheck 
+  XCircle, CheckCircle, TrendingUp, Users, DollarSign, Link2, ShieldOff, ShieldCheck, Mail 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { logAdminAction } from '@/lib/auditLog';
+import AccountRelationshipGraph from './AccountRelationshipGraph';
 
 interface AccountRestriction {
   id: string;
@@ -391,7 +392,47 @@ const AbuseDetection = () => {
     }
   };
 
-  const handleCreateRestrictionRecord = async (userId: string) => {
+  // Send cross-account fraud alert
+  const sendCrossAccountAlert = async (restriction: AccountRestriction) => {
+    if (!restriction.crossAccountFlags || restriction.crossAccountFlags.length === 0) {
+      toast.error('No cross-account links to report');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      // Fetch emails for linked accounts
+      const linkedUserIds = restriction.crossAccountFlags.map(f => f.linkedUserId);
+      const { data: linkedProfiles } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', linkedUserIds);
+
+      const crossAccountLinks = restriction.crossAccountFlags.map(flag => ({
+        userId: flag.linkedUserId,
+        email: linkedProfiles?.find(p => p.id === flag.linkedUserId)?.email || 'Unknown',
+        type: flag.type,
+        isRestricted: flag.isRestricted,
+      }));
+
+      const { error } = await supabase.functions.invoke('send-abuse-notification', {
+        body: {
+          type: 'cross_account_detected',
+          userId: restriction.user_id,
+          abuseScore: restriction.abuse_score,
+          crossAccountLinks,
+        },
+      });
+
+      if (error) throw error;
+      toast.success('Cross-account fraud alert sent to admin');
+    } catch (error) {
+      console.error('Error sending cross-account alert:', error);
+      toast.error('Failed to send alert');
+    } finally {
+      setActionLoading(false);
+    }
+  };
     try {
       const { error } = await supabase
         .from('account_restrictions')
@@ -530,6 +571,7 @@ const AbuseDetection = () => {
       <Tabs defaultValue="accounts" className="w-full">
         <TabsList>
           <TabsTrigger value="accounts">Account Risk Tracking</TabsTrigger>
+          <TabsTrigger value="graph">Relationship Graph</TabsTrigger>
           <TabsTrigger value="coupon-logs">Coupon Audit Log</TabsTrigger>
         </TabsList>
 
@@ -628,6 +670,17 @@ const AbuseDetection = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {(restriction.crossAccountFlags?.length || 0) > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => sendCrossAccountAlert(restriction)}
+                                disabled={actionLoading}
+                                title="Send Cross-Account Alert"
+                              >
+                                <Mail className="h-4 w-4 text-purple-600" />
+                              </Button>
+                            )}
                             {restriction.is_promotional_restricted ? (
                               <Button
                                 variant="ghost"
@@ -669,6 +722,19 @@ const AbuseDetection = () => {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="graph" className="space-y-4">
+          <AccountRelationshipGraph 
+            accounts={restrictions.map(r => ({
+              id: r.id,
+              userId: r.user_id,
+              email: r.profile?.email || 'Unknown',
+              isRestricted: r.is_promotional_restricted,
+              abuseScore: r.abuse_score,
+              crossAccountFlags: r.crossAccountFlags || [],
+            }))}
+          />
         </TabsContent>
 
         <TabsContent value="coupon-logs" className="space-y-4">
