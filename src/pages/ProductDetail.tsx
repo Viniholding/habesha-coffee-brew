@@ -118,8 +118,7 @@ const ProductDetail = () => {
         image_url: product.image_url,
       });
       if (result.isGuestCart) {
-        // Guest cart - notify user they can continue shopping or checkout
-        toast.info("Continue shopping or checkout as guest!");
+        toast.success("Added to cart! Continue shopping or checkout as guest.");
       }
     } catch (error) {
       console.error("Error adding to cart:", error);
