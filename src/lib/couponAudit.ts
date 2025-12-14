@@ -119,6 +119,18 @@ export async function updateAbuseTracking(
       updates.is_promotional_restricted = true;
       updates.restriction_reason = 'Automatic restriction due to abuse score threshold';
       updates.restricted_at = new Date().toISOString();
+
+      // Send notification emails (fire and forget)
+      supabase.functions.invoke('send-abuse-notification', {
+        body: {
+          type: 'account_restricted',
+          userId,
+          reason: updates.restriction_reason,
+          abuseScore: newScore,
+        },
+      }).catch((err) => {
+        console.error('Failed to send abuse notification:', err);
+      });
     }
 
     if (existing) {
