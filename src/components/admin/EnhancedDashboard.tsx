@@ -16,6 +16,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import logo from '@/assets/logo.png';
 
 interface DashboardStats {
   todayRevenue: number;
@@ -183,9 +184,12 @@ const EnhancedDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Mission Control</h1>
-        <p className="text-muted-foreground mt-1">Your business at a glance</p>
+      <div className="flex items-center gap-4">
+        <img src={logo} alt="Habesha" className="h-16 w-16 rounded-full shadow-lg" />
+        <div>
+          <h1 className="text-3xl font-bold">Habesha Command Center</h1>
+          <p className="text-muted-foreground mt-1">Your business at a glance</p>
+        </div>
       </div>
 
       {/* Primary KPIs */}
@@ -241,7 +245,7 @@ const EnhancedDashboard = () => {
             <Button 
               variant="link" 
               className="p-0 h-auto text-xs"
-              onClick={() => navigate('/admin/customers')}
+              onClick={() => navigate('/commandcenter/customers')}
             >
               View VIPs <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
@@ -261,7 +265,7 @@ const EnhancedDashboard = () => {
             <Button 
               variant="link" 
               className="p-0 h-auto text-xs"
-              onClick={() => navigate('/admin/orders')}
+              onClick={() => navigate('/commandcenter/orders')}
             >
               View orders <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
@@ -289,7 +293,7 @@ const EnhancedDashboard = () => {
             <Button 
               variant="link" 
               className="p-0 h-auto text-xs"
-              onClick={() => navigate('/admin/inventory')}
+              onClick={() => navigate('/commandcenter/inventory')}
             >
               View inventory <ArrowRight className="h-3 w-3 ml-1" />
             </Button>
@@ -322,7 +326,7 @@ const EnhancedDashboard = () => {
               <Button 
                 variant="outline" 
                 className="w-full mt-4"
-                onClick={() => navigate('/admin/inventory')}
+                onClick={() => navigate('/commandcenter/inventory')}
               >
                 Manage Inventory
               </Button>
@@ -409,7 +413,7 @@ const EnhancedDashboard = () => {
               <Button 
                 variant="outline" 
                 className="w-full mt-4"
-                onClick={() => navigate('/admin/customers')}
+                onClick={() => navigate('/commandcenter/customers')}
               >
                 View All {stats.vipCustomerCount} VIP Customers
               </Button>

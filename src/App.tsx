@@ -69,7 +69,7 @@ const App = () => (
               <Route path="/subscription/review" element={<SubscriptionReview />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-success" element={<OrderSuccess />} />
-              <Route path="/admin/*" element={<Admin />} />
+              <Route path="/commandcenter/*" element={<Admin />} />
               {/* Legal Pages */}
               <Route path="/legal" element={<LegalHub />} />
               <Route path="/shipping-returns" element={<ShippingReturns />} />
