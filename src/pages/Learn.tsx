@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Coffee, Play, Printer, BookOpen, MapPin } from 'lucide-react';
+import { Coffee, Play, Printer, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import AnimatedTutorial from '@/components/learn/AnimatedTutorial';
-import CoffeeFlavorWheel from '@/components/learn/CoffeeFlavorWheel';
-import CoffeeGlossary from '@/components/learn/CoffeeGlossary';
 import CoffeeOriginMap from '@/components/learn/CoffeeOriginMap';
 import VideoCarousel, { Video } from '@/components/learn/VideoCarousel';
 import coffeeCeremonyImage from '@/assets/coffee-ceremony.png';
@@ -141,42 +139,6 @@ export default function Learn() {
           </div>
 
           <CoffeeOriginMap />
-        </div>
-      </section>
-
-      {/* Coffee Flavor Wheel Section */}
-      <section className="w-full bg-card py-20 md:py-32 print:hidden">
-        <div className="max-w-6xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              The Coffee Flavor Wheel
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Ethiopian coffee is renowned for its complex flavor profiles. Explore the diverse tastes that make each cup unique.
-            </p>
-          </div>
-
-          <CoffeeFlavorWheel />
-        </div>
-      </section>
-
-      {/* Coffee Glossary Section */}
-      <section className="w-full bg-gradient-to-b from-background to-muted/30 py-20 md:py-32 print:hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary mb-6">
-              <BookOpen className="w-4 h-4" />
-              <span className="text-sm font-medium">Learn the Language</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Ethiopian Coffee Glossary
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Master the vocabulary of Ethiopian coffee culture — from ceremony terms to regional names.
-            </p>
-          </div>
-
-          <CoffeeGlossary />
         </div>
       </section>
 
