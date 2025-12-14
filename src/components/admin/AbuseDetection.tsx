@@ -433,26 +433,6 @@ const AbuseDetection = () => {
       setActionLoading(false);
     }
   };
-    try {
-      const { error } = await supabase
-        .from('account_restrictions')
-        .upsert({
-          user_id: userId,
-          abuse_score: 0,
-          early_cancellations: 0,
-          discount_reversals: 0,
-          coupon_rejections: 0,
-          pause_cycles: 0,
-        }, { onConflict: 'user_id' });
-
-      if (error) throw error;
-      toast.success('Account tracking record created');
-      fetchData();
-    } catch (error) {
-      console.error('Error creating restriction record:', error);
-      toast.error('Failed to create tracking record');
-    }
-  };
 
   const filteredRestrictions = restrictions.filter(r => {
     const matchesSearch = !searchTerm || 
