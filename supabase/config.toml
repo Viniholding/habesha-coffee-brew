@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.abuse-score-recalculation]
 verify_jwt = false
+
+[functions.weekly-fraud-summary]
+verify_jwt = false
