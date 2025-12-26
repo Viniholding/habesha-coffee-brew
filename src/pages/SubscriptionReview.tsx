@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { logger } from "@/lib/logger";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navigation from "@/components/Navigation";
@@ -73,6 +74,7 @@ const SubscriptionReview = () => {
 
   // Editable product selection
   const [selectedProductId, setSelectedProductId] = useState(searchParams.get("product") || "");
+  const [productImageError, setProductImageError] = useState(false);
   
   // Parse subscription data from URL params
   const subscriptionType = (searchParams.get("type") || "regular") as "regular" | "prepaid" | "gift";
@@ -480,7 +482,7 @@ const SubscriptionReview = () => {
         window.location.href = data.url;
       }
     } catch (error: any) {
-      console.error("Subscription error:", error);
+      logger.error("Subscription error:", error);
       toast.error(error.message || "Failed to create subscription");
     } finally {
       setLoading(false);
@@ -537,15 +539,12 @@ const SubscriptionReview = () => {
                     <div className="flex items-center gap-4 flex-1">
                       {/* Product Image */}
                       <div className="w-20 h-20 rounded-lg overflow-hidden bg-primary/10 flex-shrink-0">
-                        {productData?.imageUrl ? (
+                        {productData?.imageUrl && !productImageError ? (
                           <img 
                             src={productData.imageUrl} 
                             alt={productData.name}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center"><svg class="h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg></div>';
-                            }}
+                            onError={() => setProductImageError(true)}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Gift, Copy, Check, Users, DollarSign, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface Referral {
   id: string;
@@ -50,7 +51,7 @@ export default function ReferralProgram({ userId }: ReferralProgramProps) {
         setReferralCode(activeCode.referral_code);
       }
     } catch (error) {
-      console.error("Error fetching referrals:", error);
+      logger.error("Error fetching referrals:", error);
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,7 @@ export default function ReferralProgram({ userId }: ReferralProgramProps) {
       toast.success("Referral code generated!");
       fetchReferrals();
     } catch (error: any) {
-      console.error("Error generating referral code:", error);
+      logger.error("Error generating referral code:", error);
       toast.error("Failed to generate referral code");
     } finally {
       setGenerating(false);
