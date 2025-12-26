@@ -76,20 +76,17 @@ const SubscriptionConfigurator = ({ initialProgram }: SubscriptionConfiguratorPr
   const validateReferralCode = async (code: string) => {
     try {
       const { data, error } = await supabase
-        .from("referrals")
-        .select("*")
-        .eq("referral_code", code)
-        .eq("status", "pending")
+        .rpc('validate_referral_code', { _code: code })
         .single();
 
-      if (error || !data) return;
+      if (error || !data?.is_valid) return;
 
       setReferralCode(code);
       setReferralDiscount(data.referee_discount_percent || 15);
       setReferralApplied(true);
       toast.success(`Referral code applied! You get ${data.referee_discount_percent || 15}% off your first order`);
     } catch (error) {
-      console.error("Error validating referral code:", error);
+      // Silently fail - referral code validation is not critical
     }
   };
 
