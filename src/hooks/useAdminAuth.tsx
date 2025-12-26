@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export const useAdminAuth = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -34,7 +35,7 @@ export const useAdminAuth = () => {
 
       setIsAdmin(true);
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      logger.error('Error checking admin status:', error);
       navigate('/');
     } finally {
       setIsLoading(false);

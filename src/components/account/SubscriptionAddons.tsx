@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Minus, Trash2, Package, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface Product {
   id: string;
@@ -68,7 +69,7 @@ export default function SubscriptionAddons({
       .eq("status", "pending");
 
     if (error) {
-      console.error("Error fetching addons:", error);
+      logger.error("Error fetching addons:", error);
     } else {
       setAddons(data || []);
     }
@@ -83,7 +84,7 @@ export default function SubscriptionAddons({
       .order("name");
 
     if (error) {
-      console.error("Error fetching products:", error);
+      logger.error("Error fetching products:", error);
     } else {
       setProducts(data || []);
     }
@@ -108,7 +109,7 @@ export default function SubscriptionAddons({
 
     if (error) {
       toast.error("Failed to add item");
-      console.error(error);
+      logger.error("Failed to add addon:", error);
     } else {
       toast.success("Item added to next shipment");
       setIsDialogOpen(false);
@@ -128,7 +129,7 @@ export default function SubscriptionAddons({
 
     if (error) {
       toast.error("Failed to remove item");
-      console.error(error);
+      logger.error("Failed to remove addon:", error);
     } else {
       toast.success("Item removed");
       fetchAddons();
