@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
 import { Package, AlertTriangle, Edit, Eye, Plus } from 'lucide-react';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import AddInventoryDialog from './AddInventoryDialog';
@@ -16,6 +17,7 @@ import { logAdminAction } from '@/lib/auditLog';
 interface Product {
   id: string;
   name: string;
+  description: string | null;
   stock_quantity: number;
   low_stock_threshold: number;
   price: number;
@@ -82,6 +84,7 @@ export const InventoryManagement = () => {
     const formData = new FormData(e.currentTarget);
     
     const productData = {
+      description: formData.get('description') as string || null,
       stock_quantity: parseInt(formData.get('stock_quantity') as string),
       low_stock_threshold: parseInt(formData.get('low_stock_threshold') as string),
       cost_price: parseFloat(formData.get('cost_price') as string) || null,
@@ -229,6 +232,16 @@ export const InventoryManagement = () => {
                           <DialogTitle>{isReadOnly ? 'Product Details' : 'Edit Product Details'}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSaveProduct} className="space-y-4">
+                          <div>
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                              id="description"
+                              name="description"
+                              defaultValue={editingProduct?.description || ''}
+                              rows={3}
+                              disabled={isReadOnly}
+                            />
+                          </div>
                           <div>
                             <Label htmlFor="stock_quantity">Stock Quantity</Label>
                             <Input

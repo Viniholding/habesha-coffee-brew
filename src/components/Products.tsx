@@ -370,7 +370,34 @@ const Products = () => {
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {sortProducts(filterByPrice(filterBySearch(filterByCategory(getDisplayProducts(products))))).map((product) => {
+          {(() => {
+            const filteredProducts = sortProducts(filterByPrice(filterBySearch(filterByCategory(getDisplayProducts(products)))));
+            
+            if (filteredProducts.length === 0) {
+              return (
+                <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+                  <div className="bg-muted rounded-full p-6 mb-4">
+                    <Search className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No products found</h3>
+                  <p className="text-muted-foreground mb-4 max-w-md">
+                    We couldn't find any products matching your current filters. Try adjusting your search or filters.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCategoryFilter('all');
+                      setPriceRange([0, 200]);
+                    }}
+                  >
+                    Clear all filters
+                  </Button>
+                </div>
+              );
+            }
+            
+            return filteredProducts.map((product) => {
             const isThisMug = isCoffeeMug(product);
             const isThisGrinder = isHandGrinder(product);
             const displayProduct = isThisMug ? getMugDisplayProduct(products) : product;
@@ -620,7 +647,8 @@ const Products = () => {
                 </div>
               </Card>
             );
-          })}
+          });
+        })()}
         </div>
       </div>
     </section>
