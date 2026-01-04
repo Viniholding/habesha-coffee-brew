@@ -65,8 +65,8 @@ const Contact = () => {
                     <Mail className="w-6 h-6 text-primary mt-1" />
                     <div>
                       <p className="font-semibold text-foreground">Email</p>
-                      <a href="mailto:info@coffeehabesha.com" className="text-muted-foreground hover:text-primary transition-colors">
-                        info@coffeehabesha.com
+                      <a href="mailto:sales@coffeehabesha.com" className="text-muted-foreground hover:text-primary transition-colors">
+                        sales@coffeehabesha.com
                       </a>
                     </div>
                   </div>
@@ -74,18 +74,18 @@ const Contact = () => {
                     <Phone className="w-6 h-6 text-primary mt-1" />
                     <div>
                       <p className="font-semibold text-foreground">Phone</p>
-                      <a href="tel:+12405551234" className="text-muted-foreground hover:text-primary transition-colors">
-                        +1 (240) 555-1234
+                      <a href="tel:+18777880389" className="text-muted-foreground hover:text-primary transition-colors">
+                        +1 (877) 788-0389
                       </a>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
                     <MapPin className="w-6 h-6 text-primary mt-1" />
                     <div>
-                      <p className="font-semibold text-foreground">Location</p>
+                      <p className="font-semibold text-foreground">Mailing Address</p>
                       <p className="text-muted-foreground">
-                        Sourced from Ethiopian Highlands<br />
-                        Delivered Worldwide
+                        P.O. BOX 151742<br />
+                        Alexandria, Virginia 22315
                       </p>
                     </div>
                   </div>
