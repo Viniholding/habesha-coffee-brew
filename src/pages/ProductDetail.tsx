@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, RefreshCw, Star, Package, Truck, Shield, ArrowLeft, Plus, Minus, X, ZoomIn } from "lucide-react";
+import { ShoppingCart, RefreshCw, Package, Truck, Shield, ArrowLeft, Plus, Minus, X, ZoomIn } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { grindOptions, bagSizeOptions, frequencyOptions } from "@/lib/subscriptionProducts";
@@ -352,15 +352,7 @@ const ProductDetail = () => {
                 <Badge variant="outline" className="mb-2">
                   {product.category || "Coffee"}
                 </Badge>
-                <h1 className="text-4xl font-bold mb-2">{product.name}</h1>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex items-center text-primary">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star key={i} className="h-4 w-4 fill-primary" />
-                    ))}
-                  </div>
-                  <span className="text-sm text-muted-foreground">(128 reviews)</span>
-                </div>
+                <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
                 <p className="text-muted-foreground text-lg">
                   {product.description || "Premium Ethiopian coffee with exceptional flavor notes."}
                 </p>
