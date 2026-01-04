@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Search, DollarSign } from "lucide-react";
+import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Search, DollarSign, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { addToCart } from "@/lib/cart";
 import { resolveProductImage, grinderImages } from "@/lib/productImages";
@@ -331,6 +331,23 @@ const Products = () => {
                 />
               </div>
             </div>
+
+            {/* Clear All Filters Button */}
+            {(searchQuery || categoryFilter !== 'all' || priceRange[0] !== 0 || priceRange[1] !== 200) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setCategoryFilter('all');
+                  setPriceRange([0, 200]);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear filters
+              </Button>
+            )}
           </div>
 
           {/* Sort Options */}
