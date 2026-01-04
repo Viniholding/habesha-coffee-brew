@@ -9,10 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
-import { Package, AlertTriangle, Edit, Eye, Plus, Upload, X, Loader2 } from 'lucide-react';
+import { Package, AlertTriangle, Edit, Eye, Plus, Upload, X, Loader2, DollarSign, TrendingDown } from 'lucide-react';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import AddInventoryDialog from './AddInventoryDialog';
+import BulkStockUpdate from './BulkStockUpdate';
+import InventoryFilters from './InventoryFilters';
+import ProductImageGallery from './ProductImageGallery';
 import { logAdminAction } from '@/lib/auditLog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Product {
   id: string;
@@ -26,6 +30,7 @@ interface Product {
   supplier_name: string | null;
   supplier_email: string | null;
   sku: string | null;
+  category: string | null;
 }
 
 export const InventoryManagement = () => {
@@ -37,8 +42,37 @@ export const InventoryManagement = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [stockFilter, setStockFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { canEdit, isReadOnly } = useAdminRole();
+
+  // Get unique categories
+  const categories = [...new Set(products.map(p => p.category).filter(Boolean))] as string[];
+
+  // Filter products
+  const filteredProducts = products.filter(p => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      if (!p.name.toLowerCase().includes(query) && 
+          !(p.sku?.toLowerCase().includes(query))) {
+        return false;
+      }
+    }
+    
+    // Stock filter
+    if (stockFilter === 'low' && p.stock_quantity > p.low_stock_threshold) return false;
+    if (stockFilter === 'out' && p.stock_quantity > 0) return false;
+    if (stockFilter === 'in' && p.stock_quantity <= 0) return false;
+    
+    // Category filter
+    if (categoryFilter !== 'all' && p.category !== categoryFilter) return false;
+    
+    return true;
+  });
 
   useEffect(() => {
     fetchProducts();
@@ -198,6 +232,35 @@ export const InventoryManagement = () => {
   };
 
   const lowStockProducts = products.filter(p => p.stock_quantity <= p.low_stock_threshold);
+  const outOfStockProducts = products.filter(p => p.stock_quantity <= 0);
+  const totalStockValue = products.reduce((sum, p) => sum + (p.cost_price || p.price) * p.stock_quantity, 0);
+  const totalUnits = products.reduce((sum, p) => sum + p.stock_quantity, 0);
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllProducts = () => {
+    if (selectedProducts.size === filteredProducts.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setStockFilter('all');
+    setCategoryFilter('all');
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center p-8">Loading inventory...</div>;
@@ -205,7 +268,8 @@ export const InventoryManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Products</CardTitle>
@@ -213,52 +277,107 @@ export const InventoryManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{products.length}</div>
+            <p className="text-xs text-muted-foreground">{totalUnits.toLocaleString()} total units</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{lowStockProducts.length}</div>
+            <div className="text-2xl font-bold text-amber-500">{lowStockProducts.length}</div>
+            <p className="text-xs text-muted-foreground">Below threshold</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Stock Value</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+            <TrendingDown className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              ${products.reduce((sum, p) => sum + (p.cost_price || p.price) * p.stock_quantity, 0).toFixed(2)}
-            </div>
+            <div className="text-2xl font-bold text-destructive">{outOfStockProducts.length}</div>
+            <p className="text-xs text-muted-foreground">Need restocking</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalStockValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <p className="text-xs text-muted-foreground">At cost price</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Inventory</CardTitle>
-          {canEdit && (
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Inventory
-            </Button>
-          )}
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <CardTitle>Inventory ({filteredProducts.length})</CardTitle>
+            <div className="flex flex-wrap gap-2">
+              {canEdit && (
+                <>
+                  <BulkStockUpdate products={products} onUpdate={fetchProducts} />
+                  <Button onClick={() => setIsAddDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Product
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Filters */}
+          <InventoryFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            stockFilter={stockFilter}
+            onStockFilterChange={setStockFilter}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            categories={categories}
+            onClearFilters={clearFilters}
+          />
+
           <AddInventoryDialog 
             open={isAddDialogOpen} 
             onOpenChange={setIsAddDialogOpen} 
             onProductAdded={fetchProducts}
           />
+
+          {/* Selected Products Actions */}
+          {selectedProducts.size > 0 && canEdit && (
+            <div className="flex items-center gap-4 p-3 bg-muted rounded-lg">
+              <span className="text-sm font-medium">{selectedProducts.size} selected</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedProducts(new Set())}
+              >
+                Clear selection
+              </Button>
+            </div>
+          )}
+
           <Table>
             <TableHeader>
               <TableRow>
+                {canEdit && (
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={filteredProducts.length > 0 && selectedProducts.size === filteredProducts.length}
+                      onCheckedChange={toggleAllProducts}
+                    />
+                  </TableHead>
+                )}
                 <TableHead>Product</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Threshold</TableHead>
@@ -267,11 +386,31 @@ export const InventoryManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.sku || '-'}</TableCell>
-                  <TableCell>
+              {filteredProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={canEdit ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                    No products found matching your filters
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredProducts.map((product) => (
+                  <TableRow key={product.id}>
+                    {canEdit && (
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedProducts.has(product.id)}
+                          onCheckedChange={() => toggleProductSelection(product.id)}
+                        />
+                      </TableCell>
+                    )}
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>
+                      {product.category ? (
+                        <Badge variant="outline">{product.category}</Badge>
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell>{product.sku || '-'}</TableCell>
+                    <TableCell>
                     <div className="flex items-center gap-2">
                       {isReadOnly ? (
                         <span className="font-mono">{product.stock_quantity}</span>
@@ -380,6 +519,14 @@ export const InventoryManagement = () => {
                             </div>
                           </div>
 
+                          {/* Product Image Gallery */}
+                          {editingProduct && (
+                            <ProductImageGallery
+                              productId={editingProduct.id}
+                              isReadOnly={isReadOnly}
+                            />
+                          )}
+
                           <div>
                             <Label htmlFor="description">Description</Label>
                             <Textarea
@@ -468,7 +615,8 @@ export const InventoryManagement = () => {
                     </Dialog>
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+            )}
             </TableBody>
           </Table>
         </CardContent>
