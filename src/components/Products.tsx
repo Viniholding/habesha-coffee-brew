@@ -157,7 +157,7 @@ const Products = () => {
                   <div className="flex gap-2">
                     <Button 
                       variant="hero" 
-                      className="flex-1" 
+                      className={product.category === "coffee" ? "flex-1" : "w-full"} 
                       size="lg"
                       disabled={addingToCart === product.id}
                       onClick={(e) => handleAddToCart(product, e)}
