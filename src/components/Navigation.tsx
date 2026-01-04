@@ -110,7 +110,7 @@ const Navigation = () => {
           <Link to="/learn" className="hover:opacity-80 transition-opacity flex items-center">
             <img src={logo} alt="Coffee Habesha Way" className="h-8 w-auto" />
           </Link>
-          <a href="https://www.shop.coffeehabesha.com/shop-coffee-habesha/" className="hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer">Shop</a>
+          <Link to="/products" className="hover:text-primary transition-colors">Shop</Link>
           <Link to="/subscribe" className="hover:text-primary transition-colors">Subscribe</Link>
           <Link to="/cafe" className="hover:text-primary transition-colors">Café</Link>
         </div>
@@ -144,12 +144,12 @@ const Navigation = () => {
               )}
             </Button>
           ) : (
-            <Button variant="outline" size="lg" asChild>
-              <a href="https://www.shop.coffeehabesha.com/my-account/" target="_blank" rel="noopener noreferrer">My Account</a>
+            <Button variant="outline" size="lg" onClick={() => navigate("/auth")}>
+              My Account
             </Button>
           )}
-          <Button variant="hero" size="lg" asChild>
-            <a href="https://www.shop.coffeehabesha.com/shop-coffee-habesha/" target="_blank" rel="noopener noreferrer">Shop Now</a>
+          <Button variant="hero" size="lg" onClick={() => navigate("/products")}>
+            Shop Now
           </Button>
         </div>
 
@@ -214,14 +214,13 @@ const Navigation = () => {
                 >
                   Coffee Habesha Way
                 </Link>
-                <a 
-                  href="https://www.shop.coffeehabesha.com/shop-coffee-habesha/" 
+                <Link 
+                  to="/products" 
                   className="text-lg font-medium hover:text-primary transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
-                  target="_blank" rel="noopener noreferrer"
                 >
                   Shop
-                </a>
+                </Link>
                 <Link 
                   to="/subscribe" 
                   className="text-lg font-medium hover:text-primary transition-colors"
@@ -239,12 +238,12 @@ const Navigation = () => {
                 
                 <div className="pt-6 border-t border-border space-y-3">
                   {!isLoggedIn && (
-                    <Button variant="outline" size="lg" className="w-full" asChild>
-                      <a href="https://www.shop.coffeehabesha.com/my-account/" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>My Account</a>
+                    <Button variant="outline" size="lg" className="w-full" onClick={() => navigateToSection("/auth")}>
+                      My Account
                     </Button>
                   )}
-                  <Button variant="hero" size="lg" className="w-full" asChild>
-                    <a href="https://www.shop.coffeehabesha.com/shop-coffee-habesha/" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>Shop Now</a>
+                  <Button variant="hero" size="lg" className="w-full" onClick={() => navigateToSection("/products")}>
+                    Shop Now
                   </Button>
                 </div>
               </div>

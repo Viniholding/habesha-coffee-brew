@@ -185,9 +185,9 @@ const FeaturedCollection = () => {
           <Button 
             variant="outline" 
             size="lg"
-            asChild
+            onClick={() => navigate('/products')}
           >
-            <a href="https://www.shop.coffeehabesha.com/shop-coffee-habesha/" target="_blank" rel="noopener noreferrer">View All Products</a>
+            View All Products
           </Button>
         </div>
       </div>

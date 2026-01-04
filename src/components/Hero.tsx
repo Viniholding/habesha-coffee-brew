@@ -33,7 +33,7 @@ const Hero = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Button variant="hero" size="lg" className="text-lg px-8 py-6 h-auto" asChild>
-              <a href="https://www.shop.coffeehabesha.com/shop-coffee-habesha/" target="_blank" rel="noopener noreferrer">Shop Now</a>
+              <Link to="/products">Shop Now</Link>
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-primary/50 hover:border-primary" asChild>
               <Link to="/about">Learn More</Link>
