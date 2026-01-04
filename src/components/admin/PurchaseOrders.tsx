@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Send, Package, CheckCircle, Clock, Search, Eye, FileText } from 'lucide-react';
+import { Plus, Pencil, Trash2, Send, Package, CheckCircle, Clock, Search, Eye, FileText, PackageCheck } from 'lucide-react';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import { format } from 'date-fns';
 
@@ -58,6 +58,7 @@ const STATUS_OPTIONS = [
   { value: 'submitted', label: 'Submitted', color: 'bg-blue-500' },
   { value: 'confirmed', label: 'Confirmed', color: 'bg-yellow-500' },
   { value: 'shipped', label: 'Shipped', color: 'bg-purple-500' },
+  { value: 'partially_received', label: 'Partial', color: 'bg-orange-500' },
   { value: 'received', label: 'Received', color: 'bg-green-500' },
   { value: 'cancelled', label: 'Cancelled', color: 'bg-red-500' },
 ];
@@ -69,9 +70,11 @@ export default function PurchaseOrders() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [receiveDialogOpen, setReceiveDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<PurchaseOrder | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
   const [orderItems, setOrderItems] = useState<PurchaseOrderItem[]>([]);
+  const [receiveItems, setReceiveItems] = useState<Array<{ id: string; quantity: number; maxQty: number }>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [saving, setSaving] = useState(false);
@@ -151,6 +154,83 @@ export default function PurchaseOrders() {
     const items = await fetchOrderItems(order.id);
     setOrderItems(items);
     setDetailDialogOpen(true);
+  };
+
+  const handleOpenReceiveDialog = async (order: PurchaseOrder) => {
+    setSelectedOrder(order);
+    const items = await fetchOrderItems(order.id);
+    setOrderItems(items);
+    setReceiveItems(items.map(item => ({
+      id: item.id,
+      quantity: 0,
+      maxQty: item.quantity - (item.received_quantity || 0),
+    })));
+    setReceiveDialogOpen(true);
+  };
+
+  const handleReceiveItems = async () => {
+    if (!selectedOrder) return;
+    
+    setSaving(true);
+    let totalReceived = 0;
+    let totalOrdered = 0;
+
+    for (const receiveItem of receiveItems) {
+      if (receiveItem.quantity > 0) {
+        const orderItem = orderItems.find(i => i.id === receiveItem.id);
+        if (orderItem) {
+          const newReceivedQty = (orderItem.received_quantity || 0) + receiveItem.quantity;
+          
+          // Update item received quantity
+          await supabase
+            .from('purchase_order_items')
+            .update({ received_quantity: newReceivedQty })
+            .eq('id', receiveItem.id);
+
+          // Update product stock
+          if (orderItem.product_id) {
+            const product = products.find(p => p.id === orderItem.product_id);
+            if (product) {
+              await supabase
+                .from('products')
+                .update({ stock_quantity: product.stock_quantity + receiveItem.quantity })
+                .eq('id', orderItem.product_id);
+            }
+          }
+        }
+      }
+    }
+
+    // Check if fully or partially received
+    const updatedItems = await fetchOrderItems(selectedOrder.id);
+    for (const item of updatedItems) {
+      totalReceived += item.received_quantity || 0;
+      totalOrdered += item.quantity;
+    }
+
+    const isFullyReceived = totalReceived >= totalOrdered;
+    const newStatus = isFullyReceived ? 'received' : 'partially_received';
+
+    const updates: Record<string, unknown> = { status: newStatus };
+    if (isFullyReceived) {
+      updates.received_at = new Date().toISOString();
+    }
+
+    await supabase
+      .from('purchase_orders')
+      .update(updates)
+      .eq('id', selectedOrder.id);
+
+    toast.success(isFullyReceived ? 'Order fully received!' : 'Items received, order partially fulfilled');
+    setReceiveDialogOpen(false);
+    fetchData();
+    setSaving(false);
+  };
+
+  const getReceiveProgress = (items: PurchaseOrderItem[]) => {
+    const totalOrdered = items.reduce((sum, i) => sum + i.quantity, 0);
+    const totalReceived = items.reduce((sum, i) => sum + (i.received_quantity || 0), 0);
+    return totalOrdered > 0 ? (totalReceived / totalOrdered) * 100 : 0;
   };
 
   const addItemRow = () => {
@@ -299,23 +379,6 @@ export default function PurchaseOrders() {
     
     if (newStatus === 'submitted' && !order.submitted_at) {
       updates.submitted_at = new Date().toISOString();
-    }
-    if (newStatus === 'received' && !order.received_at) {
-      updates.received_at = new Date().toISOString();
-      
-      // Update stock quantities for received items
-      const items = await fetchOrderItems(order.id);
-      for (const item of items) {
-        if (item.product_id) {
-          const product = products.find(p => p.id === item.product_id);
-          if (product) {
-            await supabase
-              .from('products')
-              .update({ stock_quantity: product.stock_quantity + item.quantity })
-              .eq('id', item.product_id);
-          }
-        }
-      }
     }
 
     const { error } = await supabase
@@ -500,9 +563,9 @@ export default function PurchaseOrders() {
                             <Package className="h-4 w-4" />
                           </Button>
                         )}
-                        {order.status === 'shipped' && !isReadOnly && (
-                          <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(order, 'received')}>
-                            <CheckCircle className="h-4 w-4" />
+                        {(order.status === 'shipped' || order.status === 'partially_received') && !isReadOnly && (
+                          <Button variant="outline" size="sm" onClick={() => handleOpenReceiveDialog(order)} title="Receive Items">
+                            <PackageCheck className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
@@ -652,13 +715,24 @@ export default function PurchaseOrders() {
                 </div>
               </div>
 
+              {(selectedOrder.status === 'shipped' || selectedOrder.status === 'partially_received' || selectedOrder.status === 'received') && (
+                <div>
+                  <Label className="text-muted-foreground">Receiving Progress</Label>
+                  <Progress value={getReceiveProgress(orderItems)} className="mt-2" />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {orderItems.reduce((sum, i) => sum + (i.received_quantity || 0), 0)} of {orderItems.reduce((sum, i) => sum + i.quantity, 0)} items received
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label className="text-muted-foreground">Items</Label>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Product</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
+                      <TableHead className="text-right">Ordered</TableHead>
+                      <TableHead className="text-right">Received</TableHead>
                       <TableHead className="text-right">Unit Cost</TableHead>
                       <TableHead className="text-right">Total</TableHead>
                     </TableRow>
@@ -668,12 +742,17 @@ export default function PurchaseOrders() {
                       <TableRow key={item.id}>
                         <TableCell>{item.product_name}</TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">
+                          <span className={item.received_quantity >= item.quantity ? 'text-green-600' : item.received_quantity > 0 ? 'text-orange-500' : ''}>
+                            {item.received_quantity || 0}
+                          </span>
+                        </TableCell>
                         <TableCell className="text-right">${item.unit_cost.toFixed(2)}</TableCell>
                         <TableCell className="text-right">${item.total_cost.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                     <TableRow>
-                      <TableCell colSpan={3} className="font-semibold text-right">Total</TableCell>
+                      <TableCell colSpan={4} className="font-semibold text-right">Total</TableCell>
                       <TableCell className="font-semibold text-right">${selectedOrder.total_amount.toFixed(2)}</TableCell>
                     </TableRow>
                   </TableBody>
@@ -688,6 +767,95 @@ export default function PurchaseOrders() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Receive Items Dialog */}
+      <Dialog open={receiveDialogOpen} onOpenChange={setReceiveDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Receive Items</DialogTitle>
+            <DialogDescription>
+              {selectedOrder?.order_number} - Enter quantities received for each item
+            </DialogDescription>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div className="mb-4">
+                <Label className="text-muted-foreground">Current Progress</Label>
+                <Progress value={getReceiveProgress(orderItems)} className="mt-2" />
+              </div>
+              
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead className="text-right">Ordered</TableHead>
+                    <TableHead className="text-right">Already Received</TableHead>
+                    <TableHead className="text-right">Remaining</TableHead>
+                    <TableHead className="text-right">Receive Now</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orderItems.map((item, index) => {
+                    const remaining = item.quantity - (item.received_quantity || 0);
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.product_name}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{item.received_quantity || 0}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={remaining === 0 ? 'secondary' : 'outline'}>
+                            {remaining}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={remaining}
+                            value={receiveItems[index]?.quantity || 0}
+                            onChange={(e) => {
+                              const val = Math.min(parseInt(e.target.value) || 0, remaining);
+                              setReceiveItems(prev => prev.map((ri, i) => 
+                                i === index ? { ...ri, quantity: val } : ri
+                              ));
+                            }}
+                            className="w-20 ml-auto"
+                            disabled={remaining === 0}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setReceiveItems(orderItems.map(item => ({
+                      id: item.id,
+                      quantity: item.quantity - (item.received_quantity || 0),
+                      maxQty: item.quantity - (item.received_quantity || 0),
+                    })));
+                  }}
+                >
+                  Receive All Remaining
+                </Button>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReceiveDialogOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleReceiveItems} 
+              disabled={saving || !receiveItems.some(i => i.quantity > 0)}
+            >
+              {saving ? 'Saving...' : 'Confirm Receipt'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
