@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, RefreshCw, Star, Package, Truck, Shield, ArrowLeft, Plus, Minus } from "lucide-react";
+import { ShoppingCart, RefreshCw, Star, Package, Truck, Shield, ArrowLeft, Plus, Minus, X, ZoomIn } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { grindOptions, bagSizeOptions, frequencyOptions } from "@/lib/subscriptionProducts";
 import { addToCart } from "@/lib/cart";
@@ -51,6 +52,7 @@ const ProductDetail = () => {
   const [bagSize, setBagSize] = useState("12oz");
   const [frequency, setFrequency] = useState("biweekly");
   const [addingToCart, setAddingToCart] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     fetchProduct();
@@ -206,12 +208,20 @@ const ProductDetail = () => {
           <div className="grid md:grid-cols-2 gap-12">
             {/* Product Image Gallery */}
             <div className="relative space-y-4">
-              <div className="aspect-square rounded-lg overflow-hidden bg-card border">
+              <div 
+                className="aspect-square rounded-lg overflow-hidden bg-card border cursor-zoom-in group relative"
+                onDoubleClick={() => setLightboxOpen(true)}
+              >
                 <img
                   src={images[selectedImageIndex]?.url}
                   alt={images[selectedImageIndex]?.alt}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
                 />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10 pointer-events-none">
+                  <div className="bg-background/80 backdrop-blur-sm rounded-full p-2">
+                    <ZoomIn className="h-6 w-6 text-foreground" />
+                  </div>
+                </div>
               </div>
               {!product.in_stock && (
                 <Badge variant="destructive" className="absolute top-4 left-4">
@@ -234,13 +244,53 @@ const ProductDetail = () => {
                       <img
                         src={img.url}
                         alt={img.alt}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain bg-card"
                       />
                     </button>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Lightbox Dialog */}
+            <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+              <DialogContent className="max-w-4xl w-full p-0 bg-black/95 border-none">
+                <button
+                  onClick={() => setLightboxOpen(false)}
+                  className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                >
+                  <X className="h-6 w-6 text-white" />
+                </button>
+                <div className="relative w-full h-[80vh] flex items-center justify-center p-4">
+                  <img
+                    src={images[selectedImageIndex]?.url}
+                    alt={images[selectedImageIndex]?.alt}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+                {images.length > 1 && (
+                  <div className="flex gap-2 justify-center pb-4">
+                    {images.map((img, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${
+                          selectedImageIndex === index 
+                            ? 'border-primary ring-2 ring-primary/30' 
+                            : 'border-white/20 hover:border-white/50'
+                        }`}
+                      >
+                        <img
+                          src={img.url}
+                          alt={img.alt}
+                          className="w-full h-full object-contain bg-black"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
 
             {/* Product Info */}
             <div className="space-y-6">
