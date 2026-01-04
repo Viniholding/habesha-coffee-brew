@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 import StockForecastChart from './StockForecastChart';
 import ReorderSuggestions from './ReorderSuggestions';
+import PendingPurchaseOrders from './PendingPurchaseOrders';
 
 interface DashboardStats {
   todayRevenue: number;
@@ -428,6 +429,11 @@ const EnhancedDashboard = () => {
       <div className="grid gap-6 lg:grid-cols-2">
         <StockForecastChart />
         <ReorderSuggestions />
+      </div>
+
+      {/* Pending Purchase Orders */}
+      <div className="grid gap-6 lg:grid-cols-1">
+        <PendingPurchaseOrders />
       </div>
     </div>
   );
