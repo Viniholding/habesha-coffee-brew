@@ -53,6 +53,11 @@ const ProductDetail = () => {
   const [frequency, setFrequency] = useState("biweekly");
   const [addingToCart, setAddingToCart] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string>("white");
+
+  // Check if product is a coffee (not accessory) - only coffee can be subscribed
+  const isCoffee = product?.category === "coffee";
+  const isMug = product?.name?.toLowerCase().includes("mug");
 
   useEffect(() => {
     fetchProduct();
@@ -95,6 +100,24 @@ const ProductDetail = () => {
   };
 
   const images = getAllImages();
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        setSelectedImageIndex(prev => (prev > 0 ? prev - 1 : images.length - 1));
+      } else if (e.key === "ArrowRight") {
+        setSelectedImageIndex(prev => (prev < images.length - 1 ? prev + 1 : 0));
+      } else if (e.key === "Escape") {
+        setLightboxOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen, images.length]);
 
   const getBagMultiplier = () => {
     const option = bagSizeOptions.find(o => o.value === bagSize);
@@ -252,7 +275,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Lightbox Dialog */}
+              {/* Lightbox Dialog */}
             <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
               <DialogContent className="max-w-4xl w-full p-0 bg-black/95 border-none">
                 <button
@@ -261,6 +284,25 @@ const ProductDetail = () => {
                 >
                   <X className="h-6 w-6 text-white" />
                 </button>
+                {/* Arrow navigation buttons */}
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setSelectedImageIndex(prev => (prev > 0 ? prev - 1 : images.length - 1))}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                      aria-label="Previous image"
+                    >
+                      <ArrowLeft className="h-6 w-6 text-white" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedImageIndex(prev => (prev < images.length - 1 ? prev + 1 : 0))}
+                      className="absolute right-16 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                      aria-label="Next image"
+                    >
+                      <ArrowLeft className="h-6 w-6 text-white rotate-180" />
+                    </button>
+                  </>
+                )}
                 <div className="relative w-full h-[80vh] flex items-center justify-center p-4">
                   <img
                     src={images[selectedImageIndex]?.url}
@@ -269,24 +311,27 @@ const ProductDetail = () => {
                   />
                 </div>
                 {images.length > 1 && (
-                  <div className="flex gap-2 justify-center pb-4">
-                    {images.map((img, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImageIndex(index)}
-                        className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${
-                          selectedImageIndex === index 
-                            ? 'border-primary ring-2 ring-primary/30' 
-                            : 'border-white/20 hover:border-white/50'
-                        }`}
-                      >
-                        <img
-                          src={img.url}
-                          alt={img.alt}
-                          className="w-full h-full object-contain bg-black"
-                        />
-                      </button>
-                    ))}
+                  <div className="flex flex-col items-center gap-2 pb-4">
+                    <span className="text-white/60 text-sm">Use arrow keys to navigate</span>
+                    <div className="flex gap-2 justify-center">
+                      {images.map((img, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${
+                            selectedImageIndex === index 
+                              ? 'border-primary ring-2 ring-primary/30' 
+                              : 'border-white/20 hover:border-white/50'
+                          }`}
+                        >
+                          <img
+                            src={img.url}
+                            alt={img.alt}
+                            className="w-full h-full object-contain bg-black"
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </DialogContent>
@@ -312,17 +357,50 @@ const ProductDetail = () => {
                 </p>
               </div>
 
+              {/* Color selector for mugs */}
+              {isMug && (
+                <div>
+                  <Label className="text-base font-medium">Color</Label>
+                  <RadioGroup
+                    value={selectedColor}
+                    onValueChange={setSelectedColor}
+                    className="flex gap-3 mt-2"
+                  >
+                    {["white", "black"].map((color) => (
+                      <div key={color}>
+                        <RadioGroupItem
+                          value={color}
+                          id={`color-${color}`}
+                          className="peer sr-only"
+                        />
+                        <Label
+                          htmlFor={`color-${color}`}
+                          className={`flex items-center gap-2 rounded-md border-2 border-muted bg-card px-4 py-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer`}
+                        >
+                          <span 
+                            className={`w-5 h-5 rounded-full border ${color === 'white' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`} 
+                          />
+                          <span className="capitalize font-medium">{color}</span>
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              )}
+
               {/* Purchase Type Tabs */}
               <Tabs value={purchaseType} onValueChange={(v) => setPurchaseType(v as "one-time" | "subscription")}>
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className={`grid w-full ${isCoffee ? 'grid-cols-2' : 'grid-cols-1'}`}>
                   <TabsTrigger value="one-time" className="gap-2">
                     <ShoppingCart className="h-4 w-4" />
                     One-Time Purchase
                   </TabsTrigger>
-                  <TabsTrigger value="subscription" className="gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    Subscribe & Save 10%
-                  </TabsTrigger>
+                  {isCoffee && (
+                    <TabsTrigger value="subscription" className="gap-2">
+                      <RefreshCw className="h-4 w-4" />
+                      Subscribe & Save 10%
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <TabsContent value="one-time" className="space-y-4 mt-4">
