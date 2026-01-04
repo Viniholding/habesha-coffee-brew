@@ -167,7 +167,8 @@ const Products = () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, description, price, image_url, category, in_stock, stock_quantity, low_stock_threshold")
+        .select("id, name, description, price, image_url, category, in_stock, stock_quantity, low_stock_threshold, display_order")
+        .order("display_order")
         .order("name");
 
       if (error) throw error;
