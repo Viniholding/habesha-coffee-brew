@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle } from "lucide-react";
 import { addToCart } from "@/lib/cart";
 import { resolveProductImage, defaultProductImage } from "@/lib/productImages";
 
@@ -16,6 +16,8 @@ interface Product {
   image_url: string | null;
   category: string | null;
   in_stock: boolean;
+  stock_quantity: number;
+  low_stock_threshold: number;
 }
 
 const Products = () => {
@@ -70,12 +72,30 @@ const Products = () => {
     fetchProducts();
   }, []);
 
+  // Get mug image based on selected color
+  const getMugImage = (color: 'white' | 'black') => {
+    // Use different placeholder images based on color
+    return color === 'white' 
+      ? 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=400&h=400&fit=crop' 
+      : 'https://images.unsplash.com/photo-1572119865084-43c285814d63?w=400&h=400&fit=crop';
+  };
+
+  // Get stock status for display
+  const getStockStatus = (product: Product) => {
+    if (!product.in_stock || product.stock_quantity <= 0) {
+      return { label: 'Out of Stock', color: 'text-destructive', icon: XCircle, variant: 'destructive' as const };
+    }
+    if (product.stock_quantity <= product.low_stock_threshold) {
+      return { label: `Only ${product.stock_quantity} left`, color: 'text-amber-500', icon: AlertTriangle, variant: 'secondary' as const };
+    }
+    return { label: 'In Stock', color: 'text-green-500', icon: PackageCheck, variant: 'secondary' as const };
+  };
+
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, description, price, image_url, category, in_stock")
-        .eq("in_stock", true)
+        .select("id, name, description, price, image_url, category, in_stock, stock_quantity, low_stock_threshold")
         .order("name");
 
       if (error) throw error;
@@ -170,8 +190,8 @@ const Products = () => {
                 
                 <div className="relative h-80 overflow-hidden bg-card">
                   <img 
-                    src={resolveProductImage(product.image_url)} 
-                    alt={isThisMug ? "Coffee Mug" : product.name}
+                    src={isThisMug ? getMugImage(mugColor) : resolveProductImage(product.image_url)} 
+                    alt={isThisMug ? `Coffee Mug - ${mugColor}` : product.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
@@ -191,7 +211,19 @@ const Products = () => {
                 
                 <div className="p-6 space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-2xl font-bold">{isThisMug ? "Coffee Mug" : product.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-2xl font-bold">{isThisMug ? "Coffee Mug" : product.name}</h3>
+                      {(() => {
+                        const stockStatus = getStockStatus(displayProduct || product);
+                        const StockIcon = stockStatus.icon;
+                        return (
+                          <Badge variant={stockStatus.variant} className={`${stockStatus.color} flex items-center gap-1`}>
+                            <StockIcon className="h-3 w-3" />
+                            <span className="text-xs">{stockStatus.label}</span>
+                          </Badge>
+                        );
+                      })()}
+                    </div>
                     <p className="text-sm text-primary">{product.category || "Premium Coffee"}</p>
                     <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
                       {isThisMug 
@@ -297,26 +329,38 @@ const Products = () => {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button 
-                        variant="hero" 
-                        className={product.category === "coffee" ? "flex-1" : "w-full"} 
-                        size="lg"
-                        disabled={addingToCart === productId}
-                        onClick={(e) => handleAddToCart(displayProduct || product, e)}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        {addingToCart === productId ? "Adding..." : `Add ${getQuantity(productId) > 1 ? `(${getQuantity(productId)})` : ''} to Cart`}
-                      </Button>
-                      {product.category === "coffee" && (
-                        <Button 
-                          variant="outline" 
-                          size="lg"
-                          onClick={(e) => handleSubscribe(productId, e)}
-                          title="Subscribe & Save 10%"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      )}
+                      {(() => {
+                        const currentProduct = displayProduct || product;
+                        const isOutOfStock = !currentProduct.in_stock || currentProduct.stock_quantity <= 0;
+                        return (
+                          <>
+                            <Button 
+                              variant="hero" 
+                              className={product.category === "coffee" ? "flex-1" : "w-full"} 
+                              size="lg"
+                              disabled={addingToCart === productId || isOutOfStock}
+                              onClick={(e) => handleAddToCart(currentProduct, e)}
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-2" />
+                              {isOutOfStock 
+                                ? "Out of Stock" 
+                                : addingToCart === productId 
+                                  ? "Adding..." 
+                                  : `Add ${getQuantity(productId) > 1 ? `(${getQuantity(productId)})` : ''} to Cart`}
+                            </Button>
+                            {product.category === "coffee" && !isOutOfStock && (
+                              <Button 
+                                variant="outline" 
+                                size="lg"
+                                onClick={(e) => handleSubscribe(productId, e)}
+                                title="Subscribe & Save 10%"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
