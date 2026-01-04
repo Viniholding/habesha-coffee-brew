@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Star, RefreshCw, Eye } from "lucide-react";
-import productBag from "@/assets/product-bag.jpg";
 import { addToCart } from "@/lib/cart";
+import { resolveProductImage, defaultProductImage } from "@/lib/productImages";
 
 interface Product {
   id: string;
@@ -114,7 +114,7 @@ const Products = () => {
               
               <div className="relative h-80 overflow-hidden bg-card">
                 <img 
-                  src={product.image_url || productBag} 
+                  src={resolveProductImage(product.image_url)} 
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
