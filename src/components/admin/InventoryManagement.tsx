@@ -9,14 +9,46 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
-import { Package, AlertTriangle, Edit, Eye, Plus, Upload, X, Loader2, DollarSign, TrendingDown } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Package, AlertTriangle, Edit, Eye, Plus, Upload, X, Loader2, DollarSign, TrendingDown, History } from 'lucide-react';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import AddInventoryDialog from './AddInventoryDialog';
 import BulkStockUpdate from './BulkStockUpdate';
 import InventoryFilters from './InventoryFilters';
 import ProductImageGallery from './ProductImageGallery';
+import { InventoryAuditLog } from './InventoryAuditLog';
 import { logAdminAction } from '@/lib/auditLog';
 import { Checkbox } from '@/components/ui/checkbox';
+
+// Helper function to log inventory changes
+export const logInventoryChange = async (
+  productId: string,
+  previousQuantity: number,
+  newQuantity: number,
+  changeType: string,
+  notes?: string
+) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase.from('inventory_audit_log').insert({
+      product_id: productId,
+      admin_user_id: user.id,
+      previous_quantity: previousQuantity,
+      new_quantity: newQuantity,
+      quantity_change: newQuantity - previousQuantity,
+      change_type: changeType,
+      notes: notes || null,
+    });
+
+    if (error) {
+      console.error('Failed to log inventory change:', error);
+    }
+  } catch (error) {
+    console.error('Error logging inventory change:', error);
+  }
+};
 
 interface Product {
   id: string;
@@ -102,6 +134,15 @@ export const InventoryManagement = () => {
         .eq('id', productId);
 
       if (error) throw error;
+      
+      // Log to inventory audit log
+      await logInventoryChange(
+        productId,
+        oldQuantity,
+        newQuantity,
+        'manual_adjustment',
+        `Stock updated from ${oldQuantity} to ${newQuantity}`
+      );
       
       await logAdminAction({
         actionType: 'inventory_updated',
@@ -315,24 +356,38 @@ export const InventoryManagement = () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <CardTitle>Inventory ({filteredProducts.length})</CardTitle>
-            <div className="flex flex-wrap gap-2">
-              {canEdit && (
-                <>
-                  <BulkStockUpdate products={products} onUpdate={fetchProducts} />
-                  <Button onClick={() => setIsAddDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Product
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      {/* Tabs for Inventory and Audit Log */}
+      <Tabs defaultValue="inventory" className="w-full">
+        <TabsList>
+          <TabsTrigger value="inventory" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Inventory
+          </TabsTrigger>
+          <TabsTrigger value="audit-log" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Audit Log
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="inventory" className="mt-4">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <CardTitle>Inventory ({filteredProducts.length})</CardTitle>
+                <div className="flex flex-wrap gap-2">
+                  {canEdit && (
+                    <>
+                      <BulkStockUpdate products={products} onUpdate={fetchProducts} />
+                      <Button onClick={() => setIsAddDialogOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Product
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
           {/* Filters */}
           <InventoryFilters
             searchQuery={searchQuery}
@@ -621,6 +676,12 @@ export const InventoryManagement = () => {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="audit-log" className="mt-4">
+          <InventoryAuditLog />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -620,6 +620,50 @@ export type Database = {
           },
         ]
       }
+      inventory_audit_log: {
+        Row: {
+          admin_user_id: string
+          change_type: string
+          created_at: string
+          id: string
+          new_quantity: number
+          notes: string | null
+          previous_quantity: number
+          product_id: string
+          quantity_change: number
+        }
+        Insert: {
+          admin_user_id: string
+          change_type: string
+          created_at?: string
+          id?: string
+          new_quantity: number
+          notes?: string | null
+          previous_quantity: number
+          product_id: string
+          quantity_change: number
+        }
+        Update: {
+          admin_user_id?: string
+          change_type?: string
+          created_at?: string
+          id?: string
+          new_quantity?: number
+          notes?: string | null
+          previous_quantity?: number
+          product_id?: string
+          quantity_change?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_audit_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -956,6 +1000,7 @@ export type Database = {
       }
       products: {
         Row: {
+          avg_daily_sales: number | null
           category: string | null
           cost_price: number | null
           created_at: string
@@ -963,9 +1008,11 @@ export type Database = {
           id: string
           image_url: string | null
           in_stock: boolean
+          last_sales_calculation: string | null
           low_stock_threshold: number
           name: string
           price: number
+          reorder_point: number | null
           sku: string | null
           stock_quantity: number
           supplier_email: string | null
@@ -973,6 +1020,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avg_daily_sales?: number | null
           category?: string | null
           cost_price?: number | null
           created_at?: string
@@ -980,9 +1028,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean
+          last_sales_calculation?: string | null
           low_stock_threshold?: number
           name: string
           price: number
+          reorder_point?: number | null
           sku?: string | null
           stock_quantity?: number
           supplier_email?: string | null
@@ -990,6 +1040,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avg_daily_sales?: number | null
           category?: string | null
           cost_price?: number | null
           created_at?: string
@@ -997,9 +1048,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean
+          last_sales_calculation?: string | null
           low_stock_threshold?: number
           name?: string
           price?: number
+          reorder_point?: number | null
           sku?: string | null
           stock_quantity?: number
           supplier_email?: string | null
