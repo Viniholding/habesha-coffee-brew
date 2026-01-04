@@ -40,10 +40,10 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">Follow Us</h3>
             <div className="flex gap-4">
-              <a href="https://www.facebook.com/CoffeeHabesha" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+              <a href="https://www.facebook.com/coffeebycoffeehabesha/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="https://www.instagram.com/coffeehabesha" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
+              <a href="https://www.instagram.com/coffee.habesha/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
             </div>
