@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Star, RefreshCw, Eye } from "lucide-react";
+import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus } from "lucide-react";
 import { addToCart } from "@/lib/cart";
 import { resolveProductImage, defaultProductImage } from "@/lib/productImages";
 
@@ -23,6 +23,17 @@ const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  const getQuantity = (productId: string) => quantities[productId] || 1;
+  
+  const updateQuantity = (productId: string, delta: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: Math.max(1, Math.min(10, (prev[productId] || 1) + delta))
+    }));
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -49,13 +60,22 @@ const Products = () => {
     e.stopPropagation();
     e.preventDefault();
     setAddingToCart(product.id);
-    await addToCart(product.id, 1, {
+    const qty = getQuantity(product.id);
+    await addToCart(product.id, qty, {
       id: product.id,
       name: product.name,
       price: product.price,
       image_url: product.image_url,
     });
     setAddingToCart(null);
+  };
+
+  const getProductSize = (product: Product): string | null => {
+    const name = product.name.toLowerCase();
+    if (name.includes('350ml') || name.includes('350 ml')) return '350ml';
+    if (name.includes('500ml') || name.includes('500 ml')) return '500ml';
+    if (product.category === 'coffee') return '12oz';
+    return null;
   };
 
   const handleSubscribe = (productId: string, e: React.MouseEvent) => {
@@ -144,13 +164,44 @@ const Products = () => {
                 
                 <div className="pt-4 border-t border-border space-y-4">
                   <div className="flex items-baseline justify-between">
-                    <div>
+                    <div className="flex items-center gap-2">
                       <span className="text-3xl font-bold">${product.price.toFixed(2)}</span>
+                      {getProductSize(product) && (
+                        <Badge variant="secondary" className="text-xs">
+                          {getProductSize(product)}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 text-primary">
                       {[1, 2, 3, 4, 5].map((i) => (
                         <Star key={i} className="h-4 w-4 fill-primary" />
                       ))}
+                    </div>
+                  </div>
+                  
+                  {/* Quantity Selector */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Quantity:</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => updateQuantity(product.id, -1, e)}
+                        disabled={getQuantity(product.id) <= 1}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-8 text-center font-medium">{getQuantity(product.id)}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => updateQuantity(product.id, 1, e)}
+                        disabled={getQuantity(product.id) >= 10}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                   
@@ -163,7 +214,7 @@ const Products = () => {
                       onClick={(e) => handleAddToCart(product, e)}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      {addingToCart === product.id ? "Adding..." : "Add to Cart"}
+                      {addingToCart === product.id ? "Adding..." : `Add ${getQuantity(product.id) > 1 ? `(${getQuantity(product.id)})` : ''} to Cart`}
                     </Button>
                     {product.category === "coffee" && (
                       <Button 
