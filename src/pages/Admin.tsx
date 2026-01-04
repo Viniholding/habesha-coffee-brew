@@ -18,6 +18,8 @@ import AdminUsersManagement from '@/components/admin/AdminUsersManagement';
 import AdminAuditLog from '@/components/admin/AdminAuditLog';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AbuseDetection from '@/components/admin/AbuseDetection';
+import SupplierManagement from '@/components/admin/SupplierManagement';
+import ProductOrdering from '@/components/admin/ProductOrdering';
 import { Routes, Route } from 'react-router-dom';
 
 const Admin = () => {
@@ -55,6 +57,8 @@ const AdminRoutes = () => {
         <Route path="promotions" element={<PromotionsManagement />} />
         <Route path="promotion-analytics" element={<PromotionAnalytics />} />
         <Route path="inventory" element={<InventoryManagement />} />
+        <Route path="suppliers" element={<SupplierManagement />} />
+        <Route path="product-ordering" element={<ProductOrdering />} />
         <Route path="analytics" element={<AnalyticsDashboard />} />
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="segments" element={<CustomerSegments />} />

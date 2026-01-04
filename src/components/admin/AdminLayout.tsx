@@ -19,7 +19,9 @@ import {
   Shield,
   FileText,
   Plus,
-  AlertTriangle
+  AlertTriangle,
+  Truck,
+  ArrowUpDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +55,8 @@ const getNavigation = (adminLevel: 'owner' | 'manager' | 'support' | null) => {
     { name: 'Promotions', href: '/commandcenter/promotions', icon: Tag },
     { name: 'Promotion Analytics', href: '/commandcenter/promotion-analytics', icon: BarChart3 },
     { name: 'Inventory', href: '/commandcenter/inventory', icon: Plus },
+    { name: 'Suppliers', href: '/commandcenter/suppliers', icon: Truck },
+    { name: 'Product Order', href: '/commandcenter/product-ordering', icon: ArrowUpDown },
     { name: 'Audit Log', href: '/commandcenter/audit-log', icon: FileText },
     { name: 'Abuse Detection', href: '/commandcenter/abuse-detection', icon: AlertTriangle },
   ];
@@ -79,7 +83,7 @@ export const AdminLayout = () => {
   
   // Route protection - block unauthorized access
   const ownerOnlyRoutes = ['/commandcenter/users', '/commandcenter/settings'];
-  const managerRoutes = ['/commandcenter/collections', '/commandcenter/homepage', '/commandcenter/segments', '/commandcenter/abandoned-carts', '/commandcenter/subscriptions', '/commandcenter/program-config', '/commandcenter/promotions', '/commandcenter/promotion-analytics', '/commandcenter/inventory', '/commandcenter/audit-log', '/commandcenter/abuse-detection'];
+  const managerRoutes = ['/commandcenter/collections', '/commandcenter/homepage', '/commandcenter/segments', '/commandcenter/abandoned-carts', '/commandcenter/subscriptions', '/commandcenter/program-config', '/commandcenter/promotions', '/commandcenter/promotion-analytics', '/commandcenter/inventory', '/commandcenter/suppliers', '/commandcenter/product-ordering', '/commandcenter/audit-log', '/commandcenter/abuse-detection'];
   
   const currentPath = location.pathname;
   

@@ -1005,6 +1005,7 @@ export type Database = {
           cost_price: number | null
           created_at: string
           description: string | null
+          display_order: number | null
           id: string
           image_url: string | null
           in_stock: boolean
@@ -1016,6 +1017,7 @@ export type Database = {
           sku: string | null
           stock_quantity: number
           supplier_email: string | null
+          supplier_id: string | null
           supplier_name: string | null
           updated_at: string
         }
@@ -1025,6 +1027,7 @@ export type Database = {
           cost_price?: number | null
           created_at?: string
           description?: string | null
+          display_order?: number | null
           id?: string
           image_url?: string | null
           in_stock?: boolean
@@ -1036,6 +1039,7 @@ export type Database = {
           sku?: string | null
           stock_quantity?: number
           supplier_email?: string | null
+          supplier_id?: string | null
           supplier_name?: string | null
           updated_at?: string
         }
@@ -1045,6 +1049,7 @@ export type Database = {
           cost_price?: number | null
           created_at?: string
           description?: string | null
+          display_order?: number | null
           id?: string
           image_url?: string | null
           in_stock?: boolean
@@ -1056,10 +1061,19 @@ export type Database = {
           sku?: string | null
           stock_quantity?: number
           supplier_email?: string | null
+          supplier_id?: string | null
           supplier_name?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1622,6 +1636,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          lead_time_days: number | null
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          lead_time_days?: number | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          lead_time_days?: number | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
