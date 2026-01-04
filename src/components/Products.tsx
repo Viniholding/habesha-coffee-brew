@@ -24,6 +24,8 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [mugSize, setMugSize] = useState<'350ml' | '500ml'>('350ml');
+  const [mugColor, setMugColor] = useState<'white' | 'black'>('white');
 
   const getQuantity = (productId: string) => quantities[productId] || 1;
   
@@ -33,6 +35,35 @@ const Products = () => {
       ...prev,
       [productId]: Math.max(1, Math.min(10, (prev[productId] || 1) + delta))
     }));
+  };
+
+  // Check if product is a coffee mug
+  const isCoffeeMug = (product: Product) => 
+    product.name.toLowerCase().includes('coffee mug');
+
+  // Get the primary mug product (use 350ml as base, adjust price for 500ml)
+  const getMugDisplayProduct = (products: Product[]) => {
+    const mugs = products.filter(isCoffeeMug);
+    const mug350 = mugs.find(m => m.name.toLowerCase().includes('350ml'));
+    const mug500 = mugs.find(m => m.name.toLowerCase().includes('500ml'));
+    
+    if (mugSize === '500ml' && mug500) return mug500;
+    return mug350 || mugs[0];
+  };
+
+  // Filter products to show consolidated view
+  const getDisplayProducts = (products: Product[]) => {
+    const mugs = products.filter(isCoffeeMug);
+    const nonMugs = products.filter(p => !isCoffeeMug(p));
+    
+    // Add only one mug representative if mugs exist
+    if (mugs.length > 0) {
+      const displayMug = getMugDisplayProduct(products);
+      if (displayMug) {
+        return [...nonMugs, displayMug];
+      }
+    }
+    return nonMugs;
   };
 
   useEffect(() => {
@@ -120,117 +151,178 @@ const Products = () => {
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {products.map((product) => (
-            <Card 
-              key={product.id}
-              className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.2)] group relative cursor-pointer"
-              onClick={() => navigate(`/products/${product.id}`)}
-            >
-              {product.category === "coffee" && (
-                <Badge className="absolute top-4 right-4 z-10 bg-primary text-primary-foreground shadow-lg">
-                  Coffee
-                </Badge>
-              )}
-              
-              <div className="relative h-80 overflow-hidden bg-card">
-                <img 
-                  src={resolveProductImage(product.image_url)} 
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                  <Button 
-                    variant="secondary" 
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/products/${product.id}`);
-                    }}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Details
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="p-6 space-y-4">
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold">{product.name}</h3>
-                  <p className="text-sm text-primary">{product.category || "Premium Coffee"}</p>
-                  <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
-                    {product.description || "Premium Ethiopian coffee with exceptional flavor notes."}
-                  </p>
+          {getDisplayProducts(products).map((product) => {
+            const isThisMug = isCoffeeMug(product);
+            const displayProduct = isThisMug ? getMugDisplayProduct(products) : product;
+            const productId = displayProduct?.id || product.id;
+            
+            return (
+              <Card 
+                key={isThisMug ? 'coffee-mug-consolidated' : product.id}
+                className="overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_hsl(var(--primary)/0.2)] group relative cursor-pointer"
+                onClick={() => navigate(`/products/${productId}`)}
+              >
+                {product.category === "coffee" && (
+                  <Badge className="absolute top-4 right-4 z-10 bg-primary text-primary-foreground shadow-lg">
+                    Coffee
+                  </Badge>
+                )}
+                
+                <div className="relative h-80 overflow-hidden bg-card">
+                  <img 
+                    src={resolveProductImage(product.image_url)} 
+                    alt={isThisMug ? "Coffee Mug" : product.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                    <Button 
+                      variant="secondary" 
+                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/products/${productId}`);
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Details
+                    </Button>
+                  </div>
                 </div>
                 
-                <div className="pt-4 border-t border-border space-y-4">
-                  <div className="flex items-baseline justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-3xl font-bold">${product.price.toFixed(2)}</span>
-                      {getProductSize(product) && (
-                        <Badge variant="secondary" className="text-xs">
-                          {getProductSize(product)}
-                        </Badge>
+                <div className="p-6 space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold">{isThisMug ? "Coffee Mug" : product.name}</h3>
+                    <p className="text-sm text-primary">{product.category || "Premium Coffee"}</p>
+                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
+                      {isThisMug 
+                        ? "Premium ceramic coffee mug. Available in white and black."
+                        : (product.description || "Premium Ethiopian coffee with exceptional flavor notes.")}
+                    </p>
+                  </div>
+                  
+                  {/* Mug Size & Color Selectors */}
+                  {isThisMug && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Size:</span>
+                        <div className="flex gap-2">
+                          {(['350ml', '500ml'] as const).map((size) => (
+                            <Button
+                              key={size}
+                              variant={mugSize === size ? "default" : "outline"}
+                              size="sm"
+                              className="h-8 px-3"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMugSize(size);
+                              }}
+                            >
+                              {size}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Color:</span>
+                        <div className="flex gap-2">
+                          {(['white', 'black'] as const).map((color) => (
+                            <button
+                              key={color}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMugColor(color);
+                              }}
+                              className={`w-8 h-8 rounded-full border-2 transition-all ${
+                                mugColor === color 
+                                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' 
+                                  : 'hover:scale-110'
+                              } ${color === 'white' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}
+                              title={color.charAt(0).toUpperCase() + color.slice(1)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="pt-4 border-t border-border space-y-4">
+                    <div className="flex items-baseline justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl font-bold">
+                          ${(displayProduct?.price || product.price).toFixed(2)}
+                        </span>
+                        {isThisMug ? (
+                          <Badge variant="secondary" className="text-xs">
+                            {mugSize}
+                          </Badge>
+                        ) : (
+                          getProductSize(product) && (
+                            <Badge variant="secondary" className="text-xs">
+                              {getProductSize(product)}
+                            </Badge>
+                          )
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-primary">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star key={i} className="h-4 w-4 fill-primary" />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Quantity Selector */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Quantity:</span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => updateQuantity(productId, -1, e)}
+                          disabled={getQuantity(productId) <= 1}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center font-medium">{getQuantity(productId)}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => updateQuantity(productId, 1, e)}
+                          disabled={getQuantity(productId) >= 10}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="hero" 
+                        className={product.category === "coffee" ? "flex-1" : "w-full"} 
+                        size="lg"
+                        disabled={addingToCart === productId}
+                        onClick={(e) => handleAddToCart(displayProduct || product, e)}
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        {addingToCart === productId ? "Adding..." : `Add ${getQuantity(productId) > 1 ? `(${getQuantity(productId)})` : ''} to Cart`}
+                      </Button>
+                      {product.category === "coffee" && (
+                        <Button 
+                          variant="outline" 
+                          size="lg"
+                          onClick={(e) => handleSubscribe(productId, e)}
+                          title="Subscribe & Save 10%"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 text-primary">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="h-4 w-4 fill-primary" />
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Quantity Selector */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Quantity:</span>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => updateQuantity(product.id, -1, e)}
-                        disabled={getQuantity(product.id) <= 1}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-8 text-center font-medium">{getQuantity(product.id)}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => updateQuantity(product.id, 1, e)}
-                        disabled={getQuantity(product.id) >= 10}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="hero" 
-                      className={product.category === "coffee" ? "flex-1" : "w-full"} 
-                      size="lg"
-                      disabled={addingToCart === product.id}
-                      onClick={(e) => handleAddToCart(product, e)}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      {addingToCart === product.id ? "Adding..." : `Add ${getQuantity(product.id) > 1 ? `(${getQuantity(product.id)})` : ''} to Cart`}
-                    </Button>
-                    {product.category === "coffee" && (
-                      <Button 
-                        variant="outline" 
-                        size="lg"
-                        onClick={(e) => handleSubscribe(product.id, e)}
-                        title="Subscribe & Save 10%"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       </div>
     </section>
