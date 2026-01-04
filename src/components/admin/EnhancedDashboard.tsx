@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo.png';
+import StockForecastChart from './StockForecastChart';
+import ReorderSuggestions from './ReorderSuggestions';
 
 interface DashboardStats {
   todayRevenue: number;
@@ -420,6 +422,12 @@ const EnhancedDashboard = () => {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Stock Forecast & Reorder Suggestions */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <StockForecastChart />
+        <ReorderSuggestions />
       </div>
     </div>
   );
