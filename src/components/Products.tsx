@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import { addToCart } from "@/lib/cart";
 import { resolveProductImage, grinderImages } from "@/lib/productImages";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ interface Product {
 }
 
 type SortOption = 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc' | 'stock-first' | 'out-of-stock-first';
+type CategoryFilter = 'all' | 'coffee' | 'accessories';
 
 const Products = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const Products = () => {
   const [mugSize, setMugSize] = useState<'350ml' | '500ml'>('350ml');
   const [mugColor, setMugColor] = useState<'white' | 'black'>('white');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [notifyEmail, setNotifyEmail] = useState<Record<string, string>>({});
   const [notifyingProduct, setNotifyingProduct] = useState<string | null>(null);
   const [grinderImageIndex, setGrinderImageIndex] = useState(0);
@@ -79,6 +81,16 @@ const Products = () => {
       }
     }
     return nonMugs;
+  };
+
+  // Filter products by category
+  const filterByCategory = (products: Product[]) => {
+    if (categoryFilter === 'all') return products;
+    if (categoryFilter === 'coffee') {
+      return products.filter(p => p.category === 'coffee');
+    }
+    // accessories = everything that's not coffee
+    return products.filter(p => p.category !== 'coffee');
   };
 
   // Sort products
@@ -253,8 +265,21 @@ const Products = () => {
           </p>
         </div>
 
-        {/* Sorting Options */}
-        <div className="flex justify-end mb-8">
+        {/* Filter & Sorting Options */}
+        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-8">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as CategoryFilter)}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Products</SelectItem>
+                <SelectItem value="coffee">Coffee</SelectItem>
+                <SelectItem value="accessories">Accessories</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
@@ -274,7 +299,7 @@ const Products = () => {
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {sortProducts(getDisplayProducts(products)).map((product) => {
+          {sortProducts(filterByCategory(getDisplayProducts(products))).map((product) => {
             const isThisMug = isCoffeeMug(product);
             const isThisGrinder = isHandGrinder(product);
             const displayProduct = isThisMug ? getMugDisplayProduct(products) : product;
