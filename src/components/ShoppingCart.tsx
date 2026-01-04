@@ -288,9 +288,9 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
               </div>
               <Button 
                 className="w-full" 
-                onClick={() => navigate("/checkout")}
+                asChild
               >
-                Checkout
+                <a href="https://www.shop.coffeehabesha.com/cart/" target="_blank" rel="noopener noreferrer">View Cart</a>
               </Button>
             </div>
           </>
