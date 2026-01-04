@@ -1,9 +1,46 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Contact = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-contact-email", {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      toast.success("Message sent successfully! We'll get back to you soon.");
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message. Please try again or email us directly.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -28,14 +65,18 @@ const Contact = () => {
                     <Mail className="w-6 h-6 text-primary mt-1" />
                     <div>
                       <p className="font-semibold text-foreground">Email</p>
-                      <p className="text-muted-foreground">info@coffeehabesha.com</p>
+                      <a href="mailto:info@coffeehabesha.com" className="text-muted-foreground hover:text-primary transition-colors">
+                        info@coffeehabesha.com
+                      </a>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
                     <Phone className="w-6 h-6 text-primary mt-1" />
                     <div>
                       <p className="font-semibold text-foreground">Phone</p>
-                      <p className="text-muted-foreground">+1 (555) 123-4567</p>
+                      <a href="tel:+12405551234" className="text-muted-foreground hover:text-primary transition-colors">
+                        +1 (240) 555-1234
+                      </a>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -56,8 +97,8 @@ const Contact = () => {
                   Business Hours
                 </h4>
                 <p className="text-muted-foreground">
-                  Monday - Friday: 9:00 AM - 6:00 PM<br />
-                  Saturday: 10:00 AM - 4:00 PM<br />
+                  Monday - Friday: 9:00 AM - 6:00 PM EST<br />
+                  Saturday: 10:00 AM - 4:00 PM EST<br />
                   Sunday: Closed
                 </p>
               </div>
@@ -67,36 +108,61 @@ const Contact = () => {
               <h3 className="text-2xl font-semibold mb-6 text-foreground">
                 Send us a Message
               </h3>
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <div>
                   <label className="block text-sm font-medium mb-2 text-foreground">
-                    Name
+                    Name *
                   </label>
-                  <Input placeholder="Your name" />
+                  <Input 
+                    placeholder="Your name" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2 text-foreground">
-                    Email
+                    Email *
                   </label>
-                  <Input type="email" placeholder="your@email.com" />
+                  <Input 
+                    type="email" 
+                    placeholder="your@email.com" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2 text-foreground">
                     Subject
                   </label>
-                  <Input placeholder="What's this about?" />
+                  <Input 
+                    placeholder="What's this about?" 
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2 text-foreground">
-                    Message
+                    Message *
                   </label>
                   <Textarea 
                     placeholder="Tell us more..." 
                     className="min-h-[120px]"
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    required
                   />
                 </div>
-                <Button variant="hero" size="lg" className="w-full">
-                  Send Message
+                <Button variant="hero" size="lg" className="w-full" type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Message"
+                  )}
                 </Button>
               </form>
             </div>
