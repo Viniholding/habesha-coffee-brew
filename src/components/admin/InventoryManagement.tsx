@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
-import { Package, AlertTriangle, Edit, Eye, Plus } from 'lucide-react';
+import { Package, AlertTriangle, Edit, Eye, Plus, Upload, X, Loader2 } from 'lucide-react';
 import { useAdminRole } from '@/hooks/useAdminRole';
 import AddInventoryDialog from './AddInventoryDialog';
 import { logAdminAction } from '@/lib/auditLog';
@@ -18,6 +18,7 @@ interface Product {
   id: string;
   name: string;
   description: string | null;
+  image_url: string | null;
   stock_quantity: number;
   low_stock_threshold: number;
   price: number;
@@ -33,6 +34,10 @@ export const InventoryManagement = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { canEdit, isReadOnly } = useAdminRole();
 
   useEffect(() => {
@@ -79,12 +84,79 @@ export const InventoryManagement = () => {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    setNewImageFile(file);
+    setPreviewImage(URL.createObjectURL(file));
+  };
+
+  const uploadImage = async (productId: string): Promise<string | null> => {
+    if (!newImageFile) return null;
+
+    setUploadingImage(true);
+    try {
+      const fileExt = newImageFile.name.split('.').pop();
+      const fileName = `${productId}-${Date.now()}.${fileExt}`;
+      const filePath = `product-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, newImageFile, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const clearImageSelection = () => {
+    setNewImageFile(null);
+    setPreviewImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSaveProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+
+    // Upload new image if selected
+    let imageUrl = editingProduct?.image_url;
+    if (newImageFile && editingProduct) {
+      const uploadedUrl = await uploadImage(editingProduct.id);
+      if (uploadedUrl) {
+        imageUrl = uploadedUrl;
+      }
+    }
     
     const productData = {
       description: formData.get('description') as string || null,
+      image_url: imageUrl,
       stock_quantity: parseInt(formData.get('stock_quantity') as string),
       low_stock_threshold: parseInt(formData.get('low_stock_threshold') as string),
       cost_price: parseFloat(formData.get('cost_price') as string) || null,
@@ -111,9 +183,17 @@ export const InventoryManagement = () => {
       toast.success('Product updated successfully');
       setIsDialogOpen(false);
       setEditingProduct(null);
+      clearImageSelection();
       fetchProducts();
     } catch (error) {
       toast.error('Failed to update product');
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      clearImageSelection();
     }
   };
 
@@ -216,7 +296,7 @@ export const InventoryManagement = () => {
                   <TableCell>{product.low_stock_threshold}</TableCell>
                   <TableCell>{product.supplier_name || '-'}</TableCell>
                   <TableCell>
-                    <Dialog open={isDialogOpen && editingProduct?.id === product.id} onOpenChange={setIsDialogOpen}>
+                    <Dialog open={isDialogOpen && editingProduct?.id === product.id} onOpenChange={handleDialogClose}>
                       <DialogTrigger asChild>
                         <Button 
                           variant="ghost" 
@@ -227,11 +307,79 @@ export const InventoryManagement = () => {
                           {isReadOnly ? <Eye className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                           <DialogTitle>{isReadOnly ? 'Product Details' : 'Edit Product Details'}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={handleSaveProduct} className="space-y-4">
+                          {/* Product Image */}
+                          <div>
+                            <Label>Product Image</Label>
+                            <div className="mt-2 space-y-3">
+                              {/* Current/Preview Image */}
+                              <div className="relative w-full h-40 bg-muted rounded-lg overflow-hidden border">
+                                {(previewImage || editingProduct?.image_url) ? (
+                                  <img
+                                    src={previewImage || editingProduct?.image_url || ''}
+                                    alt={editingProduct?.name || 'Product'}
+                                    className="w-full h-full object-contain"
+                                  />
+                                ) : (
+                                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                                    <Package className="h-12 w-12" />
+                                  </div>
+                                )}
+                                {previewImage && !isReadOnly && (
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-2 right-2 h-8 w-8"
+                                    onClick={clearImageSelection}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                              
+                              {/* Upload Button */}
+                              {!isReadOnly && (
+                                <div>
+                                  <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageSelect}
+                                    className="hidden"
+                                    id="product-image-upload"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={uploadingImage}
+                                  >
+                                    {uploadingImage ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Uploading...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Upload className="h-4 w-4 mr-2" />
+                                        {previewImage ? 'Change Image' : 'Upload Image'}
+                                      </>
+                                    )}
+                                  </Button>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Max file size: 5MB. Supported: JPG, PNG, WebP
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
                           <div>
                             <Label htmlFor="description">Description</Label>
                             <Textarea
@@ -304,7 +452,16 @@ export const InventoryManagement = () => {
                             />
                           </div>
                           {canEdit && (
-                            <Button type="submit" className="w-full">Save Changes</Button>
+                            <Button type="submit" className="w-full" disabled={uploadingImage}>
+                              {uploadingImage ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                'Save Changes'
+                              )}
+                            </Button>
                           )}
                         </form>
                       </DialogContent>
