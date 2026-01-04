@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Search, DollarSign } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { addToCart } from "@/lib/cart";
 import { resolveProductImage, grinderImages } from "@/lib/productImages";
 import { toast } from "sonner";
@@ -36,6 +37,8 @@ const Products = () => {
   const [mugColor, setMugColor] = useState<'white' | 'black'>('white');
   const [sortBy, setSortBy] = useState<SortOption>('name-asc');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
   const [notifyEmail, setNotifyEmail] = useState<Record<string, string>>({});
   const [notifyingProduct, setNotifyingProduct] = useState<string | null>(null);
   const [grinderImageIndex, setGrinderImageIndex] = useState(0);
@@ -91,6 +94,21 @@ const Products = () => {
     }
     // accessories = everything that's not coffee
     return products.filter(p => p.category !== 'coffee');
+  };
+
+  // Filter products by search query
+  const filterBySearch = (products: Product[]) => {
+    if (!searchQuery.trim()) return products;
+    const query = searchQuery.toLowerCase();
+    return products.filter(p => 
+      p.name.toLowerCase().includes(query) || 
+      (p.description && p.description.toLowerCase().includes(query))
+    );
+  };
+
+  // Filter products by price range
+  const filterByPrice = (products: Product[]) => {
+    return products.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
   };
 
   // Sort products
@@ -265,21 +283,57 @@ const Products = () => {
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search products by name or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+          />
+        </div>
+
         {/* Filter & Sorting Options */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as CategoryFilter)}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Products</SelectItem>
-                <SelectItem value="coffee">Coffee</SelectItem>
-                <SelectItem value="accessories">Accessories</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col lg:flex-row justify-between gap-4 mb-8">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Category Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={categoryFilter} onValueChange={(value) => setCategoryFilter(value as CategoryFilter)}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Products</SelectItem>
+                  <SelectItem value="coffee">Coffee</SelectItem>
+                  <SelectItem value="accessories">Accessories</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Price Range Filter */}
+            <div className="flex items-center gap-3 min-w-[280px]">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <div className="flex-1 space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>${priceRange[0]}</span>
+                  <span>${priceRange[1]}</span>
+                </div>
+                <Slider
+                  value={priceRange}
+                  onValueChange={(value) => setPriceRange(value as [number, number])}
+                  min={0}
+                  max={200}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
+            </div>
           </div>
+
+          {/* Sort Options */}
           <div className="flex items-center gap-2">
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
@@ -299,7 +353,7 @@ const Products = () => {
         </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {sortProducts(filterByCategory(getDisplayProducts(products))).map((product) => {
+          {sortProducts(filterByPrice(filterBySearch(filterByCategory(getDisplayProducts(products))))).map((product) => {
             const isThisMug = isCoffeeMug(product);
             const isThisGrinder = isHandGrinder(product);
             const displayProduct = isThisMug ? getMugDisplayProduct(products) : product;
@@ -326,22 +380,22 @@ const Products = () => {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   
-                  {/* Grinder image navigation */}
+                  {/* Grinder image navigation - always visible */}
                   {isThisGrinder && (
                     <>
                       <button
                         onClick={(e) => cycleGrinderImage('prev', e)}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/90 hover:bg-background rounded-full p-2 shadow-md transition-colors z-10"
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </button>
                       <button
                         onClick={(e) => cycleGrinderImage('next', e)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/90 hover:bg-background rounded-full p-2 shadow-md transition-colors z-10"
                       >
                         <ChevronRight className="h-5 w-5" />
                       </button>
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                         {grinderImages.map((_, idx) => (
                           <button
                             key={idx}
@@ -349,8 +403,8 @@ const Products = () => {
                               e.stopPropagation();
                               setGrinderImageIndex(idx);
                             }}
-                            className={`w-2 h-2 rounded-full transition-all ${
-                              idx === grinderImageIndex ? 'bg-primary w-4' : 'bg-white/60 hover:bg-white'
+                            className={`w-2.5 h-2.5 rounded-full transition-all shadow-sm ${
+                              idx === grinderImageIndex ? 'bg-primary w-5' : 'bg-background/80 hover:bg-background'
                             }`}
                           />
                         ))}

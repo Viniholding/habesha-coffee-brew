@@ -16,7 +16,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { grindOptions, bagSizeOptions, frequencyOptions } from "@/lib/subscriptionProducts";
 import { addToCart } from "@/lib/cart";
-import { resolveProductImage } from "@/lib/productImages";
+import { resolveProductImage, grinderImages } from "@/lib/productImages";
 
 interface Product {
   id: string;
@@ -58,6 +58,7 @@ const ProductDetail = () => {
   // Check if product is a coffee (not accessory) - only coffee can be subscribed
   const isCoffee = product?.category === "coffee";
   const isMug = product?.name?.toLowerCase().includes("mug");
+  const isGrinder = product?.name?.toLowerCase().includes("hand coffee grinder");
 
   useEffect(() => {
     fetchProduct();
@@ -84,8 +85,16 @@ const ProductDetail = () => {
     }
   };
 
-  // Get all images for the gallery (product_images table + fallback to main image_url)
+  // Get all images for the gallery (product_images table + fallback to main image_url or grinder images)
   const getAllImages = (): { url: string; alt: string }[] => {
+    // For hand grinder, use the local grinder images
+    if (isGrinder) {
+      return grinderImages.map((img, index) => ({
+        url: img,
+        alt: `Hand Coffee Grinder - View ${index + 1}`
+      }));
+    }
+    
     if (productImages.length > 0) {
       return productImages.map(img => ({
         url: resolveProductImage(img.image_url),
