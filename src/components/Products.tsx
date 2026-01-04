@@ -4,9 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { addToCart } from "@/lib/cart";
-import { resolveProductImage, defaultProductImage } from "@/lib/productImages";
+import { resolveProductImage, grinderImages } from "@/lib/productImages";
+import { toast } from "sonner";
 
 interface Product {
   id: string;
@@ -20,6 +23,8 @@ interface Product {
   low_stock_threshold: number;
 }
 
+type SortOption = 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc' | 'stock-first' | 'out-of-stock-first';
+
 const Products = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
@@ -28,6 +33,10 @@ const Products = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [mugSize, setMugSize] = useState<'350ml' | '500ml'>('350ml');
   const [mugColor, setMugColor] = useState<'white' | 'black'>('white');
+  const [sortBy, setSortBy] = useState<SortOption>('name-asc');
+  const [notifyEmail, setNotifyEmail] = useState<Record<string, string>>({});
+  const [notifyingProduct, setNotifyingProduct] = useState<string | null>(null);
+  const [grinderImageIndex, setGrinderImageIndex] = useState(0);
 
   const getQuantity = (productId: string) => quantities[productId] || 1;
   
@@ -42,6 +51,10 @@ const Products = () => {
   // Check if product is a coffee mug
   const isCoffeeMug = (product: Product) => 
     product.name.toLowerCase().includes('coffee mug');
+
+  // Check if product is the hand grinder
+  const isHandGrinder = (product: Product) =>
+    product.name.toLowerCase().includes('hand coffee grinder');
 
   // Get the primary mug product (use 350ml as base, adjust price for 500ml)
   const getMugDisplayProduct = (products: Product[]) => {
@@ -66,6 +79,35 @@ const Products = () => {
       }
     }
     return nonMugs;
+  };
+
+  // Sort products
+  const sortProducts = (products: Product[]) => {
+    const sorted = [...products];
+    switch (sortBy) {
+      case 'name-asc':
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      case 'name-desc':
+        return sorted.sort((a, b) => b.name.localeCompare(a.name));
+      case 'price-asc':
+        return sorted.sort((a, b) => a.price - b.price);
+      case 'price-desc':
+        return sorted.sort((a, b) => b.price - a.price);
+      case 'stock-first':
+        return sorted.sort((a, b) => {
+          if (a.in_stock && !b.in_stock) return -1;
+          if (!a.in_stock && b.in_stock) return 1;
+          return b.stock_quantity - a.stock_quantity;
+        });
+      case 'out-of-stock-first':
+        return sorted.sort((a, b) => {
+          if (!a.in_stock && b.in_stock) return -1;
+          if (a.in_stock && !b.in_stock) return 1;
+          return a.stock_quantity - b.stock_quantity;
+        });
+      default:
+        return sorted;
+    }
   };
 
   useEffect(() => {
@@ -134,6 +176,47 @@ const Products = () => {
     navigate(`/products/${productId}?subscribe=true`);
   };
 
+  const handleNotifyMe = async (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const email = notifyEmail[productId];
+    if (!email || !email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
+    setNotifyingProduct(productId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('stock_notifications')
+        .insert({
+          product_id: productId,
+          email: email,
+          user_id: user?.id || null
+        });
+      
+      if (error) throw error;
+      toast.success("We'll notify you when this item is back in stock!");
+      setNotifyEmail(prev => ({ ...prev, [productId]: '' }));
+    } catch (error) {
+      console.error('Error subscribing to notifications:', error);
+      toast.error('Failed to subscribe. Please try again.');
+    } finally {
+      setNotifyingProduct(null);
+    }
+  };
+
+  const cycleGrinderImage = (direction: 'next' | 'prev', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setGrinderImageIndex(prev => {
+      if (direction === 'next') {
+        return (prev + 1) % grinderImages.length;
+      } else {
+        return prev === 0 ? grinderImages.length - 1 : prev - 1;
+      }
+    });
+  };
+
   if (loading) {
     return (
       <section id="products" className="py-24 bg-background">
@@ -169,12 +252,35 @@ const Products = () => {
             with care and dedication to deliver an exceptional coffee experience.
           </p>
         </div>
+
+        {/* Sorting Options */}
+        <div className="flex justify-end mb-8">
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                <SelectItem value="price-asc">Price (Low to High)</SelectItem>
+                <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+                <SelectItem value="stock-first">In Stock First</SelectItem>
+                <SelectItem value="out-of-stock-first">Out of Stock First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {getDisplayProducts(products).map((product) => {
+          {sortProducts(getDisplayProducts(products)).map((product) => {
             const isThisMug = isCoffeeMug(product);
+            const isThisGrinder = isHandGrinder(product);
             const displayProduct = isThisMug ? getMugDisplayProduct(products) : product;
             const productId = displayProduct?.id || product.id;
+            const currentProduct = displayProduct || product;
+            const isOutOfStock = !currentProduct.in_stock || currentProduct.stock_quantity <= 0;
             
             return (
               <Card 
@@ -190,10 +296,43 @@ const Products = () => {
                 
                 <div className="relative h-80 overflow-hidden bg-card">
                   <img 
-                    src={isThisMug ? getMugImage(mugColor) : resolveProductImage(product.image_url)} 
-                    alt={isThisMug ? `Coffee Mug - ${mugColor}` : product.name}
+                    src={isThisGrinder ? grinderImages[grinderImageIndex] : (isThisMug ? getMugImage(mugColor) : resolveProductImage(product.image_url))} 
+                    alt={isThisGrinder ? `Hand Coffee Grinder - Image ${grinderImageIndex + 1}` : (isThisMug ? `Coffee Mug - ${mugColor}` : product.name)}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
+                  
+                  {/* Grinder image navigation */}
+                  {isThisGrinder && (
+                    <>
+                      <button
+                        onClick={(e) => cycleGrinderImage('prev', e)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={(e) => cycleGrinderImage('next', e)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                        {grinderImages.map((_, idx) => (
+                          <button
+                            key={idx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setGrinderImageIndex(idx);
+                            }}
+                            className={`w-2 h-2 rounded-full transition-all ${
+                              idx === grinderImageIndex ? 'bg-primary w-4' : 'bg-white/60 hover:bg-white'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
                     <Button 
                       variant="secondary" 
@@ -329,38 +468,57 @@ const Products = () => {
                     </div>
                     
                     <div className="flex gap-2">
-                      {(() => {
-                        const currentProduct = displayProduct || product;
-                        const isOutOfStock = !currentProduct.in_stock || currentProduct.stock_quantity <= 0;
-                        return (
-                          <>
-                            <Button 
-                              variant="hero" 
-                              className={product.category === "coffee" ? "flex-1" : "w-full"} 
+                      {isOutOfStock ? (
+                        <div className="w-full space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              type="email"
+                              placeholder="Enter your email"
+                              value={notifyEmail[productId] || ''}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                setNotifyEmail(prev => ({ ...prev, [productId]: e.target.value }));
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-1"
+                            />
+                            <Button
+                              variant="outline"
                               size="lg"
-                              disabled={addingToCart === productId || isOutOfStock}
-                              onClick={(e) => handleAddToCart(currentProduct, e)}
+                              disabled={notifyingProduct === productId}
+                              onClick={(e) => handleNotifyMe(productId, e)}
                             >
-                              <ShoppingCart className="h-4 w-4 mr-2" />
-                              {isOutOfStock 
-                                ? "Out of Stock" 
-                                : addingToCart === productId 
-                                  ? "Adding..." 
-                                  : `Add ${getQuantity(productId) > 1 ? `(${getQuantity(productId)})` : ''} to Cart`}
+                              <Bell className="h-4 w-4 mr-2" />
+                              {notifyingProduct === productId ? 'Saving...' : 'Notify Me'}
                             </Button>
-                            {product.category === "coffee" && !isOutOfStock && (
-                              <Button 
-                                variant="outline" 
-                                size="lg"
-                                onClick={(e) => handleSubscribe(productId, e)}
-                                title="Subscribe & Save 10%"
-                              >
-                                <RefreshCw className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </>
-                        );
-                      })()}
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <Button 
+                            variant="hero" 
+                            className={product.category === "coffee" ? "flex-1" : "w-full"} 
+                            size="lg"
+                            disabled={addingToCart === productId}
+                            onClick={(e) => handleAddToCart(currentProduct, e)}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            {addingToCart === productId 
+                              ? "Adding..." 
+                              : `Add ${getQuantity(productId) > 1 ? `(${getQuantity(productId)})` : ''} to Cart`}
+                          </Button>
+                          {product.category === "coffee" && (
+                            <Button 
+                              variant="outline" 
+                              size="lg"
+                              onClick={(e) => handleSubscribe(productId, e)}
+                              title="Subscribe & Save 10%"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
