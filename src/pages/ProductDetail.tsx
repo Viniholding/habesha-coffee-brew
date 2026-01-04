@@ -397,183 +397,219 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Purchase Type Tabs */}
-              <Tabs value={purchaseType} onValueChange={(v) => setPurchaseType(v as "one-time" | "subscription")}>
-                <TabsList className={`grid w-full ${isCoffee ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                  <TabsTrigger value="one-time" className="gap-2">
-                    <ShoppingCart className="h-4 w-4" />
-                    One-Time Purchase
-                  </TabsTrigger>
-                  {isCoffee && (
+              {/* Purchase Options */}
+              {isCoffee ? (
+                <Tabs value={purchaseType} onValueChange={(v) => setPurchaseType(v as "one-time" | "subscription")}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="one-time" className="gap-2">
+                      <ShoppingCart className="h-4 w-4" />
+                      One-Time Purchase
+                    </TabsTrigger>
                     <TabsTrigger value="subscription" className="gap-2">
                       <RefreshCw className="h-4 w-4" />
                       Subscribe & Save 10%
                     </TabsTrigger>
-                  )}
-                </TabsList>
+                  </TabsList>
 
-                <TabsContent value="one-time" className="space-y-4 mt-4">
-                  <Card>
-                    <CardContent className="pt-6 space-y-4">
-                      {/* Quantity */}
-                      <div>
-                        <Label>Quantity</Label>
-                        <div className="flex items-center gap-3 mt-2">
+                  <TabsContent value="one-time" className="space-y-4 mt-4">
+                    <Card>
+                      <CardContent className="pt-6 space-y-4">
+                        <div>
+                          <Label>Quantity</Label>
+                          <div className="flex items-center gap-3 mt-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="text-xl font-bold w-8 text-center">{quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setQuantity(quantity + 1)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t">
+                          <div className="flex justify-between items-center mb-4">
+                            <span className="text-lg">Total</span>
+                            <span className="text-3xl font-bold">${calculatePrice().toFixed(2)}</span>
+                          </div>
                           <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                            variant="hero"
+                            size="lg"
+                            className="w-full"
+                            disabled={!product.in_stock || addingToCart}
+                            onClick={handleAddToCart}
                           >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="text-xl font-bold w-8 text-center">{quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setQuantity(quantity + 1)}
-                          >
-                            <Plus className="h-4 w-4" />
+                            <ShoppingCart className="h-5 w-5 mr-2" />
+                            {addingToCart ? "Adding..." : "Add to Cart"}
                           </Button>
                         </div>
-                      </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
 
-                      <div className="pt-4 border-t">
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="text-lg">Total</span>
-                          <span className="text-3xl font-bold">${calculatePrice().toFixed(2)}</span>
+                  <TabsContent value="subscription" className="space-y-4 mt-4">
+                    <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5">
+                      <CardContent className="pt-6 space-y-4">
+                        <div>
+                          <Label>Grind Type</Label>
+                          <Select value={grind} onValueChange={setGrind}>
+                            <SelectTrigger className="mt-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {grindOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
+
+                        <div>
+                          <Label>Bag Size</Label>
+                          <RadioGroup
+                            value={bagSize}
+                            onValueChange={setBagSize}
+                            className="grid grid-cols-3 gap-2 mt-2"
+                          >
+                            {bagSizeOptions.map((option) => (
+                              <div key={option.value}>
+                                <RadioGroupItem
+                                  value={option.value}
+                                  id={`size-${option.value}`}
+                                  className="peer sr-only"
+                                />
+                                <Label
+                                  htmlFor={`size-${option.value}`}
+                                  className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-card p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                                >
+                                  <span className="font-medium">{option.label}</span>
+                                </Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        </div>
+
+                        <div>
+                          <Label>Delivery Frequency</Label>
+                          <Select value={frequency} onValueChange={setFrequency}>
+                            <SelectTrigger className="mt-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {frequencyOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Quantity per Delivery</Label>
+                          <div className="flex items-center gap-3 mt-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="text-xl font-bold w-8 text-center">{quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setQuantity(Math.min(5, quantity + 1))}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t">
+                          <div className="flex justify-between items-center mb-2">
+                            <span>Regular Price</span>
+                            <span className="line-through text-muted-foreground">
+                              ${(product.price * getBagMultiplier() * quantity).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center mb-4">
+                            <span className="text-lg font-medium flex items-center gap-2">
+                              Subscriber Price
+                              <Badge variant="secondary" className="text-xs">10% OFF</Badge>
+                            </span>
+                            <span className="text-3xl font-bold text-primary">
+                              ${calculatePrice().toFixed(2)}
+                            </span>
+                          </div>
+                          <Button
+                            variant="hero"
+                            size="lg"
+                            className="w-full"
+                            disabled={!product.in_stock}
+                            onClick={handleAddToCart}
+                          >
+                            <RefreshCw className="h-5 w-5 mr-2" />
+                            Subscribe Now
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <div>
+                      <Label>Quantity</Label>
+                      <div className="flex items-center gap-3 mt-2">
                         <Button
-                          variant="hero"
-                          size="lg"
-                          className="w-full"
-                          disabled={!product.in_stock || addingToCart}
-                          onClick={handleAddToCart}
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setQuantity(Math.max(1, quantity - 1))}
                         >
-                          <ShoppingCart className="h-5 w-5 mr-2" />
-                          {addingToCart ? "Adding..." : "Add to Cart"}
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="text-xl font-bold w-8 text-center">{quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setQuantity(quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                    </div>
 
-                <TabsContent value="subscription" className="space-y-4 mt-4">
-                  <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5">
-                    <CardContent className="pt-6 space-y-4">
-                      {/* Grind Type */}
-                      <div>
-                        <Label>Grind Type</Label>
-                        <Select value={grind} onValueChange={setGrind}>
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {grindOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    <div className="pt-4 border-t">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-lg">Total</span>
+                        <span className="text-3xl font-bold">${(product.price * quantity).toFixed(2)}</span>
                       </div>
-
-                      {/* Bag Size */}
-                      <div>
-                        <Label>Bag Size</Label>
-                        <RadioGroup
-                          value={bagSize}
-                          onValueChange={setBagSize}
-                          className="grid grid-cols-3 gap-2 mt-2"
-                        >
-                          {bagSizeOptions.map((option) => (
-                            <div key={option.value}>
-                              <RadioGroupItem
-                                value={option.value}
-                                id={`size-${option.value}`}
-                                className="peer sr-only"
-                              />
-                              <Label
-                                htmlFor={`size-${option.value}`}
-                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-card p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                              >
-                                <span className="font-medium">{option.label}</span>
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      </div>
-
-                      {/* Frequency */}
-                      <div>
-                        <Label>Delivery Frequency</Label>
-                        <Select value={frequency} onValueChange={setFrequency}>
-                          <SelectTrigger className="mt-2">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {frequencyOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Quantity */}
-                      <div>
-                        <Label>Quantity per Delivery</Label>
-                        <div className="flex items-center gap-3 mt-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="text-xl font-bold w-8 text-center">{quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setQuantity(Math.min(5, quantity + 1))}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t">
-                        <div className="flex justify-between items-center mb-2">
-                          <span>Regular Price</span>
-                          <span className="line-through text-muted-foreground">
-                            ${(product.price * getBagMultiplier() * quantity).toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="text-lg font-medium flex items-center gap-2">
-                            Subscriber Price
-                            <Badge variant="secondary" className="text-xs">10% OFF</Badge>
-                          </span>
-                          <span className="text-3xl font-bold text-primary">
-                            ${calculatePrice().toFixed(2)}
-                          </span>
-                        </div>
-                        <Button
-                          variant="hero"
-                          size="lg"
-                          className="w-full"
-                          disabled={!product.in_stock}
-                          onClick={handleAddToCart}
-                        >
-                          <RefreshCw className="h-5 w-5 mr-2" />
-                          Subscribe Now
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-
+                      <Button
+                        variant="hero"
+                        size="lg"
+                        className="w-full"
+                        disabled={!product.in_stock || addingToCart}
+                        onClick={handleAddToCart}
+                      >
+                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        {addingToCart ? "Adding..." : "Add to Cart"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {/* Benefits */}
               <div className="grid grid-cols-3 gap-4 pt-6 border-t">
                 <div className="text-center">
