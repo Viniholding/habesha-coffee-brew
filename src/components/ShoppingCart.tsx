@@ -288,9 +288,9 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
               </div>
               <Button 
                 className="w-full" 
-                onClick={() => navigate('/checkout')}
+                onClick={() => navigate('/cart')}
               >
-                Checkout
+                View Cart
               </Button>
             </div>
           </>

@@ -27,6 +27,7 @@ import Subscribe from "./pages/Subscribe";
 import SubscriptionReview from "./pages/SubscriptionReview";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
+import Cart from "./pages/Cart";
 import ShippingReturns from "./pages/legal/ShippingReturns";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import TermsOfUse from "./pages/legal/TermsOfUse";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/goodbye" element={<Goodbye />} />
               <Route path="/subscribe" element={<Subscribe />} />
               <Route path="/subscription/review" element={<SubscriptionReview />} />
+              <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/commandcenter/*" element={<Admin />} />
