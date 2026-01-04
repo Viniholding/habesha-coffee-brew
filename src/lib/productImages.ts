@@ -1,5 +1,6 @@
 // Local product image imports for assets stored in src/assets
 import coffeeScoopImg from '@/assets/coffee-scoop.png';
+import coffeeScoopImg2 from '@/assets/coffee-scoop-2.png';
 import productBagImg from '@/assets/product-bag.jpg';
 import coffeeHararImg from '@/assets/coffee-harar.jpg';
 import coffeeSidamoImg from '@/assets/coffee-sidamo.jpg';
@@ -8,6 +9,7 @@ import coffeeYirgacheffeImg from '@/assets/coffee-yirgacheffe.jpg';
 // Map of local asset paths to their imported modules
 const localAssets: Record<string, string> = {
   '/src/assets/coffee-scoop.png': coffeeScoopImg,
+  '/src/assets/coffee-scoop-2.png': coffeeScoopImg2,
   '/src/assets/product-bag.jpg': productBagImg,
   '/src/assets/coffee-harar.jpg': coffeeHararImg,
   '/src/assets/coffee-sidamo.jpg': coffeeSidamoImg,

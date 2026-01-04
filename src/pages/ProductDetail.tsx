@@ -15,7 +15,7 @@ import { ShoppingCart, RefreshCw, Star, Package, Truck, Shield, ArrowLeft, Plus,
 import { toast } from "sonner";
 import { grindOptions, bagSizeOptions, frequencyOptions } from "@/lib/subscriptionProducts";
 import { addToCart } from "@/lib/cart";
-import productBag from "@/assets/product-bag.jpg";
+import { resolveProductImage } from "@/lib/productImages";
 
 interface Product {
   id: string;
@@ -28,11 +28,20 @@ interface Product {
   stock_quantity: number;
 }
 
+interface ProductImage {
+  id: string;
+  image_url: string;
+  alt_text: string | null;
+  sort_order: number;
+}
+
 const ProductDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [product, setProduct] = useState<Product | null>(null);
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [purchaseType, setPurchaseType] = useState<"one-time" | "subscription">(
     searchParams.get("subscribe") === "true" ? "subscription" : "one-time"
@@ -51,14 +60,15 @@ const ProductDetail = () => {
     if (!productId) return;
 
     try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", productId)
-        .single();
+      // Fetch product and its images in parallel
+      const [productResult, imagesResult] = await Promise.all([
+        supabase.from("products").select("*").eq("id", productId).single(),
+        supabase.from("product_images").select("*").eq("product_id", productId).order("sort_order")
+      ]);
 
-      if (error) throw error;
-      setProduct(data);
+      if (productResult.error) throw productResult.error;
+      setProduct(productResult.data);
+      setProductImages(imagesResult.data || []);
     } catch (error) {
       console.error("Error fetching product:", error);
       toast.error("Product not found");
@@ -66,6 +76,23 @@ const ProductDetail = () => {
       setLoading(false);
     }
   };
+
+  // Get all images for the gallery (product_images table + fallback to main image_url)
+  const getAllImages = (): { url: string; alt: string }[] => {
+    if (productImages.length > 0) {
+      return productImages.map(img => ({
+        url: resolveProductImage(img.image_url),
+        alt: img.alt_text || product?.name || "Product image"
+      }));
+    }
+    // Fallback to main product image
+    return [{
+      url: resolveProductImage(product?.image_url || null),
+      alt: product?.name || "Product image"
+    }];
+  };
+
+  const images = getAllImages();
 
   const getBagMultiplier = () => {
     const option = bagSizeOptions.find(o => o.value === bagSize);
@@ -177,12 +204,12 @@ const ProductDetail = () => {
           </Button>
 
           <div className="grid md:grid-cols-2 gap-12">
-            {/* Product Image */}
-            <div className="relative">
+            {/* Product Image Gallery */}
+            <div className="relative space-y-4">
               <div className="aspect-square rounded-lg overflow-hidden bg-card border">
                 <img
-                  src={product.image_url || productBag}
-                  alt={product.name}
+                  src={images[selectedImageIndex]?.url}
+                  alt={images[selectedImageIndex]?.alt}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -190,6 +217,28 @@ const ProductDetail = () => {
                 <Badge variant="destructive" className="absolute top-4 left-4">
                   Out of Stock
                 </Badge>
+              )}
+              {/* Thumbnail Gallery */}
+              {images.length > 1 && (
+                <div className="flex gap-2">
+                  {images.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`w-20 h-20 rounded-md overflow-hidden border-2 transition-all ${
+                        selectedImageIndex === index 
+                          ? 'border-primary ring-2 ring-primary/30' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.alt}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
