@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Upload, Download, FileSpreadsheet, Loader2, Check, AlertCircle } from 'lucide-react';
 import { logAdminAction } from '@/lib/auditLog';
+import { logInventoryChange } from './InventoryManagement';
 
 interface Product {
   id: string;
@@ -128,6 +129,15 @@ export default function BulkStockUpdate({ products, onUpdate }: BulkStockUpdateP
           .eq('id', row.matched.id);
 
         if (error) throw error;
+
+        // Log to inventory audit log
+        await logInventoryChange(
+          row.matched.id,
+          row.matched.stock_quantity,
+          row.quantity,
+          'bulk_update',
+          `Bulk CSV update: ${row.matched.stock_quantity} → ${row.quantity}`
+        );
 
         await logAdminAction({
           actionType: 'inventory_updated',
