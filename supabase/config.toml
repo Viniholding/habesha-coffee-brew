@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.send-contact-email]
 verify_jwt = false
+
+[functions.send-po-notification]
+verify_jwt = true
+
+[functions.check-overdue-pos]
+verify_jwt = false

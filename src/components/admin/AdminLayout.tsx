@@ -22,7 +22,8 @@ import {
   AlertTriangle,
   Truck,
   ArrowUpDown,
-  ClipboardList
+  ClipboardList,
+  History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,6 +59,7 @@ const getNavigation = (adminLevel: 'owner' | 'manager' | 'support' | null) => {
     { name: 'Inventory', href: '/commandcenter/inventory', icon: Plus },
     { name: 'Suppliers', href: '/commandcenter/suppliers', icon: Truck },
     { name: 'Purchase Orders', href: '/commandcenter/purchase-orders', icon: ClipboardList },
+    { name: 'Receiving History', href: '/commandcenter/receiving-history', icon: History },
     { name: 'Product Order', href: '/commandcenter/product-ordering', icon: ArrowUpDown },
     { name: 'Audit Log', href: '/commandcenter/audit-log', icon: FileText },
     { name: 'Abuse Detection', href: '/commandcenter/abuse-detection', icon: AlertTriangle },
@@ -85,7 +87,7 @@ export const AdminLayout = () => {
   
   // Route protection - block unauthorized access
   const ownerOnlyRoutes = ['/commandcenter/users', '/commandcenter/settings'];
-  const managerRoutes = ['/commandcenter/collections', '/commandcenter/homepage', '/commandcenter/segments', '/commandcenter/abandoned-carts', '/commandcenter/subscriptions', '/commandcenter/program-config', '/commandcenter/promotions', '/commandcenter/promotion-analytics', '/commandcenter/inventory', '/commandcenter/suppliers', '/commandcenter/purchase-orders', '/commandcenter/product-ordering', '/commandcenter/audit-log', '/commandcenter/abuse-detection'];
+  const managerRoutes = ['/commandcenter/collections', '/commandcenter/homepage', '/commandcenter/segments', '/commandcenter/abandoned-carts', '/commandcenter/subscriptions', '/commandcenter/program-config', '/commandcenter/promotions', '/commandcenter/promotion-analytics', '/commandcenter/inventory', '/commandcenter/suppliers', '/commandcenter/purchase-orders', '/commandcenter/receiving-history', '/commandcenter/product-ordering', '/commandcenter/audit-log', '/commandcenter/abuse-detection'];
   
   const currentPath = location.pathname;
   
