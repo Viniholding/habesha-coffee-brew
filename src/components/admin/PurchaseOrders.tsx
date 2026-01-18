@@ -175,6 +175,11 @@ export default function PurchaseOrders() {
     let totalReceived = 0;
     let totalOrdered = 0;
 
+    const { data: userData } = await supabase.auth.getUser();
+    const receiverId = userData.user?.id;
+    
+    const itemsReceivedForNotification: Array<{ productName: string; quantityReceived: number }> = [];
+
     for (const receiveItem of receiveItems) {
       if (receiveItem.quantity > 0) {
         const orderItem = orderItems.find(i => i.id === receiveItem.id);
@@ -197,6 +202,25 @@ export default function PurchaseOrders() {
                 .eq('id', orderItem.product_id);
             }
           }
+
+          // Log to receiving history
+          if (receiverId) {
+            await supabase
+              .from('purchase_order_receiving_log')
+              .insert({
+                purchase_order_id: selectedOrder.id,
+                purchase_order_item_id: orderItem.id,
+                product_id: orderItem.product_id,
+                product_name: orderItem.product_name,
+                quantity_received: receiveItem.quantity,
+                received_by: receiverId,
+              });
+          }
+
+          itemsReceivedForNotification.push({
+            productName: orderItem.product_name,
+            quantityReceived: receiveItem.quantity,
+          });
         }
       }
     }
@@ -220,6 +244,21 @@ export default function PurchaseOrders() {
       .from('purchase_orders')
       .update(updates)
       .eq('id', selectedOrder.id);
+
+    // Send notification email
+    if (itemsReceivedForNotification.length > 0) {
+      try {
+        await supabase.functions.invoke('send-po-notification', {
+          body: {
+            type: 'items_received',
+            purchaseOrderId: selectedOrder.id,
+            itemsReceived: itemsReceivedForNotification,
+          },
+        });
+      } catch (error) {
+        console.error('Failed to send notification:', error);
+      }
+    }
 
     toast.success(isFullyReceived ? 'Order fully received!' : 'Items received, order partially fulfilled');
     setReceiveDialogOpen(false);
