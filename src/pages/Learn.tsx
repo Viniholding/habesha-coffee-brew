@@ -5,7 +5,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import AnimatedTutorial from '@/components/learn/AnimatedTutorial';
 import VideoCarousel, { Video } from '@/components/learn/VideoCarousel';
-import coffeeCeremonyImage from '@/assets/coffee-ceremony.png';
+import coffeeCeremonyImage from '@/assets/jebena-pour.png';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Learn() {
