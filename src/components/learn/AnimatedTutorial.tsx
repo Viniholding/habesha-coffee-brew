@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Coffee, Sparkles, Users, Heart, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import jebenaImage from '@/assets/jebena-ceremony.png';
+import jebenaImage from '@/assets/jebena-pour.png';
 
 const tutorialSteps = [
   {
