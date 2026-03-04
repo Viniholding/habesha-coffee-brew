@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Coffee, Play, Printer } from 'lucide-react';
+import { Coffee, Play, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -40,8 +40,11 @@ export default function Learn() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadTutorial = () => {
+    const link = document.createElement('a');
+    link.href = '/documents/jebena-tutorial.docx';
+    link.download = 'Coffee-Habesha-Jebena-Tutorial.docx';
+    link.click();
   };
 
   return (
@@ -81,11 +84,11 @@ export default function Learn() {
               <Button 
                 variant="outline" 
                 size="lg" 
-                onClick={handlePrint}
+                onClick={handleDownloadTutorial}
                 className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
               >
-                <Printer className="w-5 h-5" />
-                Print Tutorial Guide
+                <Download className="w-5 h-5" />
+                Download Tutorial Guide
               </Button>
             </div>
           </div>
