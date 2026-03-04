@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Coffee, Play, Download } from 'lucide-react';
+import { generateTutorialPDF } from '@/lib/generateTutorialPDF';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -41,10 +42,7 @@ export default function Learn() {
   };
 
   const handleDownloadTutorial = () => {
-    const link = document.createElement('a');
-    link.href = '/documents/jebena-tutorial.docx';
-    link.download = 'Coffee-Habesha-Jebena-Tutorial.docx';
-    link.click();
+    generateTutorialPDF();
   };
 
   return (
