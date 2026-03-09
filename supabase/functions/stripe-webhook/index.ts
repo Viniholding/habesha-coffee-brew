@@ -32,7 +32,7 @@ async function sendEmail(to: string, subject: string, html: string) {
         "Authorization": `Bearer ${resendKey}`,
       },
       body: JSON.stringify({
-        from: "Habesha Coffee <onboarding@resend.dev>",
+        from: "Habesha Coffee <op@coffeehabesha.com>",
         to: [to],
         subject,
         html,

@@ -243,7 +243,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Habesha Coffee <notifications@resend.dev>",
+        from: "Habesha Coffee <op@coffeehabesha.com>",
         to: [adminEmail],
         subject: `📊 Weekly Fraud Summary: ${newRestrictionsThisWeek} new restrictions, ${highRiskClusters.length} high-risk clusters`,
         html: emailHtml,
