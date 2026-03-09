@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Star, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Search, DollarSign, X } from "lucide-react";
+import { ShoppingCart, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Search, DollarSign, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { addToCart } from "@/lib/cart";
 import { resolveProductImage, grinderImages } from "@/lib/productImages";
