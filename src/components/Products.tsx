@@ -558,11 +558,6 @@ const Products = () => {
                           )
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-primary">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <Star key={i} className="h-4 w-4 fill-primary" />
-                        ))}
-                      </div>
                     </div>
                     
                     {/* Quantity Selector */}
