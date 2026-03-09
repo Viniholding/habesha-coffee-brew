@@ -182,7 +182,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${resendKey}`,
       },
       body: JSON.stringify({
-        from: "Habesha Coffee <onboarding@resend.dev>",
+        from: "Habesha Coffee <op@coffeehabesha.com>",
         to: [request.email],
         subject: `Order Confirmed! #${request.orderNumber} ☕`,
         html: emailHtml,
