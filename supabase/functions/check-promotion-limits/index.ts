@@ -119,7 +119,7 @@ serve(async (req: Request) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Yeneta Coffee <onboarding@resend.dev>",
+          from: "Habesha Coffee <op@coffeehabesha.com>",
           to: [email],
           subject: "⚠️ Promotion Usage Alert - Codes Nearing Limit",
           html: `
