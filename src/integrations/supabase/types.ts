@@ -328,6 +328,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       collection_products: {
@@ -365,6 +372,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
             referencedColumns: ["id"]
           },
         ]
@@ -662,6 +676,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "inventory_audit_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       notification_preferences: {
@@ -801,6 +822,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
             referencedColumns: ["id"]
           },
         ]
@@ -994,6 +1022,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
             referencedColumns: ["id"]
           },
         ]
@@ -1278,6 +1313,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "purchase_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
             isOneToOne: false
@@ -1329,6 +1371,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_receiving_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
             referencedColumns: ["id"]
           },
           {
@@ -1537,6 +1586,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stock_notifications_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       subscription_addons: {
@@ -1576,6 +1632,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_addons_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
             referencedColumns: ["id"]
           },
           {
@@ -1662,6 +1725,13 @@ export type Database = {
             columns: ["default_product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_programs_default_product_id_fkey"
+            columns: ["default_product_id"]
+            isOneToOne: false
+            referencedRelation: "public_products"
             referencedColumns: ["id"]
           },
         ]
@@ -1876,7 +1946,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_products: {
+        Row: {
+          category: string | null
+          description: string | null
+          display_order: number | null
+          id: string | null
+          image_url: string | null
+          in_stock: boolean | null
+          low_stock_threshold: number | null
+          name: string | null
+          price: number | null
+          stock_quantity: number | null
+        }
+        Insert: {
+          category?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string | null
+          image_url?: string | null
+          in_stock?: boolean | null
+          low_stock_threshold?: number | null
+          name?: string | null
+          price?: number | null
+          stock_quantity?: number | null
+        }
+        Update: {
+          category?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string | null
+          image_url?: string | null
+          in_stock?: boolean | null
+          low_stock_threshold?: number | null
+          name?: string | null
+          price?: number | null
+          stock_quantity?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cancel_account_deletion: { Args: never; Returns: undefined }
@@ -1910,6 +2018,31 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      insert_admin_audit_log: {
+        Args: {
+          _action_type: string
+          _entity_id?: string
+          _entity_type?: string
+          _metadata?: Json
+          _new_values?: Json
+          _old_values?: Json
+        }
+        Returns: undefined
+      }
+      insert_coupon_audit_log: {
+        Args: {
+          _action: string
+          _coupon_code: string
+          _discount_amount?: number
+          _metadata?: Json
+          _order_id?: string
+          _promotion_id?: string
+          _reason_code?: string
+          _subscription_id?: string
+          _user_id: string
+        }
+        Returns: undefined
       }
       log_admin_login_attempt: {
         Args: {
