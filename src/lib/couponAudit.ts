@@ -40,16 +40,16 @@ export async function logCouponAction({
   metadata,
 }: CouponAuditParams): Promise<void> {
   try {
-    await supabase.from('coupon_audit_log').insert({
-      user_id: userId,
-      coupon_code: couponCode.toUpperCase(),
-      action,
-      reason_code: reasonCode,
-      promotion_id: promotionId,
-      order_id: orderId,
-      subscription_id: subscriptionId,
-      discount_amount: discountAmount,
-      metadata,
+    await supabase.rpc('insert_coupon_audit_log', {
+      _user_id: userId,
+      _coupon_code: couponCode.toUpperCase(),
+      _action: action,
+      _reason_code: reasonCode || null,
+      _promotion_id: promotionId || null,
+      _order_id: orderId || null,
+      _subscription_id: subscriptionId || null,
+      _discount_amount: discountAmount || null,
+      _metadata: metadata || {},
     });
 
     // If rejection, update account abuse tracking
