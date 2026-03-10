@@ -18,6 +18,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify scheduler auth token
+  const authToken = req.headers.get("x-scheduler-token");
+  const expectedToken = Deno.env.get("SCHEDULER_AUTH_TOKEN");
+  if (!expectedToken || !authToken || authToken !== expectedToken) {
+    logStep("Unauthorized request");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // Rate limiting for scheduler
   const clientId = getClientId(req);
   const rateLimitResponse = checkRateLimit(clientId, RATE_LIMITS.scheduler, corsHeaders);
