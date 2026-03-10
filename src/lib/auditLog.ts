@@ -38,17 +38,13 @@ export async function logAdminAction({
   metadata,
 }: AuditLogParams): Promise<void> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    await supabase.from('admin_audit_log').insert({
-      admin_user_id: user.id,
-      action_type: actionType,
-      entity_type: entityType,
-      entity_id: entityId,
-      old_values: oldValues,
-      new_values: newValues,
-      metadata,
+    await supabase.rpc('insert_admin_audit_log', {
+      _action_type: actionType,
+      _entity_type: entityType || null,
+      _entity_id: entityId || null,
+      _old_values: oldValues || null,
+      _new_values: newValues || null,
+      _metadata: metadata || null,
     });
   } catch (error) {
     console.error('Failed to log admin action:', error);

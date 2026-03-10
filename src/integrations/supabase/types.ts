@@ -1911,6 +1911,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_admin_audit_log: {
+        Args: {
+          _action_type: string
+          _entity_id?: string
+          _entity_type?: string
+          _metadata?: Json
+          _new_values?: Json
+          _old_values?: Json
+        }
+        Returns: undefined
+      }
+      insert_coupon_audit_log: {
+        Args: {
+          _action: string
+          _coupon_code: string
+          _discount_amount?: number
+          _metadata?: Json
+          _order_id?: string
+          _promotion_id?: string
+          _reason_code?: string
+          _subscription_id?: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       log_admin_login_attempt: {
         Args: {
           _email: string

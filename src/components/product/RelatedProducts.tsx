@@ -37,7 +37,7 @@ const RelatedProducts = ({ currentProductId, category }: RelatedProductsProps) =
     try {
       let query = supabase
         .from('products')
-        .select('*')
+        .select('id, name, description, price, image_url, category, in_stock, stock_quantity, display_order')
         .neq('id', currentProductId)
         .eq('in_stock', true)
         .limit(4);
@@ -55,7 +55,7 @@ const RelatedProducts = ({ currentProductId, category }: RelatedProductsProps) =
       if ((!data || data.length < 4) && category) {
         const { data: moreProducts } = await supabase
           .from('products')
-          .select('*')
+          .select('id, name, description, price, image_url, category, in_stock, stock_quantity, display_order')
           .neq('id', currentProductId)
           .neq('category', category)
           .eq('in_stock', true)
