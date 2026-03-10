@@ -26,7 +26,7 @@ export const useAdminAuth = () => {
         _role: 'admin',
       });
 
-      if (!roles) {
+      if (!isAdmin) {
         navigate('/');
         return;
       }
