@@ -251,7 +251,7 @@ const SubscriptionReview = () => {
             userId: user.id,
             couponCode: couponCode.toUpperCase(),
             action: 'rejected',
-            reasonCode: reason,
+            reasonCode: reason as import('@/lib/couponAudit').CouponReasonCode,
             promotionId: validationResult?.promotion_id || undefined,
           });
         }
