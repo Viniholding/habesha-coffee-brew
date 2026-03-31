@@ -21,6 +21,18 @@ const tocItems = [
   { id: "contact-info", title: "12. Contact Information", level: 2 },
 ];
 
+const subscriptionSubItems = [
+  { id: "sub-automatic-billing", title: "9.1 Automatic Billing" },
+  { id: "sub-discounts", title: "9.2 Subscription Discounts" },
+  { id: "sub-early-cancellation", title: "9.3 Early Cancellation" },
+  { id: "sub-cancellation", title: "9.4 Cancellation" },
+  { id: "sub-pause-skip", title: "9.5 Pause & Skip" },
+  { id: "sub-price-changes", title: "9.6 Price Changes" },
+  { id: "sub-failed-payments", title: "9.7 Failed Payments" },
+  { id: "sub-no-refunds", title: "9.8 No Refunds on Delivered Orders" },
+  { id: "sub-consent", title: "9.9 Consent & Agreement" },
+];
+
 const TermsOfUse = () => {
   return (
     <>
@@ -121,31 +133,86 @@ const TermsOfUse = () => {
 
             <section id="subscription-terms">
               <h2 className="text-xl font-semibold mb-3">9. Subscription Terms</h2>
-              <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-amber-800 dark:text-amber-200 mb-2">Subscription Discount Policy</p>
-                    <p className="text-sm text-amber-700 dark:text-amber-300">
-                      Subscription purchases receive a discounted price compared to one-time purchases. 
-                      If a subscription is canceled before the second scheduled delivery, we reserve the right to 
-                      charge the difference between the discounted subscription price and the standard one-time 
-                      purchase price for the initial order.
-                    </p>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                By purchasing a subscription through coffeehabesha.com, you agree to the following terms. Please read them carefully before subscribing. These terms govern all Coffee Habesha subscription plans, including weekly, bi-weekly, and monthly delivery options.
+              </p>
+
+              <div className="space-y-6 ml-2">
+                <div id="sub-automatic-billing">
+                  <h3 className="text-lg font-medium mb-2">1. Automatic Billing</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Subscriptions are billed automatically at the frequency you select (weekly, bi-weekly, or monthly) until canceled. Your payment method on file will be charged at the start of each billing cycle. By subscribing, you authorize Coffee Habesha, LLC to charge your payment method on a recurring basis until you cancel.
+                  </p>
+                </div>
+
+                <div id="sub-discounts">
+                  <h3 className="text-lg font-medium mb-2">2. Subscription Discounts</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Subscription pricing reflects a 10% promotional discount from standard one-time purchase prices. This discount is applied automatically at checkout and reflected in your order confirmation. Discount availability is subject to change for new subscriptions with 30 days' notice.
+                  </p>
+                </div>
+
+                <div id="sub-early-cancellation">
+                  <h3 className="text-lg font-medium mb-2">3. Early Cancellation</h3>
+                  <p className="text-muted-foreground leading-relaxed mb-3">
+                    If you cancel your subscription before your second delivery is fulfilled, the promotional discount applied to your first order will be charged back to your payment method at the time of cancellation. By subscribing, you explicitly authorize this charge.
+                  </p>
+                  <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        <strong className="text-amber-800 dark:text-amber-200">Important:</strong> You're receiving a discounted subscription price. If the subscription is canceled before the second delivery, the discount applied to the first order will be charged back. See these Terms for details.
+                      </p>
+                    </div>
                   </div>
                 </div>
+
+                <div id="sub-cancellation">
+                  <h3 className="text-lg font-medium mb-2">4. Cancellation</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    You may cancel your subscription at any time through your account dashboard or by contacting customer support at{" "}
+                    <a href="mailto:info@coffeehabesha.com" className="text-primary hover:underline">info@coffeehabesha.com</a> or{" "}
+                    <a href="tel:+18777880389" className="text-primary hover:underline">(877) 788-0389</a>. Cancellations take effect at the end of the current billing period. You will not be charged for the next cycle, and no partial refunds are issued for the remainder of a paid period.
+                  </p>
+                </div>
+
+                <div id="sub-pause-skip">
+                  <h3 className="text-lg font-medium mb-2">5. Pause & Skip</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    You may pause your subscription or skip individual deliveries through your account settings. Subscriptions may be paused for up to 60 consecutive days. Paused subscriptions resume automatically at the end of the pause period. Skipping or pausing a delivery does not extend your subscription or affect your billing cycle timing.
+                  </p>
+                </div>
+
+                <div id="sub-price-changes">
+                  <h3 className="text-lg font-medium mb-2">6. Price Changes</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    We reserve the right to change subscription pricing with 30 days' advance notice. Notice will be provided via email to the address on your account. You may cancel your subscription before new pricing takes effect without penalty. Continued use of your subscription after the effective date of a price change constitutes acceptance of the new price.
+                  </p>
+                </div>
+
+                <div id="sub-failed-payments">
+                  <h3 className="text-lg font-medium mb-2">7. Failed Payments</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    If a payment fails, we will retry your payment method up to three times over a 7-day period. If payment cannot be successfully collected after three attempts, your subscription will be paused and no delivery will be made for that cycle. You will receive an email notification and may update your billing information through your account dashboard to resume your subscription.
+                  </p>
+                </div>
+
+                <div id="sub-no-refunds">
+                  <h3 className="text-lg font-medium mb-2">8. No Refunds on Delivered Orders</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    All delivered orders are final. Refunds are not issued for delivered subscription orders except in cases of product defect, shipping damage, or carrier error. If your order arrives damaged or incorrect, please contact us within 7 days of delivery at{" "}
+                    <a href="mailto:info@coffeehabesha.com" className="text-primary hover:underline">info@coffeehabesha.com</a> with a description and photo of the issue and we will make it right.
+                  </p>
+                </div>
+
+                <div id="sub-consent">
+                  <h3 className="text-lg font-medium mb-2">9. Consent & Agreement</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    By completing your subscription purchase, you confirm that you have read, understood, and agree to these Subscription Terms of Use. Your electronic consent at checkout constitutes a legally binding agreement. These terms are incorporated into and form part of Coffee Habesha's full Terms of Use available at{" "}
+                    <a href="/terms-of-use" className="text-primary hover:underline">coffeehabesha.com/terms</a>.
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground leading-relaxed mb-3">
-                By purchasing a subscription, you agree to the following terms:
-              </p>
-              <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-2">
-                <li><strong>Automatic Billing:</strong> Subscriptions are billed automatically at the frequency you select until canceled.</li>
-                <li><strong>Subscription Discounts:</strong> Subscription pricing reflects a promotional discount from standard one-time purchase prices.</li>
-                <li><strong>Early Cancellation:</strong> If you cancel before receiving two deliveries, the discount from your first order may be charged back to ensure fair use of promotional pricing.</li>
-                <li><strong>Cancellation:</strong> You may cancel your subscription at any time through your account dashboard or by contacting customer support.</li>
-                <li><strong>Pause & Skip:</strong> You may pause your subscription or skip individual deliveries through your account settings.</li>
-                <li><strong>Price Changes:</strong> We reserve the right to change subscription pricing with 30 days' notice. You may cancel before new pricing takes effect.</li>
-              </ul>
             </section>
 
             <section id="promotion-terms">
