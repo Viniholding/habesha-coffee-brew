@@ -420,7 +420,15 @@ serve(async (req) => {
         };
         break;
 
-      case "skip":
+      case "skip": {
+        // Verify ownership first
+        const { data: skipSub } = await supabaseClient
+          .from("subscriptions")
+          .select("id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        verifyOwnership(skipSub, "skip");
+
         // Update next billing date to skip this cycle
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
         const nextBilling = new Date((sub.current_period_end + 7 * 24 * 60 * 60) * 1000);
@@ -428,33 +436,42 @@ serve(async (req) => {
           .from("subscriptions")
           .update({ next_delivery_date: nextBilling.toISOString().split('T')[0] })
           .eq("stripe_subscription_id", subscriptionId);
-        const { data: skippedSub } = await supabaseClient
-          .from("subscriptions")
-          .select("id")
-          .eq("stripe_subscription_id", subscriptionId)
-          .single();
-        if (skippedSub) {
-          await supabaseClient.from("subscription_events").insert({
-            subscription_id: skippedSub.id,
-            event_type: "skipped",
-            event_data: { skipped_date: skipDate },
-            created_by: user.id,
-          });
-        }
+        await supabaseClient.from("subscription_events").insert({
+          subscription_id: skipSub.id,
+          event_type: "skipped",
+          event_data: { skipped_date: skipDate },
+          created_by: user.id,
+        });
         result = { message: "Next delivery skipped" };
         break;
+      }
 
-      case "update_frequency":
-        // For frequency changes, we'd need to update the subscription items
-        // This is complex with Stripe - for now we log the change
+      case "update_frequency": {
+        // Verify ownership first
+        const { data: freqSub } = await supabaseClient
+          .from("subscriptions")
+          .select("id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        verifyOwnership(freqSub, "update_frequency");
+
         await supabaseClient
           .from("subscriptions")
           .update({ frequency: newFrequency })
           .eq("stripe_subscription_id", subscriptionId);
         result = { message: "Frequency updated" };
         break;
+      }
 
-      case "update_quantity":
+      case "update_quantity": {
+        // Verify ownership first
+        const { data: qtySub } = await supabaseClient
+          .from("subscriptions")
+          .select("id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        verifyOwnership(qtySub, "update_quantity");
+
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const itemId = subscription.items.data[0]?.id;
         if (itemId) {
@@ -466,6 +483,7 @@ serve(async (req) => {
         }
         result = { message: "Quantity updated" };
         break;
+      }
 
       default:
         throw new Error("Invalid action");
