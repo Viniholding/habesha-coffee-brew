@@ -305,9 +305,7 @@ serve(async (req) => {
           .eq("stripe_subscription_id", subscriptionId)
           .single();
 
-        if (!subToCancel) {
-          throw new Error("Subscription not found");
-        }
+        verifyOwnership(subToCancel, "cancel");
 
         logStep("Checking early cancellation", { 
           deliveriesCompleted: subToCancel.deliveries_completed,
