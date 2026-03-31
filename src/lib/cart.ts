@@ -70,6 +70,7 @@ export const addToCart = async (
     }
 
     toast.success("Added to cart");
+    window.dispatchEvent(new CustomEvent("cart-updated"));
     return { success: true, requiresAuth: false };
   } catch (error) {
     console.error("Error adding to cart:", error);

@@ -91,25 +91,14 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
     if (userId) {
       fetchCartItems();
       
-      // Set up realtime subscription
-      const channel = supabase
-        .channel('cart-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'cart_items',
-            filter: `user_id=eq.${userId}`
-          },
-          () => {
-            fetchCartItems();
-          }
-        )
-        .subscribe();
+      // Listen for cart-updated custom events
+      const handleCartUpdate = () => {
+        fetchCartItems();
+      };
+      window.addEventListener("cart-updated", handleCartUpdate);
 
       return () => {
-        supabase.removeChannel(channel);
+        window.removeEventListener("cart-updated", handleCartUpdate);
       };
     } else {
       loadGuestCartItems();
