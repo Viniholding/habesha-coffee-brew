@@ -127,6 +127,14 @@ serve(async (req) => {
 
     let result: any = {};
 
+    // Helper to verify subscription ownership
+    const verifyOwnership = (sub: { user_id: string } | null, subName: string) => {
+      if (!sub) throw new Error("Subscription not found");
+      if (sub.user_id !== user.id) {
+        throw new Error("Forbidden: subscription does not belong to you");
+      }
+    };
+
     switch (action) {
       case "pause":
         // Get subscription details first to check deliveries completed for pause safeguard
@@ -136,9 +144,7 @@ serve(async (req) => {
           .eq("stripe_subscription_id", subscriptionId)
           .single();
 
-        if (!subToPause) {
-          throw new Error("Subscription not found");
-        }
+        verifyOwnership(subToPause, "pause");
 
         // Check if early pause (before 2nd delivery) and discount was applied
         const isEarlyPause = (subToPause.deliveries_completed || 0) < 2;
