@@ -279,9 +279,10 @@ serve(async (req) => {
           .eq("stripe_subscription_id", subscriptionId);
         const { data: resumedSub } = await supabaseClient
           .from("subscriptions")
-          .select("id")
+          .select("id, user_id")
           .eq("stripe_subscription_id", subscriptionId)
           .single();
+        verifyOwnership(resumedSub, "resume");
         if (resumedSub) {
           await supabaseClient.from("subscription_events").insert({
             subscription_id: resumedSub.id,
