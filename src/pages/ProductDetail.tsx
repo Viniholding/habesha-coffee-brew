@@ -70,7 +70,7 @@ const ProductDetail = () => {
     try {
       // Fetch product and its images in parallel
       const [productResult, imagesResult] = await Promise.all([
-        supabase.from("products").select("id, name, description, price, image_url, category, in_stock, stock_quantity, low_stock_threshold, display_order, sku").eq("id", productId).single(),
+        supabase.from("products").select("id, name, description, price, image_url, category, in_stock, stock_quantity, display_order").eq("id", productId).single(),
         supabase.from("product_images").select("*").eq("product_id", productId).order("sort_order")
       ]);
 
