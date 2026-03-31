@@ -8,8 +8,8 @@ const WARNING_BEFORE_TIMEOUT = 5 * 60 * 1000; // 5 minutes warning
 
 export const useSessionTimeout = (enabled: boolean = true) => {
   const navigate = useNavigate();
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const warningRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
 
   const handleLogout = useCallback(async () => {
