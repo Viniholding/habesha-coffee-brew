@@ -14,7 +14,7 @@ const tocItems = [
   { id: "third-party", title: "5. Third-Party Services & Links", level: 2 },
   { id: "disclaimer-warranties", title: "6. Disclaimer of Warranties", level: 2 },
   { id: "limitation-liability", title: "7. Limitation of Liability", level: 2 },
-  { id: "governing-law", title: "8. Governing Law", level: 2 },
+  { id: "governing-law", title: "8. Choice of Law & Dispute Resolution", level: 2 },
   { id: "subscription-terms", title: "9. Subscription Terms", level: 2 },
   { id: "promotion-terms", title: "10. Promotion & Coupon Terms", level: 2 },
   { id: "changes-terms", title: "11. Changes to These Terms", level: 2 },
