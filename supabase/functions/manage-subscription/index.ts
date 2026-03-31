@@ -127,6 +127,14 @@ serve(async (req) => {
 
     let result: any = {};
 
+    // Helper to verify subscription ownership
+    const verifyOwnership = (sub: { user_id: string } | null, subName: string) => {
+      if (!sub) throw new Error("Subscription not found");
+      if (sub.user_id !== user.id) {
+        throw new Error("Forbidden: subscription does not belong to you");
+      }
+    };
+
     switch (action) {
       case "pause":
         // Get subscription details first to check deliveries completed for pause safeguard
@@ -136,9 +144,7 @@ serve(async (req) => {
           .eq("stripe_subscription_id", subscriptionId)
           .single();
 
-        if (!subToPause) {
-          throw new Error("Subscription not found");
-        }
+        verifyOwnership(subToPause, "pause");
 
         // Check if early pause (before 2nd delivery) and discount was applied
         const isEarlyPause = (subToPause.deliveries_completed || 0) < 2;
@@ -263,7 +269,15 @@ serve(async (req) => {
         };
         break;
 
-      case "resume":
+      case "resume": {
+        // Verify ownership before modifying
+        const { data: resumedSub } = await supabaseClient
+          .from("subscriptions")
+          .select("id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        verifyOwnership(resumedSub, "resume");
+
         await stripe.subscriptions.update(subscriptionId, {
           pause_collection: null,
         });
@@ -271,24 +285,17 @@ serve(async (req) => {
           .from("subscriptions")
           .update({ status: "active", paused_at: null, resume_at: null })
           .eq("stripe_subscription_id", subscriptionId);
-        const { data: resumedSub } = await supabaseClient
-          .from("subscriptions")
-          .select("id")
-          .eq("stripe_subscription_id", subscriptionId)
-          .single();
-        if (resumedSub) {
-          await supabaseClient.from("subscription_events").insert({
-            subscription_id: resumedSub.id,
-            event_type: "resumed",
-            created_by: user.id,
-          });
-          // Send email
-          await supabaseClient.functions.invoke("send-subscription-email", {
-            body: { type: "subscription_resumed", subscriptionId: resumedSub.id },
-          });
-        }
+        await supabaseClient.from("subscription_events").insert({
+          subscription_id: resumedSub.id,
+          event_type: "resumed",
+          created_by: user.id,
+        });
+        await supabaseClient.functions.invoke("send-subscription-email", {
+          body: { type: "subscription_resumed", subscriptionId: resumedSub.id },
+        });
         result = { message: "Subscription resumed" };
         break;
+      }
 
       case "cancel":
         // Get subscription details first to check deliveries completed
@@ -298,9 +305,7 @@ serve(async (req) => {
           .eq("stripe_subscription_id", subscriptionId)
           .single();
 
-        if (!subToCancel) {
-          throw new Error("Subscription not found");
-        }
+        verifyOwnership(subToCancel, "cancel");
 
         logStep("Checking early cancellation", { 
           deliveriesCompleted: subToCancel.deliveries_completed,
@@ -415,7 +420,15 @@ serve(async (req) => {
         };
         break;
 
-      case "skip":
+      case "skip": {
+        // Verify ownership first
+        const { data: skipSub } = await supabaseClient
+          .from("subscriptions")
+          .select("id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        verifyOwnership(skipSub, "skip");
+
         // Update next billing date to skip this cycle
         const sub = await stripe.subscriptions.retrieve(subscriptionId);
         const nextBilling = new Date((sub.current_period_end + 7 * 24 * 60 * 60) * 1000);
@@ -423,33 +436,42 @@ serve(async (req) => {
           .from("subscriptions")
           .update({ next_delivery_date: nextBilling.toISOString().split('T')[0] })
           .eq("stripe_subscription_id", subscriptionId);
-        const { data: skippedSub } = await supabaseClient
-          .from("subscriptions")
-          .select("id")
-          .eq("stripe_subscription_id", subscriptionId)
-          .single();
-        if (skippedSub) {
-          await supabaseClient.from("subscription_events").insert({
-            subscription_id: skippedSub.id,
-            event_type: "skipped",
-            event_data: { skipped_date: skipDate },
-            created_by: user.id,
-          });
-        }
+        await supabaseClient.from("subscription_events").insert({
+          subscription_id: skipSub.id,
+          event_type: "skipped",
+          event_data: { skipped_date: skipDate },
+          created_by: user.id,
+        });
         result = { message: "Next delivery skipped" };
         break;
+      }
 
-      case "update_frequency":
-        // For frequency changes, we'd need to update the subscription items
-        // This is complex with Stripe - for now we log the change
+      case "update_frequency": {
+        // Verify ownership first
+        const { data: freqSub } = await supabaseClient
+          .from("subscriptions")
+          .select("id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        verifyOwnership(freqSub, "update_frequency");
+
         await supabaseClient
           .from("subscriptions")
           .update({ frequency: newFrequency })
           .eq("stripe_subscription_id", subscriptionId);
         result = { message: "Frequency updated" };
         break;
+      }
 
-      case "update_quantity":
+      case "update_quantity": {
+        // Verify ownership first
+        const { data: qtySub } = await supabaseClient
+          .from("subscriptions")
+          .select("id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        verifyOwnership(qtySub, "update_quantity");
+
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const itemId = subscription.items.data[0]?.id;
         if (itemId) {
@@ -461,6 +483,7 @@ serve(async (req) => {
         }
         result = { message: "Quantity updated" };
         break;
+      }
 
       default:
         throw new Error("Invalid action");
@@ -474,9 +497,10 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+    const status = errorMessage.includes("Forbidden") ? 403 : 500;
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status,
     });
   }
 });

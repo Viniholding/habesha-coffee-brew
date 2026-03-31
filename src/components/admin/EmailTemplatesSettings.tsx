@@ -320,11 +320,11 @@ export default function EmailTemplatesSettings({ isOwner }: EmailTemplatesSettin
           </DialogHeader>
           
           <div className="border rounded-lg overflow-hidden">
-            <div 
-              className="p-6 bg-white"
-              dangerouslySetInnerHTML={{ 
-                __html: previewTemplate ? getPreviewHtml(previewTemplate) : '' 
-              }}
+            <iframe
+              srcDoc={previewTemplate ? getPreviewHtml(previewTemplate) : ''}
+              sandbox=""
+              className="w-full min-h-[400px] bg-white"
+              title="Email preview"
             />
           </div>
 
