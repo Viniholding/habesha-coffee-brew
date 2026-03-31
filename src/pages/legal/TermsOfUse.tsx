@@ -21,6 +21,18 @@ const tocItems = [
   { id: "contact-info", title: "12. Contact Information", level: 2 },
 ];
 
+const subscriptionSubItems = [
+  { id: "sub-automatic-billing", title: "9.1 Automatic Billing" },
+  { id: "sub-discounts", title: "9.2 Subscription Discounts" },
+  { id: "sub-early-cancellation", title: "9.3 Early Cancellation" },
+  { id: "sub-cancellation", title: "9.4 Cancellation" },
+  { id: "sub-pause-skip", title: "9.5 Pause & Skip" },
+  { id: "sub-price-changes", title: "9.6 Price Changes" },
+  { id: "sub-failed-payments", title: "9.7 Failed Payments" },
+  { id: "sub-no-refunds", title: "9.8 No Refunds on Delivered Orders" },
+  { id: "sub-consent", title: "9.9 Consent & Agreement" },
+];
+
 const TermsOfUse = () => {
   return (
     <>
