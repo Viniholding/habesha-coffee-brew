@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -63,6 +64,7 @@ const SubscriptionReview = () => {
   // Coupon code state
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState<{ code: string; discount: number } | null>(null);
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
 
@@ -988,6 +990,19 @@ const SubscriptionReview = () => {
                     </div>
                   )}
 
+                  {/* Discount Terms Agreement */}
+                  <div className="flex items-start space-x-3 pt-4 p-4 rounded-lg bg-muted/50 border border-border">
+                    <Checkbox
+                      id="terms-agree"
+                      checked={termsAgreed}
+                      onCheckedChange={(checked) => setTermsAgreed(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <Label htmlFor="terms-agree" className="text-sm leading-relaxed cursor-pointer text-muted-foreground">
+                      I understand and agree that I'm receiving a discounted subscription price. If the subscription is canceled or paused before the second delivery, the discount applied to the first order may be charged back.
+                    </Label>
+                  </div>
+
                   {/* Actions */}
                   <div className="flex gap-4 pt-4">
                     <Button
@@ -1001,7 +1016,7 @@ const SubscriptionReview = () => {
                     <Button
                       className="flex-1"
                       onClick={handleConfirmAndPay}
-                      disabled={loading || !user}
+                      disabled={loading || !user || !termsAgreed}
                     >
                       {loading ? (
                         <>
