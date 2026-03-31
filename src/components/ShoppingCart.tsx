@@ -179,6 +179,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
 
       if (error) throw error;
       toast.success("Item removed from cart");
+      window.dispatchEvent(new CustomEvent("cart-updated"));
     } catch (error) {
       logger.error("Error removing item:", error);
       toast.error("Failed to remove item");
