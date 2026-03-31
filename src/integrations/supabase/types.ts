@@ -1946,6 +1946,18 @@ export type Database = {
         Returns: undefined
       }
       request_account_deletion: { Args: never; Returns: string }
+      validate_promotion_code: {
+        Args: { _code: string; _is_subscription?: boolean; _user_id?: string }
+        Returns: {
+          code: string
+          discount_type: string
+          discount_value: number
+          is_valid: boolean
+          min_order_amount: number
+          promotion_id: string
+          rejection_reason: string
+        }[]
+      }
       validate_referral_code: {
         Args: { _code: string }
         Returns: {

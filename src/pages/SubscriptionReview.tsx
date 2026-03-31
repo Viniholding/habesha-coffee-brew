@@ -222,122 +222,45 @@ const SubscriptionReview = () => {
         return;
       }
 
-      // Check promotions table for valid coupon
-      const { data: promotion, error: promoError } = await supabase
-        .from("promotions")
-        .select("*")
-        .eq("code", couponCode.toUpperCase())
-        .eq("is_active", true)
+      // Validate promotion server-side via RPC (doesn't expose internal fields)
+      const { data: validationResult, error: promoError } = await supabase
+        .rpc("validate_promotion_code", {
+          _code: couponCode.toUpperCase(),
+          _user_id: user?.id || null,
+          _is_subscription: true,
+        })
         .maybeSingle();
 
       if (promoError) {
         throw promoError;
       }
 
-      if (!promotion) {
-        setCouponError("Invalid coupon code");
+      if (!validationResult || !validationResult.is_valid) {
+        const reason = validationResult?.rejection_reason || 'invalid_code';
+        const reasonMessages: Record<string, string> = {
+          invalid_code: "Invalid coupon code",
+          expired: "This coupon has expired",
+          not_started: "This coupon is not yet active",
+          max_uses_exceeded: "This coupon has reached its usage limit",
+          not_subscription_eligible: "This coupon cannot be applied to subscription orders",
+          already_used: "This coupon has already been used",
+        };
+        setCouponError(reasonMessages[reason] || "Invalid coupon code");
         if (user) {
           await logCouponAction({
             userId: user.id,
             couponCode: couponCode.toUpperCase(),
             action: 'rejected',
-            reasonCode: 'invalid_code',
+            reasonCode: reason as import('@/lib/couponAudit').CouponReasonCode,
+            promotionId: validationResult?.promotion_id || undefined,
           });
         }
         setCouponLoading(false);
         return;
-      }
-
-      // Check expiration
-      if (promotion.expires_at && new Date(promotion.expires_at) < new Date()) {
-        setCouponError("This coupon has expired");
-        if (user) {
-          await logCouponAction({
-            userId: user.id,
-            couponCode: couponCode.toUpperCase(),
-            action: 'rejected',
-            reasonCode: 'expired',
-            promotionId: promotion.id,
-          });
-        }
-        setCouponLoading(false);
-        return;
-      }
-
-      // Check if not started yet
-      if (promotion.starts_at && new Date(promotion.starts_at) > new Date()) {
-        setCouponError("This coupon is not yet active");
-        if (user) {
-          await logCouponAction({
-            userId: user.id,
-            couponCode: couponCode.toUpperCase(),
-            action: 'rejected',
-            reasonCode: 'not_started',
-            promotionId: promotion.id,
-          });
-        }
-        setCouponLoading(false);
-        return;
-      }
-
-      // Check usage limit
-      if (promotion.max_uses && promotion.current_uses >= promotion.max_uses) {
-        setCouponError("This coupon has reached its usage limit");
-        if (user) {
-          await logCouponAction({
-            userId: user.id,
-            couponCode: couponCode.toUpperCase(),
-            action: 'rejected',
-            reasonCode: 'max_uses_exceeded',
-            promotionId: promotion.id,
-          });
-        }
-        setCouponLoading(false);
-        return;
-      }
-
-      // Check if applies to subscription - must be explicitly eligible
-      if (!promotion.is_subscription_eligible) {
-        setCouponError("This coupon cannot be applied to subscription orders");
-        if (user) {
-          await logCouponAction({
-            userId: user.id,
-            couponCode: couponCode.toUpperCase(),
-            action: 'rejected',
-            reasonCode: 'not_subscription_eligible',
-            promotionId: promotion.id,
-          });
-        }
-        setCouponLoading(false);
-        return;
-      }
-
-      // Check if user already used this coupon (max_uses_per_user check)
-      if (user && promotion.max_uses_per_user) {
-        const { data: existingUses } = await supabase
-          .from("promotion_uses")
-          .select("id")
-          .eq("promotion_id", promotion.id)
-          .eq("user_id", user.id);
-
-        if (existingUses && existingUses.length >= promotion.max_uses_per_user) {
-          setCouponError("This coupon has already been used");
-          await logCouponAction({
-            userId: user.id,
-            couponCode: couponCode.toUpperCase(),
-            action: 'rejected',
-            reasonCode: 'already_used',
-            promotionId: promotion.id,
-          });
-          setCouponLoading(false);
-          return;
-        }
       }
 
       // Apply discount
-      const discountValue = promotion.discount_type === "percentage" 
-        ? promotion.discount_value 
-        : promotion.discount_value;
+      const discountValue = validationResult.discount_value;
 
       setCouponApplied({ 
         code: couponCode.toUpperCase(), 
@@ -350,12 +273,12 @@ const SubscriptionReview = () => {
           couponCode: couponCode.toUpperCase(),
           action: 'applied',
           reasonCode: 'success',
-          promotionId: promotion.id,
+          promotionId: validationResult.promotion_id,
           discountAmount: discountValue,
         });
       }
       
-      toast.success(`Coupon applied! ${promotion.discount_type === "percentage" ? `${discountValue}%` : `$${discountValue}`} off`);
+      toast.success(`Coupon applied! ${validationResult.discount_type === "percentage" ? `${discountValue}%` : `$${discountValue}`} off`);
       setCouponCode("");
     } catch (error) {
       setCouponError("Failed to validate coupon");
