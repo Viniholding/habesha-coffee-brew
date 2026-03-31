@@ -91,25 +91,14 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
     if (userId) {
       fetchCartItems();
       
-      // Set up realtime subscription
-      const channel = supabase
-        .channel('cart-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'cart_items',
-            filter: `user_id=eq.${userId}`
-          },
-          () => {
-            fetchCartItems();
-          }
-        )
-        .subscribe();
+      // Listen for cart-updated custom events
+      const handleCartUpdate = () => {
+        fetchCartItems();
+      };
+      window.addEventListener("cart-updated", handleCartUpdate);
 
       return () => {
-        supabase.removeChannel(channel);
+        window.removeEventListener("cart-updated", handleCartUpdate);
       };
     } else {
       loadGuestCartItems();
@@ -162,6 +151,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
 
       if (error) throw error;
       toast.success("Cart updated");
+      window.dispatchEvent(new CustomEvent("cart-updated"));
     } catch (error) {
       logger.error("Error updating quantity:", error);
       toast.error("Failed to update cart");
@@ -189,6 +179,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
 
       if (error) throw error;
       toast.success("Item removed from cart");
+      window.dispatchEvent(new CustomEvent("cart-updated"));
     } catch (error) {
       logger.error("Error removing item:", error);
       toast.error("Failed to remove item");
