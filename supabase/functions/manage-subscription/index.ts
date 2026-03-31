@@ -269,7 +269,15 @@ serve(async (req) => {
         };
         break;
 
-      case "resume":
+      case "resume": {
+        // Verify ownership before modifying
+        const { data: resumedSub } = await supabaseClient
+          .from("subscriptions")
+          .select("id, user_id")
+          .eq("stripe_subscription_id", subscriptionId)
+          .single();
+        verifyOwnership(resumedSub, "resume");
+
         await stripe.subscriptions.update(subscriptionId, {
           pause_collection: null,
         });
@@ -277,25 +285,17 @@ serve(async (req) => {
           .from("subscriptions")
           .update({ status: "active", paused_at: null, resume_at: null })
           .eq("stripe_subscription_id", subscriptionId);
-        const { data: resumedSub } = await supabaseClient
-          .from("subscriptions")
-          .select("id, user_id")
-          .eq("stripe_subscription_id", subscriptionId)
-          .single();
-        verifyOwnership(resumedSub, "resume");
-        if (resumedSub) {
-          await supabaseClient.from("subscription_events").insert({
-            subscription_id: resumedSub.id,
-            event_type: "resumed",
-            created_by: user.id,
-          });
-          // Send email
-          await supabaseClient.functions.invoke("send-subscription-email", {
-            body: { type: "subscription_resumed", subscriptionId: resumedSub.id },
-          });
-        }
+        await supabaseClient.from("subscription_events").insert({
+          subscription_id: resumedSub.id,
+          event_type: "resumed",
+          created_by: user.id,
+        });
+        await supabaseClient.functions.invoke("send-subscription-email", {
+          body: { type: "subscription_resumed", subscriptionId: resumedSub.id },
+        });
         result = { message: "Subscription resumed" };
         break;
+      }
 
       case "cancel":
         // Get subscription details first to check deliveries completed
