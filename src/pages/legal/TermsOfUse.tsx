@@ -125,10 +125,43 @@ const TermsOfUse = () => {
             </section>
 
             <section id="governing-law">
-              <h2 className="text-xl font-semibold mb-3">8. Governing Law</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                These Terms of Use are governed by and construed in accordance with the laws of the United States, without regard to conflict of law principles.
-              </p>
+              <h2 className="text-xl font-semibold mb-3">8. Choice of Law & Dispute Resolution</h2>
+              <div className="space-y-4 ml-2">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Governing Law</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    These Terms of Use are governed by and construed in accordance with the laws of the Commonwealth of Virginia, without regard to its conflict of law provisions.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Jurisdiction</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Any disputes not resolved through arbitration shall be brought exclusively in the state or federal courts located in Alexandria, Virginia. You consent to personal jurisdiction in those courts and waive any objection to venue in Alexandria, Virginia.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Binding Arbitration</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Except for claims that qualify for small claims court, any dispute arising out of or relating to these Terms or your subscription shall be resolved through final and binding individual arbitration administered by the American Arbitration Association (AAA) under its Consumer Arbitration Rules. Arbitration shall take place in Alexandria, Virginia, or by telephone or video at your election. The arbitrator's decision shall be final and may be entered as a judgment in any court of competent jurisdiction.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Class Action Waiver</h3>
+                  <p className="text-muted-foreground leading-relaxed font-semibold">
+                    YOU AND COFFEE HABESHA AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN AN INDIVIDUAL CAPACITY AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS OR REPRESENTATIVE PROCEEDING.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed mt-2">
+                    You waive the right to participate in any class action lawsuit or class-wide arbitration related to these Terms or your subscription.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Informal Resolution First</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Before initiating arbitration or any legal proceeding, you agree to first contact Coffee Habesha at{" "}
+                    <a href="mailto:info@coffeehabesha.com" className="text-primary hover:underline">info@coffeehabesha.com</a> and allow 30 days for informal resolution of the dispute.
+                  </p>
+                </div>
+              </div>
             </section>
 
             <section id="subscription-terms">
