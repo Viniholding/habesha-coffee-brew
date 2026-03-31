@@ -63,6 +63,7 @@ const SubscriptionReview = () => {
   // Coupon code state
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState<{ code: string; discount: number } | null>(null);
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
 
