@@ -151,6 +151,7 @@ const ShoppingCart = ({ userId }: ShoppingCartProps) => {
 
       if (error) throw error;
       toast.success("Cart updated");
+      window.dispatchEvent(new CustomEvent("cart-updated"));
     } catch (error) {
       logger.error("Error updating quantity:", error);
       toast.error("Failed to update cart");
