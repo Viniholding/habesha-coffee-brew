@@ -262,20 +262,8 @@ serve(async (req) => {
       },
     };
 
-    // Apply coupon if provided
-    if (couponCode) {
-      try {
-        const coupons = await stripe.coupons.list({ limit: 100 });
-        type StripeCoupon = { id: string; name?: string | null };
-        const coupon = coupons.data.find((c: StripeCoupon) => c.name?.toLowerCase() === couponCode.toLowerCase() || c.id === couponCode);
-        if (coupon) {
-          sessionParams.discounts = [{ coupon: coupon.id }];
-          logStep("Coupon applied", { couponId: coupon.id });
-        }
-      } catch (e) {
-        logStep("Coupon lookup failed", { error: e });
-      }
-    }
+    // The validated coupon discount is already baked into the server-computed unit price,
+    // so no additional Stripe coupon is applied here (that would double-discount).
 
     const session = await stripe.checkout.sessions.create(sessionParams);
     logStep("Checkout session created", { sessionId: session.id });
