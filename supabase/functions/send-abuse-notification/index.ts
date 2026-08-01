@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { escapeHtml, hasSchedulerToken, hasServiceRoleBearer, requireAdmin, forbidden } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -56,6 +57,16 @@ serve(async (req) => {
   }
 
   try {
+    // Only internal schedulers/service callers or authenticated admins may trigger notifications
+    const isInternal = hasSchedulerToken(req) || hasServiceRoleBearer(req);
+    if (!isInternal) {
+      const admin = await requireAdmin(req);
+      if (!admin) {
+        logStep("Unauthorized request rejected");
+        return forbidden(corsHeaders);
+      }
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -74,7 +85,7 @@ serve(async (req) => {
       throw new Error(`Failed to fetch user profile: ${profileError?.message}`);
     }
 
-    const customerName = profile.first_name || 'Valued Customer';
+    const customerName = escapeHtml(profile.first_name || 'Valued Customer');
     const adminEmail = Deno.env.get("ADMIN_EMAIL") || "admin@example.com";
 
     if (type === 'account_restricted') {
@@ -115,7 +126,7 @@ serve(async (req) => {
               <li><strong>Email:</strong> ${profile.email}</li>
               <li><strong>Name:</strong> ${profile.first_name} ${profile.last_name || ''}</li>
               <li><strong>Abuse Score:</strong> ${abuseScore || 'N/A'}</li>
-              <li><strong>Reason:</strong> ${reason || 'Automatic threshold exceeded'}</li>
+              <li><strong>Reason:</strong> ${escapeHtml(reason || 'Automatic threshold exceeded')}</li>
               <li><strong>Restricted At:</strong> ${new Date().toISOString()}</li>
             </ul>
             <p>This account has been automatically restricted from promotional pricing due to exceeding abuse detection thresholds.</p>
@@ -152,7 +163,7 @@ serve(async (req) => {
       // Send cross-account fraud alert to admin only
       const linkedAccountsList = crossAccountLinks?.map(link => `
         <li>
-          <strong>${link.email}</strong> - ${link.type === 'shared_payment' ? '💳 Shared Payment Method' : '📍 Shared Address'}
+          <strong>${escapeHtml(link.email)}</strong> - ${link.type === 'shared_payment' ? '💳 Shared Payment Method' : '📍 Shared Address'}
           ${link.isRestricted ? ' <span style="color: red;">(RESTRICTED)</span>' : ''}
         </li>
       `).join('') || '<li>No links detected</li>';
