@@ -128,7 +128,15 @@ Thank you for your order!
 
       if (error) throw error;
 
+      await logUserAction({
+        actionType: "order_issue_reported",
+        entityType: "order",
+        entityId: selectedOrder.id,
+        metadata: { issue_type: validation.data.issue_type },
+      });
+
       toast.success("Issue reported successfully. We'll contact you soon.");
+
       setIssueType("");
       setIssueDescription("");
       setSelectedOrder(null);
