@@ -84,10 +84,6 @@ for (const helper of ['auth.ts', 'db-rate-limit.ts', 'validate.ts', 'audit.ts'])
   }
 }
 
-// The service role key must never leak into client-side code.
-const clientLeak = ['src'].some(() => false);
-void clientLeak;
-
 if (failures.length > 0) {
   console.error('SECURITY REGRESSIONS DETECTED:');
   for (const f of failures) console.error(`  - ${f}`);
