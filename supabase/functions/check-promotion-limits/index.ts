@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
 import { hasSchedulerToken, hasServiceRoleBearer, requireAdmin, forbidden } from "../_shared/auth.ts";
 import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
-import { auditedResendFetch } from "../_shared/audit.ts";
+import { auditedResendFetch, auditLog } from "../_shared/audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +29,15 @@ serve(async (req: Request) => {
     const limited = await enforceRateLimit("check-promotion-limits", req, DB_RATE_LIMITS.scheduler, corsHeaders);
     if (limited) return limited;
   }
+
+  // Access review: record every scheduler invocation
+  await auditLog({
+    actorType: "system",
+    actionType: "scheduler_invoked",
+    entityType: "scheduler",
+    entityId: "check-promotion-limits",
+    req,
+  });
 
     // Internal scheduler endpoint: require the scheduler token, service-role key, or an admin JWT
     const isInternal = hasSchedulerToken(req) || hasServiceRoleBearer(req);
