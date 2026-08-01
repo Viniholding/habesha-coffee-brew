@@ -29,9 +29,14 @@ const NOTIFICATION_FUNCTIONS = [
   'send-subscription-email',
   'send-abuse-notification',
   'send-po-notification',
-  'send-guest-order-confirmation',
-  'send-contact-email',
 ];
+
+/**
+ * Intentionally public endpoints (guest checkout confirmation, contact form).
+ * They must still be rate limited and method-restricted, but derive trust from
+ * server-side lookups rather than a caller identity.
+ */
+const PUBLIC_FUNCTIONS = ['send-guest-order-confirmation', 'send-contact-email'];
 
 const failures = [];
 
@@ -44,7 +49,7 @@ function read(fn) {
   return readFileSync(path, 'utf8');
 }
 
-for (const fn of [...SCHEDULER_FUNCTIONS, ...NOTIFICATION_FUNCTIONS]) {
+for (const fn of [...SCHEDULER_FUNCTIONS, ...NOTIFICATION_FUNCTIONS, ...PUBLIC_FUNCTIONS]) {
   const src = read(fn);
   if (!src) continue;
 
@@ -60,13 +65,13 @@ for (const fn of [...SCHEDULER_FUNCTIONS, ...NOTIFICATION_FUNCTIONS]) {
     src.includes('hasServiceRoleBearer(') ||
     src.includes('getAuthUser(') ||
     src.includes('SCHEDULER_AUTH_TOKEN');
-  if (!hasAuthGate) {
+  if (!hasAuthGate && !PUBLIC_FUNCTIONS.includes(fn)) {
     failures.push(`${fn}: no authentication or internal-token gate found`);
   }
 }
 
 // No function may bypass audited email dispatch.
-for (const fn of NOTIFICATION_FUNCTIONS) {
+for (const fn of [...NOTIFICATION_FUNCTIONS, ...PUBLIC_FUNCTIONS]) {
   const src = read(fn);
   if (!src) continue;
   if (src.includes('fetch("https://api.resend.com/emails"')) {
@@ -90,4 +95,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`All edge function security checks passed (${SCHEDULER_FUNCTIONS.length + NOTIFICATION_FUNCTIONS.length} endpoints).`);
+console.log(`All edge function security checks passed (${SCHEDULER_FUNCTIONS.length + NOTIFICATION_FUNCTIONS.length + PUBLIC_FUNCTIONS.length} endpoints).`);

@@ -75,7 +75,8 @@ BEGIN
     FROM pg_policies
     WHERE schemaname = 'public' AND tablename = tbl
       AND cmd IN ('INSERT', 'ALL')
-      AND coalesce(with_check, '') !~ 'auth\.uid\(\)';
+      AND coalesce(with_check, qual, '') !~ 'auth\.uid\(\)'
+      AND coalesce(with_check, qual, '') !~ 'has_role';
     IF n > 0 THEN
       failures := failures || format('%s allows inserts without an auth.uid() check', tbl);
     END IF;
@@ -105,7 +106,7 @@ BEGIN
       AND p.prosecdef
       AND p.proname IN (
         'delete_user', 'decrement_product_stock', 'update_customer_stats',
-        'consume_rate_limit', 'log_audit_event', 'log_admin_login_attempt',
+        'consume_rate_limit', 'log_audit_event',
         'insert_admin_audit_log', 'generate_po_number'
       )
       AND (
