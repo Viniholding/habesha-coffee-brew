@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://cetccjtelascpdpvluod.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "habesha-coffee-brew",
+      "version": "0.1.0",
+      "title": "habesha-coffee-brew"
+    },
+    "tools": [
+      {
+        "name": "list_products",
+        "title": "List coffee products",
+        "description": "Browse the Habesha coffee catalog, optionally filtered by category or search text.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Text to match against product names."
+            },
+            "category": {
+              "type": "string",
+              "description": "Category filter, e.g. 'Single Origin'."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of products to return (default 20)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_orders",
+        "title": "List my orders",
+        "description": "List the signed-in customer's recent orders with status and totals.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Optional order status filter, e.g. 'shipped'."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of orders to return (default 10)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_order",
+        "title": "Get order details",
+        "description": "Get one of the signed-in customer's orders, including line items and shipment tracking.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "order_number": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The order number, as shown in order history."
+            }
+          },
+          "required": [
+            "order_number"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_subscriptions",
+        "title": "List my coffee subscriptions",
+        "description": "List the signed-in customer's coffee subscriptions with status, cadence and next delivery date.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

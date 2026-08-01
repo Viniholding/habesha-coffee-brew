@@ -66,7 +66,7 @@ const Auth = () => {
       email: validation.data.email,
       password: validation.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}${redirectTo.startsWith("/") ? redirectTo : "/"}`,
       },
     });
 
