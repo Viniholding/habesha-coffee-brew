@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
+import { serviceClient, escapeHtml } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,12 +55,70 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const request: GuestOrderRequest = await req.json();
-    logStep("Order confirmation request", { 
-      email: request.email, 
-      orderNumber: request.orderNumber,
-      itemCount: request.items.length 
-    });
+    const body = await req.json().catch(() => null);
+    const orderNumber = typeof body?.orderNumber === "string" ? body.orderNumber.trim() : "";
+    if (!orderNumber || orderNumber.length > 64 || !/^[A-Za-z0-9-_]+$/.test(orderNumber)) {
+      return new Response(JSON.stringify({ error: "Invalid order number" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Never trust client-supplied recipients or amounts: resolve everything from the order record
+    const supabase = serviceClient();
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select(`
+        order_number, subtotal, shipping, total,
+        profiles:user_id(email, first_name, last_name),
+        order_items(product_name, quantity, unit_price),
+        shipping_address:shipping_address_id(full_name, address_line1, address_line2, city, state, postal_code, country)
+      `)
+      .eq("order_number", orderNumber)
+      .maybeSingle();
+
+    if (orderError || !order) {
+      logStep("Order not found", { orderNumber });
+      return new Response(JSON.stringify({ error: "Order not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const profile = order.profiles as any;
+    const address = (order.shipping_address as any) ?? {};
+    if (!profile?.email) {
+      return new Response(JSON.stringify({ error: "Order has no contact email" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const request: GuestOrderRequest = {
+      email: profile.email,
+      firstName: escapeHtml(profile.first_name || "there"),
+      lastName: escapeHtml(profile.last_name || ""),
+      orderNumber: escapeHtml(order.order_number),
+      items: ((order.order_items as any[]) ?? []).map((i) => ({
+        name: escapeHtml(i.product_name),
+        quantity: Number(i.quantity) || 0,
+        price: Number(i.unit_price) || 0,
+      })),
+      subtotal: Number(order.subtotal) || 0,
+      shipping: Number(order.shipping) || 0,
+      total: Number(order.total) || 0,
+      shippingAddress: {
+        fullName: escapeHtml(address.full_name || ""),
+        addressLine1: escapeHtml(address.address_line1 || ""),
+        addressLine2: address.address_line2 ? escapeHtml(address.address_line2) : undefined,
+        city: escapeHtml(address.city || ""),
+        state: escapeHtml(address.state || ""),
+        postalCode: escapeHtml(address.postal_code || ""),
+        country: escapeHtml(address.country || ""),
+      },
+    };
+
+    logStep("Order confirmation resolved", { orderNumber: request.orderNumber, itemCount: request.items.length });
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) {
