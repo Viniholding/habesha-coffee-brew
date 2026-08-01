@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { hasSchedulerToken, hasServiceRoleBearer, requireAdmin, forbidden } from "../_shared/auth.ts";
 import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditedResendFetch } from "../_shared/audit.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -261,7 +262,7 @@ serve(async (req) => {
     `;
 
     // Send email
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await auditedResendFetch("weekly-fraud-summary", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

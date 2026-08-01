@@ -113,3 +113,47 @@ export async function auditSchedulerRun(params: {
     req: params.req,
   });
 }
+
+/**
+ * Drop-in replacement for `fetch("https://api.resend.com/emails", init)` that
+ * records every dispatch attempt (recipient redacted) in the audit trail.
+ */
+export async function auditedResendFetch(
+  emailType: string,
+  init: RequestInit,
+): Promise<Response> {
+  let recipient = "unknown";
+  let subject: string | undefined;
+  try {
+    const payload = JSON.parse(String(init.body ?? "{}"));
+    const to = payload?.to;
+    recipient = Array.isArray(to) ? to.join(", ") : String(to ?? "unknown");
+    subject = typeof payload?.subject === "string" ? payload.subject.slice(0, 200) : undefined;
+  } catch {
+    // body was not JSON — keep defaults
+  }
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.resend.com/emails", init);
+  } catch (err) {
+    await auditEmailDispatch({
+      emailType,
+      recipient,
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+      metadata: subject ? { subject } : undefined,
+    });
+    throw err;
+  }
+
+  await auditEmailDispatch({
+    emailType,
+    recipient,
+    success: response.ok,
+    error: response.ok ? undefined : `Resend responded ${response.status}`,
+    metadata: { ...(subject ? { subject } : {}), status: response.status },
+  });
+
+  return response;
+}

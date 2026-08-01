@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { hasSchedulerToken, hasServiceRoleBearer, requireAdmin, getAuthUser, forbidden, serviceClient } from "../_shared/auth.ts";
 import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditedResendFetch } from "../_shared/audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -246,7 +247,7 @@ serve(async (req) => {
     }
 
     // Send email
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await auditedResendFetch("send-po-notification", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

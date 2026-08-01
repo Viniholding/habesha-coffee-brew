@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
 import { hasSchedulerToken, hasServiceRoleBearer, requireAdmin, getAuthUser, forbidden, serviceClient } from "../_shared/auth.ts";
 import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditedResendFetch } from "../_shared/audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -180,7 +181,7 @@ serve(async (req) => {
       </html>
     `;
 
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await auditedResendFetch("send-shipping-notification", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

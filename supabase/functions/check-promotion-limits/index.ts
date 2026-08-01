@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
 import { hasSchedulerToken, hasServiceRoleBearer, requireAdmin, forbidden } from "../_shared/auth.ts";
 import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditedResendFetch } from "../_shared/audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -148,7 +149,7 @@ serve(async (req: Request) => {
 
     // Send email to all admins using Resend API directly
     for (const email of adminEmails) {
-      const emailResponse = await fetch("https://api.resend.com/emails", {
+      const emailResponse = await auditedResendFetch("check-promotion-limits", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${resendApiKey}`,

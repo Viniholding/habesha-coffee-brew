@@ -3,6 +3,7 @@ import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
 import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditedResendFetch } from "../_shared/audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -192,7 +193,7 @@ serve(async (req) => {
         // Send low stock notification email
         const resendKey = Deno.env.get("RESEND_API_KEY");
         if (resendKey && product.supplier_email) {
-          await fetch("https://api.resend.com/emails", {
+          await auditedResendFetch("subscription-scheduler", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
