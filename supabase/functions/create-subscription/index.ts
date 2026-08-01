@@ -3,6 +3,8 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
 import { serviceClient } from "../_shared/auth.ts";
+import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditLog } from "../_shared/audit.ts";
 
 // Server-side pricing constants (never trust client-supplied amounts)
 const BAG_SIZE_MULTIPLIERS: Record<string, number> = { "12oz": 1, "2lb": 2.5, "5lb": 5.5 };
@@ -25,7 +27,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Rate limiting
+  // Durable, database-backed rate limiting (applies even when auth is present)
+  const dbLimited = await enforceRateLimit("create-subscription", req, DB_RATE_LIMITS.sensitive, corsHeaders);
+  if (dbLimited) return dbLimited;
+
+  // Legacy in-memory burst guard
   const clientId = getClientId(req);
   const rateLimitResponse = checkRateLimit(clientId, RATE_LIMITS.checkout, corsHeaders);
   if (rateLimitResponse) {
@@ -74,6 +80,16 @@ serve(async (req) => {
       giftDuration,
     } = await req.json();
     
+    await auditLog({
+      actorType: "user",
+      actorUserId: user.id,
+      actionType: "subscription_checkout_started",
+      entityType: "subscription",
+      entityId: internalProductId || productId,
+      newValues: { productName, frequency, quantity, bagSize, grind, isPrepaid, isGift, subscriptionType },
+      req,
+    });
+
     logStep("Request body", { 
       priceId, productId, productName, internalProductId, quantity, frequency, 
       subscriptionType, isPrepaid, isGift, firstDeliveryDate 
