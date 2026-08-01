@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
+import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditLog } from "../_shared/audit.ts";
+import { parseJsonBody, rejectUnknownKeys, requireEnum, optionalString, optionalInt, handleValidationError } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -128,7 +131,7 @@ serve(async (req) => {
       "action", "subscriptionId", "newFrequency", "newQuantity", "skipDate", "resumeAt",
     ]);
     const action = requireEnum(body, "action", [
-      "pause", "resume", "cancel", "skip", "update_frequency", "update_quantity", "reactivate",
+      "pause", "resume", "cancel", "skip", "update_frequency", "update_quantity",
     ] as const);
     const subscriptionId = optionalString(body, "subscriptionId", { max: 255 });
     const newFrequency = optionalString(body, "newFrequency", { max: 50 });
@@ -523,6 +526,8 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    const validation = handleValidationError(error, corsHeaders);
+    if (validation) return validation;
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     const status = errorMessage.includes("Forbidden") ? 403 : 500;
