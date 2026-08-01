@@ -95,7 +95,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Rate limiting
+  // Durable, database-backed rate limiting (applies even when auth is present)
+  const dbLimited = await enforceRateLimit("manage-subscription", req, DB_RATE_LIMITS.sensitive, corsHeaders);
+  if (dbLimited) return dbLimited;
+
+  // Legacy in-memory burst guard
   const clientId = getClientId(req);
   const rateLimitResponse = checkRateLimit(clientId, RATE_LIMITS.api, corsHeaders);
   if (rateLimitResponse) {
@@ -118,8 +122,32 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const { action, subscriptionId, newFrequency, newQuantity, skipDate, resumeAt } = await req.json();
+    // Strict payload validation — unknown or malformed fields are rejected
+    const body = await parseJsonBody(req);
+    rejectUnknownKeys(body, [
+      "action", "subscriptionId", "newFrequency", "newQuantity", "skipDate", "resumeAt",
+    ]);
+    const action = requireEnum(body, "action", [
+      "pause", "resume", "cancel", "skip", "update_frequency", "update_quantity", "reactivate",
+    ] as const);
+    const subscriptionId = optionalString(body, "subscriptionId", { max: 255 });
+    const newFrequency = optionalString(body, "newFrequency", { max: 50 });
+    const newQuantity = optionalInt(body, "newQuantity", { min: 1, max: 20 });
+    const skipDate = optionalString(body, "skipDate", { max: 40 });
+    const resumeAt = optionalString(body, "resumeAt", { max: 40 });
     logStep("Action requested", { action, subscriptionId });
+
+    // Access review trail for user-sensitive subscription changes
+    await auditLog({
+      actorType: "user",
+      actorUserId: user.id,
+      actionType: `subscription_${action}`,
+      entityType: "subscription",
+      entityId: subscriptionId,
+      newValues: { newFrequency, newQuantity, skipDate, resumeAt },
+      req,
+    });
+
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
