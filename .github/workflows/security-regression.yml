@@ -1,0 +1,69 @@
+name: Security Regression Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly drift check, Mondays 06:00 UTC
+    - cron: '0 6 * * 1'
+
+jobs:
+  edge-function-guards:
+    name: Edge function auth, rate limit & audit guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify endpoint hardening
+        run: node scripts/check-edge-function-guards.mjs
+
+  secret-leak-scan:
+    name: No service-role secrets in client code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan src/ for privileged secrets
+        run: |
+          set -euo pipefail
+          if grep -rnE "SERVICE_ROLE|service_role_key|SUPABASE_SERVICE_ROLE_KEY" src/ ; then
+            echo "::error::Service role secret referenced in client-side code"
+            exit 1
+          fi
+          echo "No privileged secrets found in src/."
+
+  dependency-audit:
+    name: Dependency vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --ignore-scripts || npm install --ignore-scripts
+      - name: Fail on high/critical advisories
+        run: npm audit --audit-level=high
+
+  database-policies:
+    name: RLS, SECURITY DEFINER & storage permissions
+    runs-on: ubuntu-latest
+    # Requires a SUPABASE_DB_URL repository secret (a read-capable Postgres
+    # connection string for the environment you want to verify).
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Run security regression assertions
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_DB_URL:-}" ]; then
+            echo "::warning::SUPABASE_DB_URL secret not set — skipping database policy checks"
+            exit 0
+          fi
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/security-regression.sql
