@@ -92,7 +92,7 @@ export function InventoryAuditLog() {
         .from("inventory_audit_log")
         .select(`
           *,
-          products (name, sku)
+          products (name)
         `)
         .order("created_at", { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);

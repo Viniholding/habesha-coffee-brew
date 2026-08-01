@@ -43,7 +43,7 @@ export default function AddInventoryDialog({ open, onOpenChange, onProductAdded 
       const { data, error } = await supabase
         .from('products')
         .insert(productData)
-        .select()
+        .select('id')
         .single();
 
       if (error) throw error;

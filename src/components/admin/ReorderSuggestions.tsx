@@ -36,7 +36,7 @@ export const ReorderSuggestions = () => {
     try {
       // Fetch all products
       const { data: products, error: productsError } = await supabase
-        .from('products')
+        .from('admin_products')
         .select('id, name, sku, stock_quantity, reorder_point, avg_daily_sales')
         .eq('in_stock', true);
 

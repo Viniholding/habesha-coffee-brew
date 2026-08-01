@@ -171,7 +171,7 @@ export default function SupplierManagement() {
 
     // Get products that need reordering for this supplier
     const { data: products, error } = await supabase
-      .from('products')
+      .from('admin_products')
       .select('name, sku, stock_quantity, reorder_point')
       .eq('supplier_id', supplier.id)
       .lt('stock_quantity', supabase.rpc as unknown as number);
