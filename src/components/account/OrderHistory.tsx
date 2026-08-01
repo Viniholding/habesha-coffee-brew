@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Download, AlertCircle } from "lucide-react";
 import { orderIssueSchema } from "@/lib/validation";
 import { logger } from "@/lib/logger";
+import { logUserAction } from "@/lib/userAudit";
 
 interface Order {
   id: string;
