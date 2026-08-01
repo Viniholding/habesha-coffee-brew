@@ -227,8 +227,14 @@ const Products = () => {
         });
       
       if (error) throw error;
+      await logUserAction({
+        actionType: 'stock_notification_requested',
+        entityType: 'product',
+        entityId: productId,
+      });
       toast.success("We'll notify you when this item is back in stock!");
       setNotifyEmail(prev => ({ ...prev, [productId]: '' }));
+
     } catch (error) {
       console.error('Error subscribing to notifications:', error);
       toast.error('Failed to subscribe. Please try again.');
