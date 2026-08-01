@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
+import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditLog } from "../_shared/audit.ts";
+import { parseJsonBody, rejectUnknownKeys, requireEnum, optionalString, optionalInt, handleValidationError } from "../_shared/validate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -95,7 +98,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Rate limiting
+  // Durable, database-backed rate limiting (applies even when auth is present)
+  const dbLimited = await enforceRateLimit("manage-subscription", req, DB_RATE_LIMITS.sensitive, corsHeaders);
+  if (dbLimited) return dbLimited;
+
+  // Legacy in-memory burst guard
   const clientId = getClientId(req);
   const rateLimitResponse = checkRateLimit(clientId, RATE_LIMITS.api, corsHeaders);
   if (rateLimitResponse) {
@@ -118,8 +125,32 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const { action, subscriptionId, newFrequency, newQuantity, skipDate, resumeAt } = await req.json();
+    // Strict payload validation — unknown or malformed fields are rejected
+    const body = await parseJsonBody(req);
+    rejectUnknownKeys(body, [
+      "action", "subscriptionId", "newFrequency", "newQuantity", "skipDate", "resumeAt",
+    ]);
+    const action = requireEnum(body, "action", [
+      "pause", "resume", "cancel", "skip", "update_frequency", "update_quantity",
+    ] as const);
+    const subscriptionId = optionalString(body, "subscriptionId", { max: 255 });
+    const newFrequency = optionalString(body, "newFrequency", { max: 50 });
+    const newQuantity = optionalInt(body, "newQuantity", { min: 1, max: 20 });
+    const skipDate = optionalString(body, "skipDate", { max: 40 });
+    const resumeAt = optionalString(body, "resumeAt", { max: 40 });
     logStep("Action requested", { action, subscriptionId });
+
+    // Access review trail for user-sensitive subscription changes
+    await auditLog({
+      actorType: "user",
+      actorUserId: user.id,
+      actionType: `subscription_${action}`,
+      entityType: "subscription",
+      entityId: subscriptionId,
+      newValues: { newFrequency, newQuantity, skipDate, resumeAt },
+      req,
+    });
+
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -495,6 +526,8 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    const validation = handleValidationError(error, corsHeaders);
+    if (validation) return validation;
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
     const status = errorMessage.includes("Forbidden") ? 403 : 500;

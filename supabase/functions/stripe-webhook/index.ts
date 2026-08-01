@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
+import { auditedResendFetch } from "../_shared/audit.ts";
 
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -25,7 +26,7 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 
   try {
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await auditedResendFetch("stripe-webhook", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ShoppingCart, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Search, DollarSign, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { addToCart } from "@/lib/cart";
+import { logUserAction } from "@/lib/userAudit";
+
 import { resolveProductImage, grinderImages } from "@/lib/productImages";
 import { toast } from "sonner";
 
@@ -227,8 +229,14 @@ const Products = () => {
         });
       
       if (error) throw error;
+      await logUserAction({
+        actionType: 'stock_notification_requested',
+        entityType: 'product',
+        entityId: productId,
+      });
       toast.success("We'll notify you when this item is back in stock!");
       setNotifyEmail(prev => ({ ...prev, [productId]: '' }));
+
     } catch (error) {
       console.error('Error subscribing to notifications:', error);
       toast.error('Failed to subscribe. Please try again.');

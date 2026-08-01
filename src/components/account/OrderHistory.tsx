@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Download, AlertCircle } from "lucide-react";
 import { orderIssueSchema } from "@/lib/validation";
 import { logger } from "@/lib/logger";
+import { logUserAction } from "@/lib/userAudit";
 
 interface Order {
   id: string;
@@ -128,7 +129,15 @@ Thank you for your order!
 
       if (error) throw error;
 
+      await logUserAction({
+        actionType: "order_issue_reported",
+        entityType: "order",
+        entityId: selectedOrder.id,
+        metadata: { issue_type: validation.data.issue_type },
+      });
+
       toast.success("Issue reported successfully. We'll contact you soon.");
+
       setIssueType("");
       setIssueDescription("");
       setSelectedOrder(null);

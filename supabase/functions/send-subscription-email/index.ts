@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
 import { hasSchedulerToken, hasServiceRoleBearer, requireAdmin, getAuthUser, forbidden, serviceClient } from "../_shared/auth.ts";
+import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditedResendFetch } from "../_shared/audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -349,6 +351,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Only POST is accepted on this endpoint
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json", "Allow": "POST, OPTIONS" },
+    });
+  }
+
+  // Durable, database-backed rate limiting (applies even when auth is present)
+  {
+    const limited = await enforceRateLimit("send-subscription-email", req, DB_RATE_LIMITS.email, corsHeaders);
+    if (limited) return limited;
+  }
+
   // Rate limiting
   const clientId = getClientId(req);
   const rateLimitResponse = checkRateLimit(clientId, RATE_LIMITS.email, corsHeaders);
@@ -445,7 +461,7 @@ serve(async (req) => {
       logStep("Sending gift notification to recipient", { recipientEmail });
     }
 
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await auditedResendFetch("send-subscription-email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

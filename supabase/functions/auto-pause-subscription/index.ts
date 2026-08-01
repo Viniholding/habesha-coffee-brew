@@ -3,6 +3,8 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
 import { hasSchedulerToken, hasServiceRoleBearer, requireAdmin, forbidden } from "../_shared/auth.ts";
+import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditedResendFetch, auditLog } from "../_shared/audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,7 +33,7 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 
   try {
-    const response = await fetch("https://api.resend.com/emails", {
+    const response = await auditedResendFetch("auto-pause-subscription", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -59,6 +61,29 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Only POST is accepted on this endpoint
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json", "Allow": "POST, OPTIONS" },
+    });
+  }
+
+  // Durable, database-backed rate limiting (applies even when auth is present)
+  {
+    const limited = await enforceRateLimit("auto-pause-subscription", req, DB_RATE_LIMITS.scheduler, corsHeaders);
+    if (limited) return limited;
+  }
+
+  // Access review: record every scheduler invocation
+  await auditLog({
+    actorType: "system",
+    actionType: "scheduler_invoked",
+    entityType: "scheduler",
+    entityId: "auto-pause-subscription",
+    req,
+  });
 
     // Internal scheduler endpoint: require the scheduler token, service-role key, or an admin JWT
     const isInternal = hasSchedulerToken(req) || hasServiceRoleBearer(req);

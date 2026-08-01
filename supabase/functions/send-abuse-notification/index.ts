@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { escapeHtml, hasSchedulerToken, hasServiceRoleBearer, requireAdmin, forbidden } from "../_shared/auth.ts";
+import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
+import { auditedResendFetch } from "../_shared/audit.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -29,7 +31,7 @@ interface NotificationRequest {
 }
 
 async function sendEmail(to: string[], subject: string, html: string) {
-  const res = await fetch("https://api.resend.com/emails", {
+  const res = await auditedResendFetch("send-abuse-notification", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -54,6 +56,20 @@ async function sendEmail(to: string[], subject: string, html: string) {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Only POST is accepted on this endpoint
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json", "Allow": "POST, OPTIONS" },
+    });
+  }
+
+  // Durable, database-backed rate limiting (applies even when auth is present)
+  {
+    const limited = await enforceRateLimit("send-abuse-notification", req, DB_RATE_LIMITS.email, corsHeaders);
+    if (limited) return limited;
   }
 
   try {
