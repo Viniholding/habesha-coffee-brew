@@ -2,6 +2,13 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
+import { serviceClient } from "../_shared/auth.ts";
+
+// Server-side pricing constants (never trust client-supplied amounts)
+const BAG_SIZE_MULTIPLIERS: Record<string, number> = { "12oz": 1, "2lb": 2.5, "5lb": 5.5 };
+const PREPAID_DISCOUNTS: Record<string, number> = { "3": 5, "6": 10, "12": 15 };
+const FREQUENCY_DAYS: Record<string, number> = { weekly: 7, biweekly: 14, every_3_weeks: 21, every_4_weeks: 28, monthly: 30 };
+const BASE_SUBSCRIBER_DISCOUNT = 10;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,6 +83,68 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    // ---- Server-side price computation (client-supplied priceId/prepaidTotal are ignored) ----
+    const admin = serviceClient();
+    if (!internalProductId) throw new Error("internalProductId is required");
+
+    const { data: productRow, error: productError } = await admin
+      .from("products")
+      .select("id, price, in_stock")
+      .eq("id", internalProductId)
+      .maybeSingle();
+
+    if (productError || !productRow) throw new Error("Product not found");
+    if (productRow.in_stock === false) throw new Error("Product is not available");
+
+    const safeQuantity = Math.min(Math.max(parseInt(String(quantity ?? 1), 10) || 1, 1), 20);
+    const bagMultiplier = BAG_SIZE_MULTIPLIERS[String(bagSize ?? "12oz")];
+    if (!bagMultiplier) throw new Error("Invalid bag size");
+
+    const basePrice = Number(productRow.price) * bagMultiplier * safeQuantity;
+
+    let serverDiscountPercent = BASE_SUBSCRIBER_DISCOUNT;
+    let totalDeliveries = 1;
+    const daysPerDelivery = FREQUENCY_DAYS[String(frequency)] ?? 14;
+
+    if (isPrepaid) {
+      const months = parseInt(String(prepaidMonths ?? 0), 10) || 0;
+      const prepaidDiscount = PREPAID_DISCOUNTS[String(months)];
+      if (!prepaidDiscount) throw new Error("Invalid prepaid duration");
+      serverDiscountPercent += prepaidDiscount;
+      totalDeliveries = Math.max(1, Math.floor((months * 30) / daysPerDelivery));
+    } else if (isGift) {
+      const months = parseInt(String(giftDuration ?? 0), 10) || 0;
+      if (months < 1 || months > 12) throw new Error("Invalid gift duration");
+      totalDeliveries = Math.max(1, Math.floor((months * 30) / daysPerDelivery));
+    }
+
+    // Validate any coupon server-side instead of trusting discountPercent
+    const submittedCoupon = (couponCode || discountCode || "").toString().trim().toUpperCase();
+    let validatedCouponCode = "";
+    let validatedCouponPercent = 0;
+    if (submittedCoupon) {
+      if (!/^[A-Z0-9_-]{1,32}$/.test(submittedCoupon)) throw new Error("Invalid coupon code");
+      const { data: promoRows } = await admin.rpc("validate_promotion_code", {
+        _code: submittedCoupon,
+        _user_id: user.id,
+        _is_subscription: true,
+      });
+      const promo = Array.isArray(promoRows) ? promoRows[0] : promoRows;
+      if (promo?.is_valid && promo.discount_type === "percentage") {
+        validatedCouponPercent = Number(promo.discount_value) || 0;
+        validatedCouponCode = submittedCoupon;
+        serverDiscountPercent += validatedCouponPercent;
+      }
+    }
+
+    serverDiscountPercent = Math.min(Math.max(serverDiscountPercent, 0), 90);
+    const perDeliveryPrice = basePrice * (1 - serverDiscountPercent / 100);
+    const serverTotalAmount = perDeliveryPrice * totalDeliveries;
+
+    logStep("Server-computed pricing", {
+      basePrice, serverDiscountPercent, perDeliveryPrice, totalDeliveries, serverTotalAmount,
+    });
+
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
@@ -99,7 +168,7 @@ serve(async (req) => {
     // Handle different subscription types
     if (isPrepaid || isGift) {
       // For prepaid and gift, we create a one-time payment
-      const totalAmount = parseFloat(prepaidTotal || priceId) * 100;
+      const totalAmount = serverTotalAmount * 100;
       
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
         customer: customerId,
@@ -125,7 +194,7 @@ serve(async (req) => {
           grind: grind || "whole_bean",
           bag_size: bagSize || "12oz",
           frequency: frequency,
-          quantity: String(quantity || 1),
+          quantity: String(safeQuantity),
           first_delivery_date: firstDeliveryDate || "",
           is_prepaid: String(isPrepaid || false),
           prepaid_months: String(prepaidMonths || 0),
@@ -135,7 +204,7 @@ serve(async (req) => {
           gift_message: giftMessage || "",
           gift_duration: String(giftDuration || 0),
           discount_code: discountCode || "",
-          discount_percent: String(discountPercent || 0),
+          discount_percent: String(serverDiscountPercent),
         },
       };
 
@@ -157,10 +226,10 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product: productId,
-            unit_amount: Math.round(Number(priceId) * 100),
+            unit_amount: Math.round(perDeliveryPrice * 100),
             recurring: intervalConfig,
           },
-          quantity: quantity || 1,
+          quantity: 1,
         },
       ],
       mode: "subscription",
@@ -174,10 +243,10 @@ serve(async (req) => {
         grind: grind || "whole_bean",
         bag_size: bagSize || "12oz",
         frequency: frequency,
-        quantity: String(quantity || 1),
+        quantity: String(safeQuantity),
         first_delivery_date: firstDeliveryDate || "",
-        discount_code: discountCode || couponCode || "",
-        discount_percent: String(discountPercent || 0),
+        discount_code: validatedCouponCode,
+        discount_percent: String(serverDiscountPercent),
       },
       subscription_data: {
         metadata: {
