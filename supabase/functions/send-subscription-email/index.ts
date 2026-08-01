@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
+import { hasSchedulerToken, hasServiceRoleBearer, requireAdmin, getAuthUser, forbidden, serviceClient } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -366,6 +367,28 @@ serve(async (req) => {
 
     const { type, subscriptionId, additionalData }: EmailRequest = await req.json();
     logStep("Email request", { type, subscriptionId });
+
+    // Authorization: internal callers, admins, or the subscription owner only
+    if (!hasSchedulerToken(req) && !hasServiceRoleBearer(req)) {
+      const user = await getAuthUser(req);
+      if (!user) {
+        logStep("Unauthenticated request rejected");
+        return forbidden(corsHeaders);
+      }
+      const admin = await requireAdmin(req);
+      if (!admin) {
+        const { data: ownedSub } = await serviceClient()
+          .from("subscriptions")
+          .select("id")
+          .eq("id", subscriptionId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!ownedSub) {
+          logStep("Ownership check failed", { subscriptionId });
+          return forbidden(corsHeaders);
+        }
+      }
+    }
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (!resendKey) {

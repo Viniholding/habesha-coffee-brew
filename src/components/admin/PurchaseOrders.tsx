@@ -98,7 +98,7 @@ export default function PurchaseOrders() {
         .select('*, suppliers(id, name, email)')
         .order('created_at', { ascending: false }),
       supabase.from('suppliers').select('id, name, email').eq('is_active', true).order('name'),
-      supabase.from('products').select('id, name, cost_price, stock_quantity, reorder_point').order('name'),
+      supabase.from('admin_products').select('id, name, cost_price, stock_quantity, reorder_point').order('name'),
     ]);
 
     if (ordersResult.error) {

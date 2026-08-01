@@ -39,7 +39,7 @@ export const StockForecastChart = () => {
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
-        .from('products')
+        .from('admin_products')
         .select('id, name, stock_quantity, reorder_point, avg_daily_sales')
         .gt('stock_quantity', 0)
         .order('name');

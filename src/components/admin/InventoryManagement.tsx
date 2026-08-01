@@ -113,7 +113,7 @@ export const InventoryManagement = () => {
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
-        .from('products')
+        .from('admin_products')
         .select('*')
         .order('name');
 

@@ -49,7 +49,7 @@ interface AuditLogEntry {
   change_type: string;
   notes: string | null;
   created_at: string;
-  products: {
+  admin_products: {
     name: string;
     sku: string | null;
   } | null;
@@ -92,7 +92,7 @@ export function InventoryAuditLog() {
         .from("inventory_audit_log")
         .select(`
           *,
-          products (name, sku)
+          admin_products (name, sku)
         `)
         .order("created_at", { ascending: false })
         .range(page * pageSize, (page + 1) * pageSize - 1);
@@ -120,8 +120,8 @@ export function InventoryAuditLog() {
         const lowerQuery = searchQuery.toLowerCase();
         return (data as AuditLogEntry[]).filter(
           (log) =>
-            log.products?.name?.toLowerCase().includes(lowerQuery) ||
-            log.products?.sku?.toLowerCase().includes(lowerQuery) ||
+            log.admin_products?.name?.toLowerCase().includes(lowerQuery) ||
+            log.admin_products?.sku?.toLowerCase().includes(lowerQuery) ||
             log.notes?.toLowerCase().includes(lowerQuery)
         );
       }
@@ -171,8 +171,8 @@ export function InventoryAuditLog() {
     const headers = ["Date", "Product", "SKU", "Previous Qty", "New Qty", "Change", "Type", "Notes"];
     const rows = auditLogs.map((log) => [
       format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
-      log.products?.name || "Unknown",
-      log.products?.sku || "",
+      log.admin_products?.name || "Unknown",
+      log.admin_products?.sku || "",
       log.previous_quantity,
       log.new_quantity,
       log.quantity_change > 0 ? `+${log.quantity_change}` : log.quantity_change,
@@ -350,9 +350,9 @@ export function InventoryAuditLog() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">{log.products?.name || "Unknown Product"}</div>
-                      {log.products?.sku && (
-                        <div className="text-xs text-muted-foreground">SKU: {log.products.sku}</div>
+                      <div className="font-medium">{log.admin_products?.name || "Unknown Product"}</div>
+                      {log.admin_products?.sku && (
+                        <div className="text-xs text-muted-foreground">SKU: {log.admin_products.sku}</div>
                       )}
                     </TableCell>
                     <TableCell className="text-center font-mono">
