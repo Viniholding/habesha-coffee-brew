@@ -15,6 +15,7 @@ import Cafe from "./pages/Cafe";
 import ContactPage from "./pages/Contact";
 import Learn from "./pages/Learn";
 import Auth from "./pages/Auth";
+import OAuthConsent from "./pages/OAuthConsent";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Account from "./pages/Account";
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/cafe" element={<Cafe />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/account" element={<Account />} />
