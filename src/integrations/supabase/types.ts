@@ -202,7 +202,8 @@ export type Database = {
       admin_audit_log: {
         Row: {
           action_type: string
-          admin_user_id: string
+          actor_type: string
+          admin_user_id: string | null
           created_at: string
           entity_id: string | null
           entity_type: string | null
@@ -215,7 +216,8 @@ export type Database = {
         }
         Insert: {
           action_type: string
-          admin_user_id: string
+          actor_type?: string
+          admin_user_id?: string | null
           created_at?: string
           entity_id?: string | null
           entity_type?: string | null
@@ -228,7 +230,8 @@ export type Database = {
         }
         Update: {
           action_type?: string
-          admin_user_id?: string
+          actor_type?: string
+          admin_user_id?: string | null
           created_at?: string
           entity_id?: string | null
           entity_type?: string | null
@@ -1449,6 +1452,36 @@ export type Database = {
           },
         ]
       }
+      rate_limit_counters: {
+        Row: {
+          bucket_key: string
+          created_at: string
+          expires_at: string
+          id: string
+          request_count: number
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          bucket_key: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          window_start: string
+        }
+        Update: {
+          bucket_key?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           converted_at: string | null
@@ -2040,6 +2073,18 @@ export type Database = {
             Args: { _confirmation_text: string; _token: string }
             Returns: undefined
           }
+      consume_rate_limit: {
+        Args: {
+          _bucket_key: string
+          _max_requests: number
+          _window_seconds: number
+        }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          reset_at: string
+        }[]
+      }
       delete_user: { Args: never; Returns: undefined }
       generate_po_number: { Args: never; Returns: string }
       get_admin_level: { Args: { _user_id: string }; Returns: string }
@@ -2089,6 +2134,30 @@ export type Database = {
           _ip_address?: string
           _success: boolean
           _user_agent?: string
+        }
+        Returns: undefined
+      }
+      log_audit_event: {
+        Args: {
+          _action_type: string
+          _actor_type: string
+          _actor_user_id: string
+          _entity_id?: string
+          _entity_type?: string
+          _ip_address?: string
+          _metadata?: Json
+          _new_values?: Json
+          _old_values?: Json
+          _user_agent?: string
+        }
+        Returns: string
+      }
+      log_user_action: {
+        Args: {
+          _action_type: string
+          _entity_id?: string
+          _entity_type?: string
+          _metadata?: Json
         }
         Returns: undefined
       }
