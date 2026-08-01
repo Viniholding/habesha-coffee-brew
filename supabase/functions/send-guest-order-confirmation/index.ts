@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { getClientId, checkRateLimit, RATE_LIMITS } from "../_shared/rate-limit.ts";
 import { serviceClient, escapeHtml } from "../_shared/auth.ts";
+import { enforceRateLimit, DB_RATE_LIMITS } from "../_shared/db-rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,6 +43,20 @@ interface GuestOrderRequest {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Only POST is accepted on this endpoint
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json", "Allow": "POST, OPTIONS" },
+    });
+  }
+
+  // Durable, database-backed rate limiting (applies even when auth is present)
+  {
+    const limited = await enforceRateLimit("send-guest-order-confirmation", req, DB_RATE_LIMITS.publicForm, corsHeaders);
+    if (limited) return limited;
   }
 
   // Rate limiting
