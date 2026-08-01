@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ShoppingCart, RefreshCw, Eye, Plus, Minus, PackageCheck, AlertTriangle, XCircle, Bell, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Search, DollarSign, X } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { addToCart } from "@/lib/cart";
+import { logUserAction } from "@/lib/userAudit";
+
 import { resolveProductImage, grinderImages } from "@/lib/productImages";
 import { toast } from "sonner";
 
