@@ -14,7 +14,7 @@ const CafeComing = () => {
             comfort, bringing the rich heritage of Coffee Habesha to life.
           </p>
           <div className="inline-block bg-primary/10 px-8 py-4 rounded-lg">
-            <p className="text-lg font-semibold text-primary">Opening 2026 • Stay Tuned</p>
+            <p className="text-lg font-semibold text-primary">Opening 2027 • Stay Tuned</p>
           </div>
         </div>
       </div>
