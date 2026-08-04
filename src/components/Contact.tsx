@@ -92,16 +92,6 @@ const Contact = () => {
                 </div>
               </div>
 
-              <div className="bg-muted p-6 rounded-lg">
-                <h4 className="font-semibold text-lg mb-2 text-foreground">
-                  Business Hours
-                </h4>
-                <p className="text-muted-foreground">
-                  Monday - Friday: 9:00 AM - 6:00 PM EST<br />
-                  Saturday: 10:00 AM - 4:00 PM EST<br />
-                  Sunday: Closed
-                </p>
-              </div>
             </div>
 
             <div className="bg-card p-8 rounded-lg border border-border shadow-lg">
