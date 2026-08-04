@@ -56,50 +56,12 @@ const Contact = () => {
 
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-8">
-              <div>
-                <h3 className="text-2xl font-semibold mb-6 text-foreground">
-                  Contact Information
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <Mail className="w-6 h-6 text-primary mt-1" />
-                    <div>
-                      <p className="font-semibold text-foreground">Email</p>
-                      <a href="mailto:sales@coffeehabesha.com" className="text-muted-foreground hover:text-primary transition-colors">
-                        sales@coffeehabesha.com
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <Phone className="w-6 h-6 text-primary mt-1" />
-                    <div>
-                      <p className="font-semibold text-foreground">Phone</p>
-                      <a href="tel:+18777880389" className="text-muted-foreground hover:text-primary transition-colors">
-                        +1 (877) 788-0389
-                      </a>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <MapPin className="w-6 h-6 text-primary mt-1" />
-                    <div>
-                      <p className="font-semibold text-foreground">Mailing Address</p>
-                      <p className="text-muted-foreground">
-                        P.O. BOX 151742<br />
-                        Alexandria, Virginia 22315
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               <div className="bg-muted p-6 rounded-lg">
                 <h4 className="font-semibold text-lg mb-2 text-foreground">
-                  Business Hours
+                  Need Help?
                 </h4>
                 <p className="text-muted-foreground">
-                  Monday - Friday: 9:00 AM - 6:00 PM EST<br />
-                  Saturday: 10:00 AM - 4:00 PM EST<br />
-                  Sunday: Closed
+                  Fill out the form and our team will get back to you as soon as possible.
                 </p>
               </div>
             </div>
