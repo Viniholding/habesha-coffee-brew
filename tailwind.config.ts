@@ -60,6 +60,7 @@ export default {
         "account-bg": "hsl(var(--account-bg))",
         "account-card": "hsl(var(--account-card))",
         "account-card-warm": "hsl(var(--account-card-warm))",
+        "footer-copyright": "hsl(var(--footer-copyright))",
       },
       borderRadius: {
         lg: "var(--radius)",

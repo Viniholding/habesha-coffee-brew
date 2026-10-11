@@ -79,7 +79,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-border pt-8 text-center">
-          <p style={{ fontSize: "10pt", color: "#BBA694" }}>
+          <p className="text-[10pt] text-footer-copyright">
             &copy; {new Date().getFullYear()} Coffee Habesha. All rights reserved.
           </p>
         </div>
