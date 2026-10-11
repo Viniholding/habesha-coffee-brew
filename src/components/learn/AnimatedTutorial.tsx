@@ -11,7 +11,7 @@ const tutorialSteps = [
     subtitle: "Coffee Time Is Sacred",
     description: "Find your coziest spot — Light your etan (frankincense), grab your Jebena, and gather your people. Coffee time is sacred — laughter required.",
     icon: Heart,
-    tip: "Traditionally, the youngest daughter performs the ceremony"
+    tip: "Traditionally, the youngest performs the ceremony"
   },
   {
     number: 2,
