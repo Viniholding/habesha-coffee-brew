@@ -55,6 +55,9 @@ All colors MUST be HSL.
     --account-bg: 25 20% 15%;
     --account-card: 22 20% 18%;
     --account-card-warm: 25 22% 20%;
+
+    /* Footer copyright text (#BBA694) */
+    --footer-copyright: 28 22.5% 65.7%;
   }
 
   .dark {
