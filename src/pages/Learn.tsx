@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Coffee, Play, Download } from 'lucide-react';
+import { Coffee, Play, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -40,12 +40,6 @@ export default function Learn() {
     }
   };
 
-  const handleDownloadTutorial = () => {
-    const link = document.createElement('a');
-    link.href = '/documents/Coffee-Habesha-Jebena-Tutorial.pdf';
-    link.download = 'Coffee-Habesha-Jebena-Tutorial.pdf';
-    link.click();
-  };
 
   return (
     <div className="min-h-screen">
@@ -79,17 +73,29 @@ export default function Learn() {
               The traditional art of Ethiopian coffee — from roasting to the three sacred rounds
             </p>
             
-            {/* Print Button */}
+            {/* Brochure Download Card */}
             <div className="mt-8 print:hidden">
-              <Button 
-                variant="outline" 
-                size="lg" 
-                onClick={handleDownloadTutorial}
-                className="gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+              <a
+                href="/documents/Coffee-Habesha-Jebena-Ritual-Brochure.pdf"
+                download="Coffee-Habesha-Jebena-Ritual-Brochure.pdf"
+                className="group inline-flex items-center gap-5 w-full max-w-2xl mx-auto p-5 md:p-6 rounded-2xl border border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 text-left"
               >
-                <Download className="w-5 h-5" />
-                Download Tutorial Guide
-              </Button>
+                <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center shrink-0">
+                  <FileText className="w-7 h-7 text-primary-foreground" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold text-foreground leading-tight">
+                    The Jebena Ritual Brochure
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Free printable PDF — ingredients, equipment & the full step-by-step ceremony
+                  </p>
+                </div>
+                <div className="ml-auto hidden sm:flex items-center gap-2 shrink-0 text-primary font-semibold text-sm">
+                  <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                  Download PDF
+                </div>
+              </a>
             </div>
           </div>
 
