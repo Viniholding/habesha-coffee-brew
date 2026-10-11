@@ -78,8 +78,10 @@ const Footer = () => {
           </nav>
         </div>
         
-        <div className="border-t border-border pt-8 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Coffee Habesha. All rights reserved.</p>
+        <div className="border-t border-border pt-8 text-center">
+          <p style={{ fontSize: "10pt", color: "#BBA694" }}>
+            &copy; {new Date().getFullYear()} Coffee Habesha. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
