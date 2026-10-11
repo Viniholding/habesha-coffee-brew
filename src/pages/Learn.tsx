@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Coffee, Play, Download } from 'lucide-react';
+import { Coffee, Play, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -40,12 +40,6 @@ export default function Learn() {
     }
   };
 
-  const handleDownloadTutorial = () => {
-    const link = document.createElement('a');
-    link.href = '/documents/Coffee-Habesha-Jebena-Tutorial.pdf';
-    link.download = 'Coffee-Habesha-Jebena-Tutorial.pdf';
-    link.click();
-  };
 
   return (
     <div className="min-h-screen">
